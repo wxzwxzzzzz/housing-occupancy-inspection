@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(ls:*)",
+      "Bash(npm run dev:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(pkill:*)",
+      "WebSearch",
+      "WebFetch(domain:site.logic-flow.cn)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.logic-flow.cn)",
+      "Bash(npm i:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

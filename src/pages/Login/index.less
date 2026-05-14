@@ -1,0 +1,202 @@
+// 登录页面容器
+.login-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+// 背景
+.login-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    animation: backgroundMove 60s linear infinite;
+  }
+}
+
+.login-background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 70% 50%, rgba(118, 75, 162, 0.3) 0%, transparent 50%);
+}
+
+@keyframes backgroundMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+// 内容区域
+.login-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 450px;
+  padding: 0 24px;
+}
+
+// 登录卡片
+.login-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  :global {
+    .ant-card-body {
+      padding: 40px 32px;
+    }
+  }
+}
+
+// 登录头部
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  margin-bottom: 16px;
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+// 表单样式
+.login-extra {
+  text-align: right;
+  margin-top: -8px;
+
+  a {
+    color: #667eea;
+    font-size: 14px;
+
+    &:hover {
+      color: #764ba2;
+    }
+  }
+}
+
+// 测试提示
+.login-tips {
+  margin-top: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+
+  p {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #0369a1;
+    line-height: 1.6;
+
+    &:first-child {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+  }
+}
+
+// 底部信息
+.login-footer {
+  text-align: center;
+  margin-top: 32px;
+  color: rgba(255, 255, 255, 0.9);
+
+  p {
+    margin: 4px 0;
+    font-size: 13px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 响应式
+@media (max-width: 576px) {
+  .login-card {
+    :global {
+      .ant-card-body {
+        padding: 32px 24px;
+      }
+    }
+  }
+
+  .login-title {
+    font-size: 24px;
+  }
+
+  .login-subtitle {
+    font-size: 13px;
+  }
+}
+
+// Tabs 样式优化
+:global {
+  .login-card .ant-tabs-nav {
+    margin-bottom: 24px;
+  }
+
+  .login-card .ant-tabs-tab {
+    font-size: 16px;
+    padding: 12px 0;
+  }
+
+  .login-card .ant-input-affix-wrapper,
+  .login-card .ant-input-password {
+    padding: 12px 16px;
+  }
+
+  .login-card .ant-btn-lg {
+    height: 48px;
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+}
