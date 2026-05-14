@@ -1,171 +1,195 @@
-import React, { useState } from 'react';
-import { Card, Table, Button, Space, Input, Select, Modal, Form, message, Tag, Switch, Avatar } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, LockOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import {
+  Avatar,
+  Button,
+  Card,
+  Form,
+  Input,
+  message,
+  Modal,
+  Select,
+  Space,
+  Switch,
+  Table,
+  Tag,
+} from 'antd';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  LockOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { userService } from '@/services/domains/arche';
+import { authService } from '@/services/domains/auth';
+import { qb } from '@/services/ontology/query';
+import { OT } from '@/services/ontology/object-types';
+import type { User } from '@/types/ontology/ap/arche/user';
 
-const { Option } = Select;
+const ROLE_OPTIONS = [
+  { label: '系统管理员', value: 'ADMIN' },
+  { label: '审批员', value: 'APPROVER' },
+  { label: '工作人员', value: 'STAFF' },
+  { label: '居民', value: 'RESIDENT' },
+];
 
-interface PersonnelItem {
-  id: string;
-  name: string;
-  username: string;
-  phone: string;
-  email: string;
-  role: string;
-  department: string;
-  status: 'active' | 'inactive';
-  createTime: string;
-}
+const STATUS_LABEL: Record<string, string> = {
+  ACTIVE: '正常',
+  INACTIVE: '停用',
+  LOCKED: '已锁定',
+};
+const STATUS_COLOR: Record<string, string> = {
+  ACTIVE: 'green',
+  INACTIVE: 'default',
+  LOCKED: 'red',
+};
 
 const SystemPersonnel: React.FC = () => {
+  const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [currentRecord, setCurrentRecord] = useState<PersonnelItem | null>(null);
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [keyword, setKeyword] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string | undefined>();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<User | null>(null);
   const [form] = Form.useForm();
+  const [submitting, setSubmitting] = useState(false);
 
-  // 模拟数据
-  const [dataSource] = useState<PersonnelItem[]>([
-    {
-      id: '1',
-      name: '张管理',
-      username: 'admin',
-      phone: '138****1234',
-      email: 'admin@example.com',
-      role: '系统管理员',
-      department: '技术部',
-      status: 'active',
-      createTime: '2025-01-01 10:00:00',
-    },
-    {
-      id: '2',
-      name: '李审批',
-      username: 'approver1',
-      phone: '139****5678',
-      email: 'approver1@example.com',
-      role: '审批员',
-      department: '业务部',
-      status: 'active',
-      createTime: '2025-02-15 14:30:00',
-    },
-    {
-      id: '3',
-      name: '王监测',
-      username: 'monitor1',
-      phone: '137****9012',
-      email: 'monitor1@example.com',
-      role: '监测员',
-      department: '监管部',
-      status: 'active',
-      createTime: '2025-03-10 09:20:00',
-    },
-    {
-      id: '4',
-      name: '赵离职',
-      username: 'old_user',
-      phone: '136****3456',
-      email: 'old@example.com',
-      role: '审批员',
-      department: '业务部',
-      status: 'inactive',
-      createTime: '2024-08-20 11:00:00',
-    },
-  ]);
+  async function load(page = pageNo, size = pageSize) {
+    setLoading(true);
+    try {
+      const builder = qb(OT.User).orderBy('createAt', 'DESC').page(page, size);
+      if (keyword) builder.like('account', keyword);
+      if (roleFilter) builder.eq('userType', roleFilter);
+      const env = await userService.list(builder.build());
+      setData(env.data);
+      setTotal(env.page?.total ?? env.data.length);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const statusConfig = {
-    active: { text: '正常', color: 'green' },
-    inactive: { text: '停用', color: 'red' },
+  useEffect(() => {
+    load(1, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAdd = () => {
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue({ status: 'ACTIVE', userType: 'STAFF' });
+    setModalOpen(true);
   };
 
-  const columns: ColumnsType<PersonnelItem> = [
+  const handleEdit = (record: User) => {
+    setEditing(record);
+    form.setFieldsValue({
+      account: record.account,
+      fullName: (record as any).fullName,
+      phone: (record as any).phone,
+      email: (record as any).email,
+      userType: (record as any).userType,
+      status: (record as any).status,
+    });
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    const values = await form.validateFields();
+    setSubmitting(true);
+    try {
+      if (editing) {
+        await userService.modify({ ...values, id: (editing as any).id });
+        message.success('编辑成功');
+      } else {
+        await userService.add({ ...values, isAnonymous: false, isSSOUser: false, emailChangeStatus: 'NONE' } as any);
+        message.success('新增成功');
+      }
+      setModalOpen(false);
+      load();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = (record: User) => {
+    Modal.confirm({
+      title: '删除人员',
+      content: `确定删除 ${(record as any).account}?`,
+      okType: 'danger',
+      onOk: async () => {
+        await userService.delete((record as any).id);
+        message.success('已删除');
+        load();
+      },
+    });
+  };
+
+  const handleLock = (record: User) => {
+    Modal.confirm({
+      title: '锁定账户',
+      content: `确定锁定 ${(record as any).account}?`,
+      onOk: async () => {
+        await authService.lockAccount((record as any).id);
+        message.success('已锁定');
+        load();
+      },
+    });
+  };
+
+  const columns: ColumnsType<User> = [
     {
-      title: '姓名',
-      dataIndex: 'name',
-      key: 'name',
-      width: 120,
-      render: (text) => (
+      title: '账号',
+      dataIndex: 'account',
+      width: 140,
+      render: (text: string) => (
         <Space>
           <Avatar icon={<UserOutlined />} size="small" />
           <span>{text}</span>
         </Space>
       ),
     },
+    { title: '姓名', dataIndex: 'fullName', width: 120 },
+    { title: '手机', dataIndex: 'phone', width: 130 },
+    { title: '邮箱', dataIndex: 'email', width: 200, ellipsis: true },
     {
-      title: '用户名',
-      dataIndex: 'username',
-      key: 'username',
-      width: 120,
-    },
-    {
-      title: '联系电话',
-      dataIndex: 'phone',
-      key: 'phone',
-      width: 130,
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-      key: 'email',
-      width: 180,
-    },
-    {
-      title: '角色',
-      dataIndex: 'role',
-      key: 'role',
-      width: 120,
-      render: (text) => <Tag color="blue">{text}</Tag>,
-    },
-    {
-      title: '部门',
-      dataIndex: 'department',
-      key: 'department',
-      width: 100,
+      title: '类型',
+      dataIndex: 'userType',
+      width: 110,
+      render: (v: string) => (
+        <Tag color="blue">{ROLE_OPTIONS.find((r) => r.value === v)?.label ?? v}</Tag>
+      ),
     },
     {
       title: '状态',
       dataIndex: 'status',
-      key: 'status',
       width: 100,
-      render: (status: keyof typeof statusConfig) => (
-        <Tag color={statusConfig[status].color}>{statusConfig[status].text}</Tag>
-      ),
+      render: (v: string) => <Tag color={STATUS_COLOR[v] ?? 'default'}>{STATUS_LABEL[v] ?? v}</Tag>,
     },
     {
       title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 160,
+      dataIndex: 'createAt',
+      width: 200,
+      render: (v: string) => (v ? new Date(v).toLocaleString() : '-'),
     },
     {
       title: '操作',
-      key: 'action',
-      width: 240,
+      key: 'op',
+      width: 280,
       fixed: 'right',
-      render: (_, record) => (
+      render: (_, record: User) => (
         <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
             编辑
           </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<LockOutlined />}
-            onClick={() => handleResetPassword(record)}
-          >
-            重置密码
+          <Button type="link" size="small" icon={<LockOutlined />} onClick={() => handleLock(record)}>
+            锁定
           </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          >
+          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record)}>
             删除
           </Button>
         </Space>
@@ -173,105 +197,29 @@ const SystemPersonnel: React.FC = () => {
     },
   ];
 
-  const handleAdd = () => {
-    setEditMode(false);
-    setCurrentRecord(null);
-    form.resetFields();
-    setModalVisible(true);
-  };
-
-  const handleEdit = (record: PersonnelItem) => {
-    setEditMode(true);
-    setCurrentRecord(record);
-    form.setFieldsValue(record);
-    setModalVisible(true);
-  };
-
-  const handleResetPassword = (record: PersonnelItem) => {
-    Modal.confirm({
-      title: '重置密码',
-      content: `确定要重置 ${record.name} 的密码吗？密码将重置为默认密码。`,
-      onOk: async () => {
-        setLoading(true);
-        try {
-          // TODO: 调用重置密码 API
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          message.success('密码重置成功，默认密码已发送至手机');
-        } catch (error) {
-          message.error('密码重置失败');
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-  };
-
-  const handleDelete = (record: PersonnelItem) => {
-    Modal.confirm({
-      title: '删除人员',
-      content: `确定要删除 ${record.name} 吗？此操作不可恢复。`,
-      okText: '确定',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: async () => {
-        setLoading(true);
-        try {
-          // TODO: 调用删除 API
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          message.success('删除成功');
-        } catch (error) {
-          message.error('删除失败');
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-  };
-
-  const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
-      setLoading(true);
-
-      // TODO: 调用新增/编辑 API
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      message.success(editMode ? '编辑成功' : '新增成功');
-      setModalVisible(false);
-      form.resetFields();
-    } catch (error) {
-      console.error('Failed to submit:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: 24 }}>
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {/* 搜索筛选 */}
           <Space wrap>
             <Input
-              placeholder="搜索姓名或用户名"
+              placeholder="账号关键字"
               prefix={<SearchOutlined />}
               style={{ width: 200 }}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              allowClear
+              onPressEnter={() => load(1, pageSize)}
             />
-            <Select placeholder="选择角色" style={{ width: 150 }} allowClear>
-              <Option value="admin">系统管理员</Option>
-              <Option value="approver">审批员</Option>
-              <Option value="monitor">监测员</Option>
-            </Select>
-            <Select placeholder="选择部门" style={{ width: 150 }} allowClear>
-              <Option value="tech">技术部</Option>
-              <Option value="business">业务部</Option>
-              <Option value="supervision">监管部</Option>
-            </Select>
-            <Select placeholder="状态" style={{ width: 120 }} allowClear>
-              <Option value="active">正常</Option>
-              <Option value="inactive">停用</Option>
-            </Select>
-            <Button type="primary" icon={<SearchOutlined />}>
+            <Select
+              placeholder="用户类型"
+              style={{ width: 150 }}
+              allowClear
+              value={roleFilter}
+              onChange={(v) => setRoleFilter(v)}
+              options={ROLE_OPTIONS}
+            />
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => load(1, pageSize)}>
               搜索
             </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -279,99 +227,83 @@ const SystemPersonnel: React.FC = () => {
             </Button>
           </Space>
 
-          {/* 表格 */}
-          <Table
+          <Table<User>
+            rowKey={(r) => (r as any).id}
             columns={columns}
-            dataSource={dataSource}
-            rowKey="id"
+            dataSource={data}
             loading={loading}
             scroll={{ x: 1400 }}
             pagination={{
-              total: dataSource.length,
-              pageSize: 10,
+              current: pageNo,
+              pageSize,
+              total,
               showSizeChanger: true,
-              showTotal: (total) => `共 ${total} 条`,
+              showTotal: (t) => `共 ${t} 条`,
+              onChange: (p, s) => {
+                setPageNo(p);
+                setPageSize(s);
+                load(p, s);
+              },
             }}
           />
         </Space>
       </Card>
 
-      {/* 新增/编辑弹窗 */}
       <Modal
-        title={editMode ? '编辑人员' : '新增人员'}
-        open={modalVisible}
-        onOk={handleModalOk}
+        title={editing ? '编辑人员' : '新增人员'}
+        open={modalOpen}
+        onOk={handleSubmit}
         onCancel={() => {
-          setModalVisible(false);
+          setModalOpen(false);
           form.resetFields();
         }}
-        confirmLoading={loading}
-        width={600}
+        confirmLoading={submitting}
+        width={520}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label="姓名"
-            rules={[{ required: true, message: '请输入姓名' }]}
-          >
+          <Form.Item name="fullName" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
             <Input placeholder="请输入姓名" />
           </Form.Item>
           <Form.Item
-            name="username"
-            label="用户名"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            name="account"
+            label="账号"
+            rules={[{ required: true, message: '请输入账号' }]}
           >
-            <Input placeholder="请输入用户名" disabled={editMode} />
+            <Input placeholder="请输入登录账号" disabled={!!editing} />
           </Form.Item>
+          {!editing && (
+            <Form.Item
+              name="password"
+              label="初始密码"
+              rules={[{ required: true, message: '请输入初始密码' }]}
+            >
+              <Input.Password placeholder="请输入初始密码" />
+            </Form.Item>
+          )}
           <Form.Item
             name="phone"
             label="手机号"
-            rules={[
-              { required: true, message: '请输入手机号' },
-              { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' },
-            ]}
+            rules={[{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确' }]}
           >
-            <Input placeholder="请输入手机号" maxLength={11} />
+            <Input placeholder="可选" maxLength={11} />
           </Form.Item>
           <Form.Item
             name="email"
             label="邮箱"
-            rules={[
-              { required: true, message: '请输入邮箱' },
-              { type: 'email', message: '邮箱格式不正确' },
-            ]}
+            rules={[{ type: 'email', message: '邮箱格式不正确' }]}
           >
-            <Input placeholder="请输入邮箱" />
+            <Input placeholder="可选" />
           </Form.Item>
-          <Form.Item
-            name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
-          >
-            <Select placeholder="请选择角色">
-              <Option value="系统管理员">系统管理员</Option>
-              <Option value="审批员">审批员</Option>
-              <Option value="监测员">监测员</Option>
-            </Select>
+          <Form.Item name="userType" label="用户类型" rules={[{ required: true }]}>
+            <Select options={ROLE_OPTIONS} />
           </Form.Item>
-          <Form.Item
-            name="department"
-            label="部门"
-            rules={[{ required: true, message: '请选择部门' }]}
-          >
-            <Select placeholder="请选择部门">
-              <Option value="技术部">技术部</Option>
-              <Option value="业务部">业务部</Option>
-              <Option value="监管部">监管部</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="status"
-            label="状态"
-            valuePropName="checked"
-            initialValue={true}
-          >
-            <Switch checkedChildren="正常" unCheckedChildren="停用" />
+          <Form.Item name="status" label="状态" valuePropName="value">
+            <Select
+              options={[
+                { label: '正常', value: 'ACTIVE' },
+                { label: '停用', value: 'INACTIVE' },
+              ]}
+            />
           </Form.Item>
         </Form>
       </Modal>

@@ -25,7 +25,15 @@ const Dashboard: React.FC = observer(() => {
 
   useEffect(() => {
     dashboardStore.fetchDashboardData();
+    if (alertStore.alerts.length === 0) {
+      alertStore.fetchAlerts({ pageSize: 50 });
+    }
   }, []);
+
+  // 真实业务指标(从 store/本体取),其他展示性 mock 暂时保留
+  const liveStats = dashboardStore.stats;
+  const liveAlertCount = alertStore.total;
+  const liveCritical = alertStore.criticalAlerts.length;
 
   // 模拟数据
   const mockData = {
@@ -337,9 +345,7 @@ const Dashboard: React.FC = observer(() => {
           <Card className="stat-card" bordered={false}>
             <Statistic
               title="今日打卡率"
-              value={mockData.attendance.rate}
-              precision={1}
-              suffix="%"
+              value={liveStats?.attendanceRate ?? `${mockData.attendance.rate}%`}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#3f8600' }}
             />
@@ -357,7 +363,7 @@ const Dashboard: React.FC = observer(() => {
               </Space>
             </div>
             <Progress
-              percent={mockData.attendance.rate}
+              percent={parseFloat(liveStats?.attendanceRate ?? '0') || mockData.attendance.rate}
               strokeColor="#52c41a"
               showInfo={false}
               size="small"
@@ -370,15 +376,15 @@ const Dashboard: React.FC = observer(() => {
           <Card className="stat-card" bordered={false}>
             <Statistic
               title="预警总数"
-              value={mockData.alerts.total}
+              value={liveStats?.totalAlerts ?? liveAlertCount}
               prefix={<AlertOutlined />}
               valueStyle={{ color: '#cf1322' }}
             />
             <div className="stat-footer">
               <Space>
-                <span className="alert-critical">严重 {mockData.alerts.critical}</span>
-                <span className="alert-warning">警告 {mockData.alerts.warning}</span>
-                <span className="alert-info">提示 {mockData.alerts.info}</span>
+                <span className="alert-critical">红色 {liveCritical}</span>
+                <span className="alert-warning">活跃 {liveStats?.activeAlerts ?? mockData.alerts.warning}</span>
+                <span className="alert-info">已处置 {liveStats?.resolvedAlerts ?? mockData.alerts.info}</span>
               </Space>
             </div>
           </Card>
@@ -388,7 +394,7 @@ const Dashboard: React.FC = observer(() => {
           <Card className="stat-card" bordered={false}>
             <Statistic
               title="待审批"
-              value={mockData.approvals.pending}
+              value={liveStats?.pending ?? mockData.approvals.pending}
               prefix={<FileTextOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -406,14 +412,14 @@ const Dashboard: React.FC = observer(() => {
           <Card className="stat-card" bordered={false}>
             <Statistic
               title="保障户总数"
-              value={mockData.attendance.total}
+              value={liveStats?.totalResidents ?? mockData.attendance.total}
               prefix={<TeamOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
             <div className="stat-footer">
               <Space>
                 <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                <span>已打卡 {mockData.attendance.checkedIn}</span>
+                <span>活跃家庭 {liveStats?.activeHouseholds ?? mockData.attendance.checkedIn}</span>
               </Space>
             </div>
           </Card>

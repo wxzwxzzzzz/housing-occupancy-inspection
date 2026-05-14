@@ -1,225 +1,238 @@
-import React, { useState, useEffect } from 'react';
-import { observer } from 'mobx-react-lite';
-import { useParams, useNavigate } from 'react-router-dom';
+/**
+ * 通用审批详情 — /approval/detail/:type/:id
+ *
+ * type 决定 objectType,从对应 service 拉详情。
+ * 支持的 type:
+ *   - leave / migrant / material(=eligibility) / makeup
+ *   - residence-change / employment-change / member-change / termination
+ */
+
+import React, { useEffect, useState } from 'react';
 import {
+  Button,
   Card,
   Descriptions,
-  Button,
-  Space,
-  Tag,
-  Timeline,
-  Modal,
+  Empty,
   Form,
   Input,
   message,
+  Modal,
+  Space,
+  Spin,
+  Tag,
+  Timeline,
 } from 'antd';
+import { ArrowLeftOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { useNavigate, useParams } from '@umijs/max';
+import { approvalService } from '@/services/domains/approval';
+import { leaveService } from '@/services/domains/leave';
+import { migrantWorkService } from '@/services/domains/migrant-work';
 import {
-  ArrowLeftOutlined,
-  CheckOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
+  attendanceMakeupService,
+} from '@/services/domains/attendance';
+import {
+  eligibilityApplicationService,
+  eligibilityTerminationService,
+} from '@/services/domains/eligibility';
+import {
+  employmentChangeService,
+  householdMemberChangeService,
+  residenceChangeService,
+} from '@/services/domains/change';
+import { OT } from '@/services/ontology/object-types';
+import { EnumLabels, StatusColors } from '@/utils/enum-options';
 
-const { TextArea } = Input;
+const TYPE_TO_CONFIG: Record<
+  string,
+  { service: any; objectType: string; title: string }
+> = {
+  leave: { service: leaveService, objectType: OT.Leave, title: '请假' },
+  migrant: { service: migrantWorkService, objectType: OT.MigrantWork, title: '备案' },
+  material: {
+    service: eligibilityApplicationService,
+    objectType: OT.EligibilityApplication,
+    title: '资格申请',
+  },
+  makeup: { service: attendanceMakeupService, objectType: OT.AttendanceMakeup, title: '补卡' },
+  'residence-change': {
+    service: residenceChangeService,
+    objectType: OT.ResidenceChange,
+    title: '居住地址变更',
+  },
+  'employment-change': {
+    service: employmentChangeService,
+    objectType: OT.EmploymentChange,
+    title: '就业变更',
+  },
+  'member-change': {
+    service: householdMemberChangeService,
+    objectType: OT.HouseholdMemberChange,
+    title: '家庭成员变更',
+  },
+  termination: {
+    service: eligibilityTerminationService,
+    objectType: OT.EligibilityTermination,
+    title: '资格终止',
+  },
+};
 
-interface ApprovalDetail {
-  id: string;
-  title: string;
-  applicant: string;
-  type: string;
-  status: 'pending' | 'approved' | 'rejected';
-  content: string;
-  createTime: string;
-  updateTime: string;
-  approver?: string;
-  approveTime?: string;
-  rejectReason?: string;
-}
-
-interface HistoryItem {
-  time: string;
-  action: string;
-  operator: string;
-  remark?: string;
-}
-
-const ApprovalDetail: React.FC = observer(() => {
-  const { id } = useParams<{ id: string }>();
+const ApprovalDetail: React.FC = () => {
+  const { type = 'material', id = '' } = useParams<{ type: string; id: string }>();
   const navigate = useNavigate();
+  const config = TYPE_TO_CONFIG[type] ?? TYPE_TO_CONFIG.material;
+
+  const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<'approve' | 'reject'>('approve');
+  const [modalType, setModalType] = useState<'approve' | 'reject' | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
 
-  // 模拟数据
-  const [detail] = useState<ApprovalDetail>({
-    id: id || '1',
-    title: '设备维修申请',
-    applicant: '张三',
-    type: '维修',
-    status: 'pending',
-    content: '一号楼监测设备出现故障，需要进行维修处理。',
-    createTime: '2024-01-15 10:30:00',
-    updateTime: '2024-01-15 10:30:00',
-  });
-
-  const [history] = useState<HistoryItem[]>([
-    {
-      time: '2024-01-15 10:30:00',
-      action: '提交申请',
-      operator: '张三',
-    },
-  ]);
-
-  const statusMap = {
-    pending: { text: '待审批', color: 'warning' },
-    approved: { text: '已通过', color: 'success' },
-    rejected: { text: '已拒绝', color: 'error' },
-  };
-
-  const handleApprove = () => {
-    setModalType('approve');
-    setModalVisible(true);
-  };
-
-  const handleReject = () => {
-    setModalType('reject');
-    setModalVisible(true);
-  };
-
-  const handleModalOk = async () => {
+  async function load() {
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-      setLoading(true);
-
-      // TODO: 调用审批 API
-      console.log('Approval:', modalType, values);
-
-      message.success(modalType === 'approve' ? '审批通过' : '审批拒绝');
-      setModalVisible(false);
-      form.resetFields();
-      navigate('/approval/list');
-    } catch (error) {
-      console.error('Failed to submit:', error);
+      const env = await config.service.detail(id);
+      setDetail(env.data);
     } finally {
       setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, type]);
+
+  const handleSubmit = async () => {
+    if (!modalType) return;
+    const values = await form.validateFields();
+    setSubmitting(true);
+    try {
+      if (modalType === 'approve') {
+        await approvalService.approve(config.objectType, id, values.opinion);
+        message.success('已通过');
+      } else {
+        await approvalService.reject(config.objectType, id, values.opinion);
+        message.success('已驳回');
+      }
+      setModalType(null);
+      form.resetFields();
+      load();
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: 24 }}>
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div>
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(-1)}
-              style={{ marginBottom: '16px' }}
-            >
-              返回
-            </Button>
-          </div>
-
-          <Descriptions title="审批详情" bordered column={2}>
-            <Descriptions.Item label="标题" span={2}>
-              {detail.title}
-            </Descriptions.Item>
-            <Descriptions.Item label="申请人">
-              {detail.applicant}
-            </Descriptions.Item>
-            <Descriptions.Item label="类型">{detail.type}</Descriptions.Item>
-            <Descriptions.Item label="状态">
-              <Tag color={statusMap[detail.status].color}>
-                {statusMap[detail.status].text}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="创建时间">
-              {detail.createTime}
-            </Descriptions.Item>
-            <Descriptions.Item label="申请内容" span={2}>
-              {detail.content}
-            </Descriptions.Item>
-            {detail.approver && (
-              <>
-                <Descriptions.Item label="审批人">
-                  {detail.approver}
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+            返回
+          </Button>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 48 }}>
+              <Spin />
+            </div>
+          ) : !detail ? (
+            <Empty description="未找到该申请" />
+          ) : (
+            <>
+              <Descriptions title={`${config.title}详情 #${id.slice(-6)}`} bordered column={2}>
+                <Descriptions.Item label="编号">#{id.slice(-6)}</Descriptions.Item>
+                <Descriptions.Item label="状态">
+                  <Tag color={(StatusColors.ApplicationStatus as any)[detail.status]}>
+                    {EnumLabels.ApplicationStatus[detail.status as keyof typeof EnumLabels.ApplicationStatus] ??
+                      detail.status}
+                  </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="审批时间">
-                  {detail.approveTime}
+                {detail.resident && (
+                  <Descriptions.Item label="居民">{String(detail.resident)}</Descriptions.Item>
+                )}
+                {detail.applicant && (
+                  <Descriptions.Item label="申请人">{String(detail.applicant)}</Descriptions.Item>
+                )}
+                {detail.household && (
+                  <Descriptions.Item label="家庭">{String(detail.household)}</Descriptions.Item>
+                )}
+                {detail.startDate && (
+                  <Descriptions.Item label="开始日期">{detail.startDate}</Descriptions.Item>
+                )}
+                {detail.endDate && (
+                  <Descriptions.Item label="结束日期">{detail.endDate}</Descriptions.Item>
+                )}
+                {detail.reason && (
+                  <Descriptions.Item label="事由" span={2}>
+                    {detail.reason}
+                  </Descriptions.Item>
+                )}
+                <Descriptions.Item label="提交时间">
+                  {detail.submittedAt ? new Date(detail.submittedAt).toLocaleString() : '-'}
                 </Descriptions.Item>
-              </>
-            )}
-            {detail.rejectReason && (
-              <Descriptions.Item label="拒绝原因" span={2}>
-                {detail.rejectReason}
-              </Descriptions.Item>
-            )}
-          </Descriptions>
+                <Descriptions.Item label="审批人">{detail.approver ?? '-'}</Descriptions.Item>
+                {detail.approvalOpinion && (
+                  <Descriptions.Item label="审批意见" span={2}>
+                    {detail.approvalOpinion}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
 
-          {detail.status === 'pending' && (
-            <Space>
-              <Button
-                type="primary"
-                icon={<CheckOutlined />}
-                onClick={handleApprove}
-              >
-                通过
-              </Button>
-              <Button
-                danger
-                icon={<CloseOutlined />}
-                onClick={handleReject}
-              >
-                拒绝
-              </Button>
-            </Space>
+              {detail.status === 'UNDER_APPROVAL' && (
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<CheckOutlined />}
+                    onClick={() => setModalType('approve')}
+                  >
+                    通过
+                  </Button>
+                  <Button danger icon={<CloseOutlined />} onClick={() => setModalType('reject')}>
+                    驳回
+                  </Button>
+                </Space>
+              )}
+
+              <Card type="inner" title="审批时间线" size="small">
+                <Timeline
+                  items={[
+                    detail.submittedAt && {
+                      color: 'blue',
+                      children: `${new Date(detail.submittedAt).toLocaleString()} 提交申请(${detail.submittedBy ?? ''})`,
+                    },
+                    detail.approvalTime && {
+                      color: detail.approvalResult === 'REJECTED' ? 'red' : 'green',
+                      children: `${new Date(detail.approvalTime).toLocaleString()} ${detail.approvalResult === 'REJECTED' ? '已驳回' : '已通过'}(${detail.approver ?? ''})`,
+                    },
+                  ].filter(Boolean) as any}
+                />
+              </Card>
+            </>
           )}
-
-          <Card title="审批历史" size="small">
-            <Timeline
-              items={history.map((item) => ({
-                children: (
-                  <div>
-                    <div>{item.action}</div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>
-                      {item.operator} - {item.time}
-                    </div>
-                    {item.remark && (
-                      <div style={{ marginTop: '8px' }}>{item.remark}</div>
-                    )}
-                  </div>
-                ),
-              }))}
-            />
-          </Card>
         </Space>
       </Card>
 
       <Modal
-        title={modalType === 'approve' ? '审批通过' : '审批拒绝'}
-        open={modalVisible}
-        onOk={handleModalOk}
+        title={modalType === 'approve' ? '审批通过' : '审批驳回'}
+        open={!!modalType}
+        onOk={handleSubmit}
         onCancel={() => {
-          setModalVisible(false);
+          setModalType(null);
           form.resetFields();
         }}
-        confirmLoading={loading}
+        confirmLoading={submitting}
+        okText="确认提交"
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="remark"
-            label={modalType === 'approve' ? '审批意见' : '拒绝原因'}
-            rules={
-              modalType === 'reject'
-                ? [{ required: true, message: '请输入拒绝原因' }]
-                : []
-            }
+            name="opinion"
+            label={modalType === 'approve' ? '审批意见' : '驳回原因'}
+            rules={modalType === 'reject' ? [{ required: true, message: '请填写驳回原因' }] : []}
           >
-            <TextArea rows={4} placeholder="请输入备注信息" />
+            <Input.TextArea rows={4} placeholder="请输入审批意见..." />
           </Form.Item>
         </Form>
       </Modal>
     </div>
   );
-});
+};
 
 export default ApprovalDetail;

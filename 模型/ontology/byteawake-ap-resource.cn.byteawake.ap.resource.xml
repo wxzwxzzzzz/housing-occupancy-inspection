@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ontologies xmlns="http://byteawake.cn/ontology"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://byteawake.cn/ontology oms.xsd">
+
+    <ontology title="资源排班" namespace="cn.byteawake.ap.resource" serviceDomain="byteawake-ap-resource">
+        <import namespace="cn.byteawake.ap.oms"/>
+
+        <!-- ============================================ -->
+        <!--  枚举                                        -->
+        <!-- ============================================ -->
+
+        <enum name="ResourceType" title="资源类型" description="可调度资源的类型分类，对齐 Odoo resource.resource.resource_type">
+            <member title="人员" name="HUMAN" code="1" ordinal="0"/>
+            <member title="物料" name="MATERIAL" code="2" ordinal="1"/>
+        </enum>
+
+        <enum name="Weekday" title="星期" description="一周七天的顺序编码">
+            <member title="周一" name="MONDAY" code="1" ordinal="0"/>
+            <member title="周二" name="TUESDAY" code="2" ordinal="1"/>
+            <member title="周三" name="WEDNESDAY" code="3" ordinal="2"/>
+            <member title="周四" name="THURSDAY" code="4" ordinal="3"/>
+            <member title="周五" name="FRIDAY" code="5" ordinal="4"/>
+            <member title="周六" name="SATURDAY" code="6" ordinal="5"/>
+            <member title="周日" name="SUNDAY" code="7" ordinal="6"/>
+        </enum>
+
+        <enum name="DayPeriod" title="日内时段" description="一天中的工作时段划分">
+            <member title="上午" name="MORNING" code="1" ordinal="0"/>
+            <member title="休息" name="BREAK" code="2" ordinal="1"/>
+            <member title="下午" name="AFTERNOON" code="3" ordinal="2"/>
+            <member title="全天" name="FULL_DAY" code="4" ordinal="3"/>
+        </enum>
+
+        <enum name="WeekType" title="双周类型" description="双周日历模式下的周次标识">
+            <member title="第一周" name="FIRST" code="0" ordinal="0"/>
+            <member title="第二周" name="SECOND" code="1" ordinal="1"/>
+        </enum>
+
+        <enum name="LeaveEffect" title="休班效果" description="日历休班安排对工作时间计算的影响效果，TIME_OFF 扣除时间，MAKE_UP_WORKDAY 增加时间">
+            <member title="休班" name="TIME_OFF" code="0" ordinal="0"/>
+            <member title="补班工作日" name="MAKE_UP_WORKDAY" code="1" ordinal="1"/>
+        </enum>
+
+        <enum name="TimeType" title="时间类型" description="日历例外安排的性质分类，对齐 Odoo resource.calendar.leaves.time_type">
+            <member title="缺勤" name="LEAVE" code="1" ordinal="0"/>
+            <member title="其他工作安排" name="OTHER" code="2" ordinal="1"/>
+        </enum>
+
+        <enum name="ScheduleType" title="调度类型" description="日历的调度模式，对齐 Odoo resource.calendar.schedule_type">
+            <member title="固定" name="FIXED" code="1" ordinal="0"/>
+            <member title="弹性" name="FLEXIBLE" code="2" ordinal="1"/>
+        </enum>
+
+        <!-- ============================================ -->
+        <!--  实体                                        -->
+        <!-- ============================================ -->
+
+        <class title="资源" name="Resource" dataSet="ap_resource_resource">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <implements>
+                <supplier itf="cn.byteawake.ap.oms.ITenant"/>
+                <supplier itf="cn.byteawake.ap.oms.IAuditInfo"/>
+                <supplier itf="cn.byteawake.ap.oms.IEnable"/>
+                <supplier itf="cn.byteawake.ap.oms.ILogicDelete"/>
+            </implements>
+            <attributes>
+                <attribute title="编码" name="code" field="code" type="String" length="64" isRequired="true"/>
+                <attribute title="名称" name="name" field="name" type="String" length="128" isRequired="true"/>
+                <attribute title="资源类型" name="resourceType" field="resource_type" type="cn.byteawake.ap.resource.ResourceType" isRequired="true"/>
+                <attribute title="默认日历" name="calendar" field="calendar_id" type="cn.byteawake.ap.resource.Calendar"/>
+                <attribute title="时区" name="timezone" field="timezone" type="String" length="64"/>
+                <attribute title="效率因子" name="efficiencyFactor" field="efficiency_factor" type="Decimal" precision="10" scale="2"/>
+            </attributes>
+            <actions>
+                <action name="add" title="新增资源" kind="add"
+                        requestType="cn.byteawake.ap.resource.Resource">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.code">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.name">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.resourceType">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.calendar">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.timezone">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.efficiencyFactor">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="add" title="新增资源" kind="FUNCTION" type="func:cn.byteawake.ap.oms/add"/>
+                </action>
+
+                <action name="modify" title="修改资源" kind="modify"
+                        requestType="cn.byteawake.ap.resource.Resource">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.code">
+                            <availability visible="true" enable="false" required="false" editable="false"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.name">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.resourceType">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.calendar">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.timezone">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Resource.efficiencyFactor">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="modify" title="修改资源" kind="FUNCTION" type="func:cn.byteawake.ap.oms/modify"/>
+                </action>
+
+                <action name="delete" title="删除资源" kind="delete">
+                    <executeRule name="delete" title="删除资源" kind="FUNCTION" type="func:cn.byteawake.ap.oms/delete"/>
+                </action>
+
+                <action name="list" title="列表" kind="list">
+                    <executeRule name="list" title="列表" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+
+                <action name="detail" title="详情" kind="detail">
+                    <executeRule name="detail" title="详情" kind="FUNCTION" type="func:cn.byteawake.ap.oms/detail"/>
+                </action>
+
+                <action name="enable" title="启用" kind="enable">
+                    <executeRule name="enable" title="启用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="stop" title="停用" kind="stop">
+                    <executeRule name="stop" title="停用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="refer" title="参照" kind="refer">
+                    <executeRule name="refer" title="参照" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+            </actions>
+        </class>
+
+        <class title="资源日历" name="Calendar" dataSet="ap_resource_calendar">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <implements>
+                <supplier itf="cn.byteawake.ap.oms.ITenant"/>
+                <supplier itf="cn.byteawake.ap.oms.IAuditInfo"/>
+                <supplier itf="cn.byteawake.ap.oms.IEnable"/>
+                <supplier itf="cn.byteawake.ap.oms.ILogicDelete"/>
+            </implements>
+            <attributes>
+                <attribute title="编码" name="code" field="code" type="String" length="64" isRequired="true"/>
+                <attribute title="名称" name="name" field="name" type="String" length="128" isRequired="true"/>
+                <attribute title="时区" name="timezone" field="timezone" type="String" length="64"/>
+                <attribute title="每日小时数" name="hoursPerDay" field="hours_per_day" type="Decimal" precision="10" scale="2"/>
+                <attribute title="每周小时数" name="hoursPerWeek" field="hours_per_week" type="Decimal" precision="10" scale="2"/>
+                <attribute title="调度类型" name="scheduleType" field="schedule_type" type="cn.byteawake.ap.resource.ScheduleType" isRequired="true"/>
+                <attribute title="双周日历" name="twoWeeksCalendar" field="two_weeks_calendar" type="Boolean"/>
+                <attribute title="描述" name="description" field="description" type="Text"/>
+            </attributes>
+            <actions>
+                <action name="add" title="新增日历" kind="add"
+                        requestType="cn.byteawake.ap.resource.Calendar">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.code">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.name">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.timezone">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.hoursPerDay">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.hoursPerWeek">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.scheduleType">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.twoWeeksCalendar">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.description">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="add" title="新增日历" kind="FUNCTION" type="func:cn.byteawake.ap.oms/add"/>
+                </action>
+
+                <action name="modify" title="修改日历" kind="modify"
+                        requestType="cn.byteawake.ap.resource.Calendar">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.code">
+                            <availability visible="true" enable="false" required="false" editable="false"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.name">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.timezone">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.hoursPerDay">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.hoursPerWeek">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.scheduleType">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.twoWeeksCalendar">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.Calendar.description">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="modify" title="修改日历" kind="FUNCTION" type="func:cn.byteawake.ap.oms/modify"/>
+                </action>
+
+                <action name="delete" title="删除日历" kind="delete">
+                    <executeRule name="delete" title="删除日历" kind="FUNCTION" type="func:cn.byteawake.ap.oms/delete"/>
+                </action>
+
+                <action name="list" title="列表" kind="list">
+                    <executeRule name="list" title="列表" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+
+                <action name="detail" title="详情" kind="detail">
+                    <executeRule name="detail" title="详情" kind="FUNCTION" type="func:cn.byteawake.ap.oms/detail"/>
+                </action>
+
+                <action name="enable" title="启用" kind="enable">
+                    <executeRule name="enable" title="启用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="stop" title="停用" kind="stop">
+                    <executeRule name="stop" title="停用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="refer" title="参照" kind="refer">
+                    <executeRule name="refer" title="参照" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+            </actions>
+        </class>
+
+        <class title="工作时段" name="CalendarAttendance" dataSet="ap_resource_calendar_attendance">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <implements>
+                <supplier itf="cn.byteawake.ap.oms.ITenant"/>
+                <supplier itf="cn.byteawake.ap.oms.IAuditInfo"/>
+                <supplier itf="cn.byteawake.ap.oms.IEnable"/>
+                <supplier itf="cn.byteawake.ap.oms.ILogicDelete"/>
+            </implements>
+            <attributes>
+                <attribute title="所属日历" name="calendar" field="calendar_id" type="cn.byteawake.ap.resource.Calendar" isRequired="true"/>
+                <attribute title="名称" name="name" field="name" type="String" length="128" isRequired="true"/>
+                <attribute title="星期" name="dayOfWeek" field="day_of_week" type="cn.byteawake.ap.resource.Weekday" isRequired="true"/>
+                <attribute title="开始小时" name="hourFrom" field="hour_from" type="Decimal" precision="5" scale="2" isRequired="true"/>
+                <attribute title="结束小时" name="hourTo" field="hour_to" type="Decimal" precision="5" scale="2" isRequired="true"/>
+                <attribute title="日内时段" name="dayPeriod" field="day_period" type="cn.byteawake.ap.resource.DayPeriod"/>
+                <attribute title="双周类型" name="weekType" field="week_type" type="cn.byteawake.ap.resource.WeekType"/>
+                <attribute title="序号" name="ordinal" field="ordinal" type="Integer"/>
+            </attributes>
+            <actions>
+                <action name="add" title="新增工作时段" kind="add"
+                        requestType="cn.byteawake.ap.resource.CalendarAttendance">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.calendar">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.name">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.dayOfWeek">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.hourFrom">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.hourTo">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.dayPeriod">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.weekType">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.ordinal">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="add" title="新增工作时段" kind="FUNCTION" type="func:cn.byteawake.ap.oms/add"/>
+                </action>
+
+                <action name="modify" title="修改工作时段" kind="modify"
+                        requestType="cn.byteawake.ap.resource.CalendarAttendance">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.calendar">
+                            <availability visible="true" enable="false" required="false" editable="false"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.name">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.dayOfWeek">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.hourFrom">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.hourTo">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.dayPeriod">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.weekType">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarAttendance.ordinal">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="modify" title="修改工作时段" kind="FUNCTION" type="func:cn.byteawake.ap.oms/modify"/>
+                </action>
+
+                <action name="delete" title="删除工作时段" kind="delete">
+                    <executeRule name="delete" title="删除工作时段" kind="FUNCTION" type="func:cn.byteawake.ap.oms/delete"/>
+                </action>
+
+                <action name="list" title="列表" kind="list">
+                    <executeRule name="list" title="列表" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+
+                <action name="detail" title="详情" kind="detail">
+                    <executeRule name="detail" title="详情" kind="FUNCTION" type="func:cn.byteawake.ap.oms/detail"/>
+                </action>
+
+                <action name="enable" title="启用" kind="enable">
+                    <executeRule name="enable" title="启用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="stop" title="停用" kind="stop">
+                    <executeRule name="stop" title="停用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="refer" title="参照" kind="refer">
+                    <executeRule name="refer" title="参照" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+            </actions>
+        </class>
+
+        <class title="日历休班" name="CalendarLeave" dataSet="ap_resource_calendar_leave">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <implements>
+                <supplier itf="cn.byteawake.ap.oms.ITenant"/>
+                <supplier itf="cn.byteawake.ap.oms.IAuditInfo"/>
+                <supplier itf="cn.byteawake.ap.oms.IEnable"/>
+                <supplier itf="cn.byteawake.ap.oms.ILogicDelete"/>
+            </implements>
+            <attributes>
+                <attribute title="所属日历" name="calendar" field="calendar_id" type="cn.byteawake.ap.resource.Calendar"/>
+                <attribute title="所属资源" name="resource" field="resource_id" type="cn.byteawake.ap.resource.Resource"/>
+                <attribute title="名称" name="name" field="name" type="String" length="128" isRequired="true"/>
+                <attribute title="开始时间" name="dateFrom" field="date_from" type="DateTime" isRequired="true"/>
+                <attribute title="结束时间" name="dateTo" field="date_to" type="DateTime" isRequired="true"/>
+                <attribute title="休班效果" name="effect" field="effect" type="cn.byteawake.ap.resource.LeaveEffect" isRequired="true"/>
+                <attribute title="时间类型" name="timeType" field="time_type" type="cn.byteawake.ap.resource.TimeType"/>
+                <attribute title="描述" name="description" field="description" type="Text"/>
+            </attributes>
+            <actions>
+                <action name="add" title="新增休班安排" kind="add"
+                        requestType="cn.byteawake.ap.resource.CalendarLeave">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.calendar">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.resource">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.name">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.dateFrom">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.dateTo">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.effect">
+                            <availability visible="true" enable="true" required="true" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.timeType">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.description">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="add" title="新增休班安排" kind="FUNCTION" type="func:cn.byteawake.ap.oms/add"/>
+                </action>
+
+                <action name="modify" title="修改休班安排" kind="modify"
+                        requestType="cn.byteawake.ap.resource.CalendarLeave">
+                    <parameters>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.calendar">
+                            <availability visible="true" enable="false" required="false" editable="false"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.resource">
+                            <availability visible="true" enable="false" required="false" editable="false"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.name">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.dateFrom">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.dateTo">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.effect">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.timeType">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                        <parameter ref="cn.byteawake.ap.resource.CalendarLeave.description">
+                            <availability visible="true" enable="true" required="false" editable="true"/>
+                        </parameter>
+                    </parameters>
+                    <executeRule name="modify" title="修改休班安排" kind="FUNCTION" type="func:cn.byteawake.ap.oms/modify"/>
+                </action>
+
+                <action name="delete" title="删除休班安排" kind="delete">
+                    <executeRule name="delete" title="删除休班安排" kind="FUNCTION" type="func:cn.byteawake.ap.oms/delete"/>
+                </action>
+
+                <action name="list" title="列表" kind="list">
+                    <executeRule name="list" title="列表" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+
+                <action name="detail" title="详情" kind="detail">
+                    <executeRule name="detail" title="详情" kind="FUNCTION" type="func:cn.byteawake.ap.oms/detail"/>
+                </action>
+
+                <action name="enable" title="启用" kind="enable">
+                    <executeRule name="enable" title="启用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="stop" title="停用" kind="stop">
+                    <executeRule name="stop" title="停用" kind="FUNCTION" type="func:cn.byteawake.ap.oms/save"/>
+                </action>
+
+                <action name="refer" title="参照" kind="refer">
+                    <executeRule name="refer" title="参照" kind="FUNCTION" type="func:cn.byteawake.ap.oms/list"/>
+                </action>
+            </actions>
+        </class>
+
+    </ontology>
+
+</ontologies>

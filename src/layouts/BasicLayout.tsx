@@ -81,6 +81,7 @@ const routeTitleMap: Record<string, string> = {
   '/system/config': '系统配置',
   '/system/log': '日志审计',
   '/system/filter': '筛选器管理',
+  '/system/fence': '电子围栏',
   '/profile': '个人中心',
   '/settings': '账户设置',
 }
@@ -182,8 +183,54 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
     navigate('/dashboard')
   }
 
-  // 构建菜单数据
-  const menuItems: MenuProps['items'] = useMemo(() => [
+  // 各菜单项要求的用户类型(userType)。空数组 = 所有登录用户可见。
+  // ADMIN 始终拥有全部权限,在过滤时单独放行。
+  const ROLE = {
+    APPROVER: 'APPROVER',
+    STAFF: 'STAFF',
+    RESIDENT: 'RESIDENT',
+  } as const;
+
+  // 当前用户角色(由 userStore 从 user.userType 派生)
+  const currentRole = userStore.role;
+  const isAdmin = currentRole === 'ADMIN';
+
+  // 给每个菜单标记可见角色;ADMIN 默认看全部。
+  const menuAcl: Record<string, string[]> = {
+    '/dashboard': [], // 所有人可见
+    '/monitor': [ROLE.APPROVER, ROLE.STAFF],
+    '/monitor/attendance': [ROLE.APPROVER, ROLE.STAFF],
+    '/monitor/alert': [ROLE.APPROVER, ROLE.STAFF],
+    '/approval': [ROLE.APPROVER, ROLE.STAFF],
+    '/approval/material': [ROLE.APPROVER, ROLE.STAFF],
+    '/approval/leave': [ROLE.APPROVER, ROLE.STAFF],
+    '/approval/filing': [ROLE.APPROVER, ROLE.STAFF],
+    '/approval/workflow': [ROLE.APPROVER], // 工作人员看不到流程配置
+    '/report': [ROLE.APPROVER],
+    '/report/statistics': [ROLE.APPROVER],
+    '/report/export': [ROLE.APPROVER],
+    '/system': [], // 系统组保留给 ADMIN(其他人通过子项控制)
+    '/system/message': [ROLE.APPROVER, ROLE.STAFF, ROLE.RESIDENT],
+    '/system/personnel': [], // 仅 ADMIN
+    '/system/role': [],
+    '/system/menu': [],
+    '/system/config': [],
+    '/system/log': [],
+    '/system/filter': [],
+    '/system/fence': [],
+  };
+
+  function canSee(path: string): boolean {
+    if (isAdmin) return true;
+    const allow = menuAcl[path];
+    if (!allow) return true; // 未声明的默认放行
+    if (allow.length === 0) return path === '/dashboard' || path === '/system/message';
+    return allow.includes(currentRole);
+  }
+
+  // 构建菜单数据(按角色过滤)
+  const menuItems: MenuProps['items'] = useMemo(() => {
+    const all = [
     {
       key: '/dashboard',
       icon: iconMap['dashboard'],
@@ -290,12 +337,35 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
           icon: iconMap['filter'],
           label: <Link to="/system/filter">筛选器管理</Link>,
         },
+        {
+          key: '/system/fence',
+          icon: iconMap['environment'],
+          label: <Link to="/system/fence">电子围栏</Link>,
+        },
       ],
     },
-  ], [])
+    ];
 
-  // 快捷菜单分组数据 - 使用更柔和的色彩方案
-  const quickMenuGroups = [
+    // 递归过滤:子项空了就移除父组
+    const filterMenu = (nodes: any[]): any[] =>
+      nodes
+        .map((node) => {
+          if (!canSee(node.key)) return null;
+          if (node.children) {
+            const kids = filterMenu(node.children);
+            if (kids.length === 0) return null;
+            return { ...node, children: kids };
+          }
+          return node;
+        })
+        .filter(Boolean);
+
+    return filterMenu(all);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRole, isAdmin]);
+
+  // 快捷菜单分组数据 - 使用更柔和的色彩方案(按角色过滤)
+  const allQuickMenuGroups = [
     {
       key: 'monitor',
       icon: <MonitorOutlined/>,
@@ -346,7 +416,14 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
         {label: '系统配置', path: '/system/config', icon: <ControlOutlined/>},
       ],
     },
-  ]
+  ];
+
+  const quickMenuGroups = allQuickMenuGroups
+    .map((g) => ({
+      ...g,
+      children: g.children.filter((c) => canSee(c.path)),
+    }))
+    .filter((g) => g.children.length > 0);
 
   const handleQuickMenuToggle = (key: string) => {
     setActiveQuickMenu(activeQuickMenu === key ? null : key)
@@ -432,7 +509,10 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
       key: 'logout',
       icon: <LogoutOutlined/>,
       label: '退出登录',
-      onClick: () => navigate('/login'),
+      onClick: () => {
+        userStore.logout();
+        navigate('/login');
+      },
     },
   ]
 
@@ -480,10 +560,12 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
             {/* 用户头像 */}
             <Dropdown menu={{items: userMenuItems}} placement="bottomRight">
               <Space style={{cursor: 'pointer'}}>
-                <Avatar icon={<UserOutlined/>} src={userStore.user?.avatar}>
-                  {userStore.user?.name?.[0] || 'U'}
+                <Avatar icon={<UserOutlined/>}>
+                  {(userStore.user as any)?.fullName?.[0] || (userStore.user as any)?.account?.[0] || 'U'}
                 </Avatar>
-                <span style={{color: '#666'}}>{userStore.user?.name || '用户'}</span>
+                <span style={{color: '#666'}}>
+                  {(userStore.user as any)?.fullName || (userStore.user as any)?.account || '用户'}
+                </span>
               </Space>
             </Dropdown>
           </Space>

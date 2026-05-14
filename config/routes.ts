@@ -153,6 +153,12 @@ export default [
             icon: 'filter',
             component: './Filter',
           },
+          {
+            path: '/system/fence',
+            name: '电子围栏',
+            icon: 'environment',
+            component: './Fence',
+          },
         ],
       },
       {

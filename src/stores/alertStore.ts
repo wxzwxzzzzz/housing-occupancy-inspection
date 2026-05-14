@@ -1,27 +1,17 @@
-import { makeAutoObservable } from 'mobx';
-
-export interface Alert {
-  id: string;
-  title: string;
-  content: string;
-  level: 'info' | 'warning' | 'error' | 'critical';
-  status: 'pending' | 'processing' | 'resolved';
-  createTime: string;
-  updateTime: string;
-  location?: string;
-  buildingId?: string;
-}
+import { makeAutoObservable, runInAction } from 'mobx';
+import { alertService, type AlertItem } from '@/services/domains/alert';
+import type { AlertLevel } from '@/types/ontology/prh/enums';
 
 class AlertStore {
-  alerts: Alert[] = [];
-  loading: boolean = false;
-  total: number = 0;
+  alerts: AlertItem[] = [];
+  loading = false;
+  total = 0;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  setAlerts(alerts: Alert[]) {
+  setAlerts(alerts: AlertItem[]) {
     this.alerts = alerts;
   }
 
@@ -33,29 +23,46 @@ class AlertStore {
     this.total = total;
   }
 
-  addAlert(alert: Alert) {
+  addAlert(alert: AlertItem) {
     this.alerts.unshift(alert);
     this.total += 1;
   }
 
-  updateAlert(id: string, updates: Partial<Alert>) {
-    const index = this.alerts.findIndex((alert) => alert.id === id);
-    if (index !== -1) {
-      this.alerts[index] = { ...this.alerts[index], ...updates };
+  updateAlert(id: string, updates: Partial<AlertItem>) {
+    const idx = this.alerts.findIndex((a) => a.id === id);
+    if (idx !== -1) {
+      this.alerts[idx] = { ...this.alerts[idx], ...updates };
     }
   }
 
   removeAlert(id: string) {
-    this.alerts = this.alerts.filter((alert) => alert.id !== id);
-    this.total -= 1;
+    this.alerts = this.alerts.filter((a) => a.id !== id);
+    this.total = Math.max(0, this.total - 1);
   }
 
   get unreadCount() {
-    return this.alerts.filter((alert) => alert.status === 'pending').length;
+    return this.alerts.filter((a) => a.status === 'pending').length;
   }
 
   get criticalAlerts() {
-    return this.alerts.filter((alert) => alert.level === 'critical');
+    return this.alerts.filter((a) => a.level === 'ALERT_RED');
+  }
+
+  async fetchAlerts(params?: { pageNo?: number; pageSize?: number; level?: AlertLevel }) {
+    this.setLoading(true);
+    try {
+      const result = await alertService.list(params);
+      runInAction(() => {
+        this.alerts = result.data;
+        this.total = result.page?.total ?? result.data.length;
+      });
+    } catch (err) {
+      console.error('fetchAlerts failed', err);
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
   }
 }
 

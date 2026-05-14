@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ontologies xmlns="http://byteawake.cn/ontology"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://byteawake.cn/ontology oms.xsd">
+    <ontology title="审批公共接口" namespace="cn.byteawake.ap.approval" serviceDomain="byteawake-ap-approval">
+        <import namespace="cn.byteawake.ap.oql"/>
+        <import namespace="cn.byteawake.ap.arche"/>
+
+        <!-- ============================================ -->
+        <!--  审批状态枚举                                  -->
+        <!-- ============================================ -->
+        <enum name="VerifyState" title="审批流状态" description="审批流程的当前运行状态">
+            <member name="PENDING" code="10" title="待审批"/>
+            <member name="APPROVED" code="20" title="已通过"/>
+            <member name="REJECTED" code="30" title="已驳回"/>
+            <member name="RETURNED" code="40" title="已退回"/>
+            <member name="CANCELLED" code="50" title="已取消"/>
+        </enum>
+
+        <enum name="ApprovalResult" title="审批结果" description="单次审批动作的结果">
+            <member name="APPROVED" code="10" title="通过"/>
+            <member name="REJECTED" code="20" title="驳回"/>
+            <member name="RETURNED" code="30" title="退回"/>
+        </enum>
+
+        <!-- ============================================ -->
+        <!--  审批公共接口                                  -->
+        <!-- ============================================ -->
+
+        <!-- 提交信息 -->
+        <interface title="提交信息" name="ISubmitInfo">
+            <attributes>
+                <attribute name="submittedAt" title="提交时间" field="submitted_at" type="DateTime"/>
+                <attribute name="submittedBy" title="提交人" field="submitted_by_id" type="cn.byteawake.ap.arche.User"/>
+                <attribute name="withdrawnAt" title="撤回时间" field="withdrawn_at" type="DateTime"/>
+                <attribute name="withdrawnBy" title="撤回人" field="withdrawn_by_id" type="cn.byteawake.ap.arche.User"/>
+            </attributes>
+        </interface>
+
+        <!-- 审批信息 -->
+        <interface title="审批信息" name="IApprovalInfo">
+            <attributes>
+                <attribute name="approver" title="审批人" field="approver_id" type="cn.byteawake.ap.arche.User"/>
+                <attribute name="approvalTime" title="审批时间" field="approval_time" type="DateTime"/>
+                <attribute name="approvalOpinion" title="审批意见" field="approval_opinion" type="Text"/>
+                <attribute name="approvalResult" title="审批结果" field="approval_result" type="cn.byteawake.ap.approval.ApprovalResult"/>
+            </attributes>
+        </interface>
+
+        <!-- 审批流信息 -->
+        <interface title="审批流信息" name="IApprovalFlow">
+            <attributes>
+                <attribute name="approvalFlowEnabled" title="是否启用审批流" field="approval_flow_enabled" type="Boolean" defaultValue="false"/>
+                <attribute name="verifyState" title="审批流状态" field="verify_state" type="Short"/>
+                <attribute name="returnCount" title="退回次数" field="return_count" type="Short"/>
+
+                <attribute name="processInstance" title="流程实例" field="process_instance_id" type="String" length="64"/>
+                <attribute name="approvalStep" title="审批环节" field="approval_step" type="String" length="128"/>
+
+                <attribute name="pendingApprover" title="待审批人" field="pending_approver_id" type="cn.byteawake.ap.arche.User"/>
+                <attribute name="task" title="任务" field="task_id" type="String" length="255"/>
+            </attributes>
+        </interface>
+
+    </ontology>
+</ontologies>

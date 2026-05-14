@@ -164,7 +164,7 @@ export default defineConfig({
     },
   ],
   mock: {
-    include: ['mock/**/*', 'src/pages/**/_mock.ts'],
+    include: ['mock/*.ts', 'mock/*.js', 'src/pages/**/_mock.ts'],
   },
   /**
    * @name 是否开启 mako

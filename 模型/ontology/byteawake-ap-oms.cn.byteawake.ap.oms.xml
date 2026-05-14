@@ -1,0 +1,528 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ontologies xmlns="http://byteawake.cn/ontology"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://byteawake.cn/ontology oms.xsd">
+    <ontology title="公共元数据" namespace="cn.byteawake.ap.oms" serviceDomain="byteawake-ap-oms">
+        <!-- ============================================ -->
+        <!--  导入依赖                                    -->
+        <!-- ============================================ -->
+        <import namespace="cn.byteawake.ap.oql"/>
+
+        <!-- ============================================ -->
+        <!--  公共业务规则规范                             -->
+        <!-- ============================================ -->
+        <businessRuleSpec>
+            <functions>
+                <function name="now" title="当前时间" functionType="func:cn.byteawake.ap.oms/now">
+                    <applyScopes>
+                        <applyScope namespace="*"/>
+                    </applyScopes>
+                </function>
+            </functions>
+        </businessRuleSpec>
+
+        <!-- ============================================ -->
+        <!--  动作类型                                    -->
+        <!-- ============================================ -->
+        <typedef name="Phone" title="手机号" baseType="String" length="20" pattern="^1[3-9][0-9]{9}$"/>
+        <typedef name="Email" title="邮箱" baseType="String" length="100" pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"/>
+
+        <actionKinds>
+            <actionKind name="add" title="新增"/>
+            <actionKind name="modify" title="修改"/>
+            <actionKind name="delete" title="删除"/>
+            <actionKind name="copy" title="复制"/>
+            <actionKind name="detail" title="详情"/>
+            <actionKind name="list" title="列表"/>
+            <actionKind name="listdetail" title="列表详情"/>
+            <actionKind name="query" title="查询"/>
+            <actionKind name="querytree" title="树查询"/>
+            <actionKind name="audit" title="审核"/>
+            <actionKind name="unaudit" title="弃审"/>
+            <actionKind name="close" title="关闭"/>
+            <actionKind name="open" title="打开"/>
+            <actionKind name="check" title="校验"/>
+            <actionKind name="lineclose" title="行关闭"/>
+            <actionKind name="lineopen" title="行打开"/>
+            <actionKind name="movefirst" title="移至首条"/>
+            <actionKind name="movelast" title="移至末条"/>
+            <actionKind name="movenext" title="下一条"/>
+            <actionKind name="moveprev" title="上一条"/>
+            <actionKind name="invalid" title="作废"/>
+            <actionKind name="submit" title="提交"/>
+            <actionKind name="unsubmit" title="取消提交"/>
+            <actionKind name="stop" title="停用"/>
+            <actionKind name="enable" title="启用"/>
+            <actionKind name="refer" title="参照"/>
+            <actionKind name="referrefresh" title="参照刷新"/>
+            <actionKind name="pullandpush" title="拉推单"/>
+            <actionKind name="push" title="推单"/>
+            <actionKind name="pull" title="拉单"/>
+            <actionKind name="backwrite" title="回写"/>
+            <!-- 认证业务动作类别 -->
+            <actionKind name="signup" title="注册"/>
+            <actionKind name="authenticate" title="认证"/>
+            <actionKind name="verify" title="验证"/>
+            <actionKind name="recover" title="恢复"/>
+            <actionKind name="logout" title="登出"/>
+            <actionKind name="sendOTP" title="发送一次性密码"/>
+            <actionKind name="sendMagicLink" title="发送魔法链接"/>
+            <actionKind name="resend" title="重发确认"/>
+            <actionKind name="challenge" title="挑战"/>
+            <actionKind name="reauthenticate" title="重新认证"/>
+            <actionKind name="linkIdentity" title="绑定身份"/>
+            <actionKind name="getOptions" title="获取选项"/>
+            <actionKind name="initiateSSO" title="发起SSO"/>
+            <actionKind name="consumeACS" title="消费ACS"/>
+            <actionKind name="authorize" title="授权"/>
+            <actionKind name="consent" title="同意"/>
+            <actionKind name="issueToken" title="签发令牌"/>
+            <actionKind name="refresh" title="刷新令牌"/>
+            <actionKind name="authenticateWithPasskey" title="Passkey无密码登录"/>
+            <actionKind name="exchangeCodeForSession" title="PKCE交换"/>
+            <actionKind name="regenerateSecret" title="重新生成密钥"/>
+            <actionKind name="lockAccount" title="锁定账户"/>
+            <actionKind name="unlockAccount" title="解锁账户"/>
+            <actionKind name="oauthAuthorize" title="OAuth授权请求"/>
+            <actionKind name="oauthConsent" title="OAuth用户同意"/>
+            <actionKind name="oauthIssueToken" title="OAuth签发令牌"/>
+            <actionKind name="revokeConsent" title="撤销授权"/>
+            <!-- PRH 保障监管业务动作类别 -->
+            <actionKind name="archive" title="归档"/>
+            <actionKind name="invite" title="邀请"/>
+            <actionKind name="checkin" title="打卡"/>
+            <actionKind name="terminate" title="终止"/>
+            <actionKind name="expire" title="到期"/>
+            <actionKind name="suspend" title="暂停"/>
+            <actionKind name="resume" title="恢复"/>
+            <actionKind name="approve" title="审批通过"/>
+            <actionKind name="reject" title="审批驳回"/>
+        </actionKinds>
+
+        <!-- ============================================ -->
+        <!--  公共函数定义                                -->
+        <!-- ============================================ -->
+        <function name="save" title="保存" kind="LOCAL" ref="func:cn.byteawake.ap.oms/save">
+            <parameters>
+                <parameter name="payload" title="保存载荷" type="cn.byteawake.ap.oms.OntologyObject" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="delete" title="删除" kind="LOCAL" ref="func:cn.byteawake.ap.oms/delete">
+            <parameters>
+                <parameter name="ids" title="对象标识列表" type="String" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="copy" title="复制" kind="LOCAL" ref="func:cn.byteawake.ap.oms/copy">
+            <parameters>
+                <parameter name="copyId" title="复制源对象标识" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="add" title="新增" kind="LOCAL" ref="func:cn.byteawake.ap.oms/add">
+            <parameters>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="detail" title="详情" kind="LOCAL" ref="func:cn.byteawake.ap.oms/detail">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="list" title="列表" kind="LOCAL" ref="func:cn.byteawake.ap.oms/list">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="listdetail" title="列表详情" kind="LOCAL" ref="func:cn.byteawake.ap.oms/listdetail">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="query" title="查询" kind="LOCAL" ref="func:cn.byteawake.ap.oms/query">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="querytree" title="树查询" kind="LOCAL" ref="func:cn.byteawake.ap.oms/querytree">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="audit" title="审核" kind="LOCAL" ref="func:cn.byteawake.ap.oms/audit">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="comment" title="审核意见" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="unaudit" title="弃审" kind="LOCAL" ref="func:cn.byteawake.ap.oms/unaudit">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="comment" title="审核意见" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="close" title="关闭" kind="LOCAL" ref="func:cn.byteawake.ap.oms/close">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="comment" title="关闭意见" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="open" title="打开" kind="LOCAL" ref="func:cn.byteawake.ap.oms/open">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="check" title="校验" kind="LOCAL" ref="func:cn.byteawake.ap.oms/check">
+            <parameters>
+                <parameter name="objects" title="待校验对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="lineclose" title="行关闭" kind="LOCAL" ref="func:cn.byteawake.ap.oms/lineclose">
+            <parameters>
+                <parameter name="objects" title="行对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="lineopen" title="行打开" kind="LOCAL" ref="func:cn.byteawake.ap.oms/lineopen">
+            <parameters>
+                <parameter name="objects" title="行对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="movefirst" title="移至首条" kind="LOCAL" ref="func:cn.byteawake.ap.oms/movefirst">
+            <parameters>
+                <parameter name="spec" title="导航声明" type="cn.byteawake.ap.oms.NavigationSpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="movelast" title="移至末条" kind="LOCAL" ref="func:cn.byteawake.ap.oms/movelast">
+            <parameters>
+                <parameter name="spec" title="导航声明" type="cn.byteawake.ap.oms.NavigationSpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="movenext" title="下一条" kind="LOCAL" ref="func:cn.byteawake.ap.oms/movenext">
+            <parameters>
+                <parameter name="spec" title="导航声明" type="cn.byteawake.ap.oms.NavigationSpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="moveprev" title="上一条" kind="LOCAL" ref="func:cn.byteawake.ap.oms/moveprev">
+            <parameters>
+                <parameter name="spec" title="导航声明" type="cn.byteawake.ap.oms.NavigationSpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="invalid" title="作废" kind="LOCAL" ref="func:cn.byteawake.ap.oms/invalid">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="comment" title="作废意见" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="submit" title="提交" kind="LOCAL" ref="func:cn.byteawake.ap.oms/submit">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="unsubmit" title="取消提交" kind="LOCAL" ref="func:cn.byteawake.ap.oms/unsubmit">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="stop" title="停用" kind="LOCAL" ref="func:cn.byteawake.ap.oms/stop">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="enable" title="启用" kind="LOCAL" ref="func:cn.byteawake.ap.oms/enable">
+            <parameters>
+                <parameter name="id" title="对象标识" type="String" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="refer" title="参照" kind="LOCAL" ref="func:cn.byteawake.ap.oms/refer">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="referrefresh" title="参照刷新" kind="LOCAL" ref="func:cn.byteawake.ap.oms/referrefresh">
+            <parameters>
+                <parameter name="spec" title="查询声明" type="cn.byteawake.ap.oql.QuerySpec" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="pullandpush" title="拉推单" kind="LOCAL" ref="func:cn.byteawake.ap.oms/pullandpush">
+            <parameters>
+                <parameter name="objects" title="来源对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="push" title="推单" kind="LOCAL" ref="func:cn.byteawake.ap.oms/push">
+            <parameters>
+                <parameter name="objects" title="来源对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="pull" title="拉单" kind="LOCAL" ref="func:cn.byteawake.ap.oms/pull">
+            <parameters>
+                <parameter name="objects" title="来源对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+        <function name="backwrite" title="回写" kind="LOCAL" ref="func:cn.byteawake.ap.oms/backwrite">
+            <parameters>
+                <parameter name="objects" title="来源对象列表" type="cn.byteawake.ap.oms.OntologyObject" isMultiple="true" direction="IN"/>
+                <parameter name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" direction="OUT"/>
+            </parameters>
+        </function>
+
+        <!-- 本体对象 -->
+        <class title="本体对象" name="OntologyObject" isAbstract="true" isPersistent="false">
+            <attributes>
+                <attribute title="标识" name="id" field="id" type="String" length="32" isPrimaryKey="true"/>
+                <attribute title="时间戳" name="pubts" field="pubts" type="Timestamp"/>
+            </attributes>
+        </class>
+
+        <!-- 用户（业务投影） -->
+        <class title="用户" name="User" dataSet="arche_user">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <attributes>
+                <attribute title="真实姓名" name="realName" field="real_name" type="String" length="45"/>
+                <attribute title="昵称" name="nickname" field="nickname" type="String" length="45"/>
+                <attribute title="手机号" name="phone" field="phone" type="cn.byteawake.ap.oms.Phone"/>
+                <attribute title="邮箱" name="email" field="email" type="cn.byteawake.ap.oms.Email"/>
+                <attribute title="头像" name="avatar" field="avatar" type="String" length="100"/>
+            </attributes>
+        </class>
+
+        <!-- 操作结果 -->
+        <class title="操作结果" name="OntologyResult" isPersistent="false">
+            <attributes>
+                <attribute title="是否成功" name="success" field="success" type="Boolean" isRequired="true"/>
+                <attribute title="结果编码" name="code" field="code" type="String" isRequired="true"/>
+                <attribute title="结果消息" name="message" field="message" type="String"/>
+                <attribute title="详细消息" name="detailMsg" field="detail_msg" type="Text"/>
+                <attribute title="结果级别" name="level" field="level" type="cn.byteawake.ap.oms.OntologyLevelKind"/>
+                <attribute title="追踪标识" name="traceId" field="trace_id" type="String"/>
+            </attributes>
+        </class>
+
+        <!-- 逻辑删除接口 -->
+        <interface title="逻辑删除相关" name="ILogicDelete">
+            <attributes>
+                <attribute title="逻辑删除标记" name="dr" field="dr" defaultValue="0" type="Boolean"/>
+            </attributes>
+        </interface>
+
+        <!-- 租户接口 -->
+        <interface title="租户接口" name="ITenant">
+            <attributes>
+                <attribute title="租户" name="tenant" field="tenant" type="String" length="36" isPartition="true" isRequired="true"/>
+            </attributes>
+        </interface>
+
+        <!-- 租户接口 -->
+        <interface title="树型结构" name="ITree">
+            <attributes>
+                <attribute title="名称" name="name" field="name" type="String" length="256"/>
+                <attribute title="上级" name="parent" field="parent" type="String" length="36"/>
+                <attribute title="层级" name="level" field="level" type="Integer"/>
+                <attribute title="路径" name="path" field="path" type="String" length="255"/>
+                <attribute title="序号" name="ordinal" field="ordinal" type="Integer"/>
+                <attribute title="是否末级" name="isEnd" field="is_end" type="Boolean" defaultValue="true"/>
+            </attributes>
+        </interface>
+
+        <!-- 审计信息接口 -->
+        <interface title="审计信息" name="IAuditInfo">
+            <attributes>
+                <attribute title="创建人" name="creator" field="creator" type="cn.byteawake.ap.oms.User"/>
+                <attribute title="创建时间" name="createAt" field="create_at" type="DateTime"/>
+                <attribute title="修改人" name="modifier" field="modifier" type="cn.byteawake.ap.oms.User"/>
+                <attribute title="修改时间" name="modifyAt" field="modify_at" type="DateTime"/>
+            </attributes>
+        </interface>
+
+        <!-- 启用接口 -->
+        <interface title="启用" name="IEnable">
+            <attributes>
+                <attribute name="enable" title="启用" field="enable" defaultValue="false" type="Boolean"/>
+                <attribute name="enableAt" field="enable_at" title="启用时间" type="DateTime"/>
+                <attribute name="disableAt" field="disable_at" title="停用时间" type="DateTime" />
+            </attributes>
+        </interface>
+        
+        <!-- 时间轴接口 -->
+        <interface title="时间轴" name="ITimeline">
+            <attributes>
+                <attribute title="生效时间" name="startTime" field="start_time" type="DateTime"/>
+                <attribute title="失效时间" name="endTime" field="end_time" type="DateTime"/>
+            </attributes>
+        </interface>
+
+        <!-- 系统预置接口 -->
+        <interface title="系统预置" name="ISysPreset">
+            <attributes>
+                <attribute name="isSys" field="is_sys" title="是否系统预置" defaultValue="false" type="Boolean"/>
+                <attribute name="sysId" field="sys_id" title="系统标识" type="String" length="36"/>
+            </attributes>
+        </interface>
+
+        <enum name="ImportMode" title="导入模式" description="定义导入动作的处理模式">
+            <member name="UPSERT" code="10" title="新增或更新"/>
+            <member name="INSERT_ONLY" code="20" title="仅新增"/>
+            <member name="UPDATE_ONLY" code="30" title="仅更新"/>
+            <member name="VALIDATE_ONLY" code="40" title="仅校验"/>
+        </enum>
+
+        <!-- 标准地理坐标 -->
+        <struct name="GeoPoint" title="地理坐标">
+            <attributes>
+                <attribute title="经度" name="longitude" field="longitude" type="Decimal" precision="10" scale="6"/>
+                <attribute title="纬度" name="latitude" field="latitude" type="Decimal" precision="10" scale="6"/>
+            </attributes>
+        </struct>
+
+        <!-- 标准附件 -->
+        <struct name="Attachment" title="附件">
+            <attributes>
+                <attribute title="文件名" name="name" field="name" type="String" length="256"/>
+                <attribute title="URL" name="url" field="url" type="String" length="512"/>
+                <attribute title="MIME类型" name="mimeType" field="mime_type" type="String" length="64"/>
+            </attributes>
+        </struct>
+
+        <!-- 围栏类型 -->
+        <enum name="FenceType" title="围栏类型" description="电子围栏的形状类型">
+            <member name="CIRCLE" code="10" title="圆形"/>
+            <member name="POLYGON" code="20" title="多边形"/>
+        </enum>
+
+        <enum name="OntologyLevelKind" title="级别类别" description="定义操作结果或校验规则的严重程度">
+            <member name="INFO" code="10" title="提示"/>
+            <member name="WARN" code="20" title="警告"/>
+            <member name="ERROR" code="30" title="错误"/>
+            <member name="FATAL" code="40" title="严重错误"/>
+        </enum>
+
+        <enum name="TimeGrainKind" title="时间粒度" description="定义指标的最小有意义时间粒度">
+            <member name="DAY" code="10" title="日"/>
+            <member name="WEEK" code="20" title="周"/>
+            <member name="MONTH" code="30" title="月"/>
+            <member name="QUARTER" code="40" title="季"/>
+            <member name="YEAR" code="50" title="年"/>
+        </enum>
+
+        <enum name="AdditivityKind" title="可加性" description="定义指标跨维度聚合的可加性">
+            <member name="ADDITIVE" code="10" title="完全可加"/>
+            <member name="SEMI_ADDITIVE" code="20" title="半可加"/>
+            <member name="NON_ADDITIVE" code="30" title="不可加"/>
+        </enum>
+
+        <enum name="DataSetKind" title="数据集类别" description="定义数据集的类别">
+            <member name="ONTOLOGY_OBJECT" code="10" title="本体对象"/>
+            <member name="PHYSICAL_TABLE" code="20" title="物理表"/>
+        </enum>
+
+        <class title="导航声明" name="NavigationSpec" isPersistent="false">
+            <extends>
+                <super class="cn.byteawake.ap.oql.QuerySpec"/>
+            </extends>
+            <attributes>
+                <attribute title="当前对象标识" name="currentId" field="current_id" type="String"/>
+            </attributes>
+        </class>
+
+        <class title="导入请求" name="ImportRequest" isPersistent="false">
+            <attributes>
+                <attribute title="文件令牌" name="fileToken" field="file_token" type="String" isRequired="true"/>
+                <attribute title="导入模式" name="mode" field="mode" type="cn.byteawake.ap.oms.ImportMode" isRequired="true"/>
+                <attribute title="模板编码" name="templateCode" field="template_code" type="String"/>
+            </attributes>
+        </class>
+
+        <!-- 字段错误 -->
+        <class title="字段错误" name="FieldError" isPersistent="false">
+            <attributes>
+                <attribute title="字段路径" name="path" field="path" type="String" isRequired="true"/>
+                <attribute title="错误消息" name="message" field="message" type="String" isRequired="true"/>
+                <attribute title="错误级别" name="level" field="level" type="cn.byteawake.ap.oms.OntologyLevelKind"/>
+            </attributes>
+        </class>
+
+        <!-- 电子围栏 -->
+        <class title="电子围栏" name="Fence" dataSet="oms_fence">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <implements>
+                <supplier itf="cn.byteawake.ap.oms.ILogicDelete"/>
+                <supplier itf="cn.byteawake.ap.oms.ITenant"/>
+                <supplier itf="cn.byteawake.ap.oms.IAuditInfo"/>
+            </implements>
+            <attributes>
+                <attribute title="围栏类型" name="fenceType" field="fence_type" type="cn.byteawake.ap.oms.FenceType" isRequired="true"/>
+                <attribute title="中心坐标" name="center" field="center" type="cn.byteawake.ap.oms.GeoPoint"/>
+                <attribute title="半径" name="radius" field="radius" type="Decimal" precision="10" scale="2"/>
+            </attributes>
+        </class>
+
+        <!-- 围栏多边形顶点 -->
+        <class title="围栏顶点" name="FenceVertex" dataSet="oms_fence_vertex">
+            <extends>
+                <super class="cn.byteawake.ap.oms.OntologyObject"/>
+            </extends>
+            <implements>
+                <supplier itf="cn.byteawake.ap.oms.ITenant"/>
+                <supplier itf="cn.byteawake.ap.oms.IAuditInfo"/>
+            </implements>
+            <attributes>
+                <attribute title="所属围栏" name="fence" field="fence" type="cn.byteawake.ap.oms.Fence" isRequired="true"/>
+                <attribute title="顶点序号" name="ordinal" field="ordinal" type="Integer" isRequired="true"/>
+                <attribute title="顶点坐标" name="point" field="point" type="cn.byteawake.ap.oms.GeoPoint" isRequired="true"/>
+            </attributes>
+        </class>
+
+        <links>
+            <link title="操作结果关联对象" name="ontologyResultData" semantic="COMPOSITION">
+                <subject name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" multiplicity="1"/>
+                <object name="data" title="关联对象" type="cn.byteawake.ap.oms.OntologyObject" multiplicity="0..*"/>
+            </link>
+            <link title="操作结果字段错误" name="ontologyResultFieldErrors" semantic="COMPOSITION">
+                <subject name="result" title="操作结果" type="cn.byteawake.ap.oms.OntologyResult" multiplicity="1"/>
+                <object name="fieldErrors" title="字段错误" type="cn.byteawake.ap.oms.FieldError" multiplicity="0..*"/>
+            </link>
+            <link title="围栏关联顶点" name="fenceVertices" semantic="COMPOSITION">
+                <subject name="fence" title="围栏" type="cn.byteawake.ap.oms.Fence" multiplicity="1"/>
+                <object name="vertices" title="顶点" type="cn.byteawake.ap.oms.FenceVertex" multiplicity="0..*"/>
+            </link>
+        </links>
+
+        <!-- enum：枚举 -->
+        <enum name="EnumMemberAliasKind" title="枚举项别名类别" description="定义枚举项别名的类别">
+            <member name="LEGACY" code="10" title="历史别名"/>
+            <member name="INPUT" code="20" title="输入别名"/>
+            <member name="EXTERNAL" code="30" title="外部别名"/>
+            <member name="SYMBOL" code="40" title="符号别名"/>
+        </enum>
+    </ontology>
+</ontologies>

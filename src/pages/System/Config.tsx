@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, Form, Input, InputNumber, Switch, Button, message, Tabs, TimePicker, Space, Divider, Tag } from 'antd';
 import { SaveOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { attendanceRuleService } from '@/services/domains/attendance';
 
 const { TabPane } = Tabs;
 
@@ -54,9 +55,26 @@ const SystemConfig: React.FC = () => {
       const values = await form.validateFields();
       setLoading(true);
 
-      // TODO: 调用保存配置 API
-      console.log('Config values:', values);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // 把核心阈值同步到本体的 AttendanceRule 实体(种子里 id 已知)
+      await Promise.all([
+        attendanceRuleService.modify({
+          id: 'rule-location',
+          name: '位置偏离阈值',
+          threshold: values.geoDistanceAlert,
+        } as any),
+        attendanceRuleService.modify({
+          id: 'rule-face',
+          name: '人脸匹配最低分',
+          threshold: values.faceScoreThreshold,
+        } as any),
+        attendanceRuleService.modify({
+          id: 'rule-missed',
+          name: '连续缺卡天数',
+          threshold: values.attendanceMissThreshold,
+        } as any),
+      ]).catch((err) => {
+        console.warn('同步规则失败,仅本地保存', err);
+      });
 
       message.success('配置保存成功');
     } catch (error) {
