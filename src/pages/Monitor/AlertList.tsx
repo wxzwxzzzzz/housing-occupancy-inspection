@@ -306,8 +306,8 @@ const AlertList: React.FC = observer(() => {
                 />
               </Form.Item>
             </Col>
-            <Col span={24}>
-              <Space>
+            <Col span={24} style={{ marginTop: 4 }}>
+              <Space wrap>
                 <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
                   查询
                 </Button>

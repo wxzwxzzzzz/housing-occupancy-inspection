@@ -92,3 +92,25 @@ ol {
     }
   }
 }
+
+/*
+ * 搜索/工具栏折行间距
+ *
+ * 1) `<Space wrap>` 在 antd 5 默认 row-gap = size(small=8px),折行后看着挤,
+ *    全局调整为 12px,Personnel/Menu/Role 等使用 Space wrap 的搜索栏受益。
+ * 2) `<Form layout="inline">` 折行时 Form.Item 自带 24px 下间距,
+ *    单行偏大、多行偏小,统一改成 row-gap=12px + Item margin-bottom=0,
+ *    与上面一致;最后一组按钮(查询/重置)就不会再紧贴上一行。
+ */
+.ant-space-wrap {
+  row-gap: 12px !important;
+}
+
+.ant-form-inline {
+  row-gap: 12px;
+
+  & > .ant-form-item {
+    margin-bottom: 0;
+    margin-right: 16px;
+  }
+}
