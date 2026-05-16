@@ -134,7 +134,9 @@ const FenceMapEditor: React.FC<FenceMapEditorProps> = ({
     const map = mapRef.current;
     if (!T || !map) return;
 
-    overlayRef.current.forEach((o) => map.removeOverLay(o));
+    overlayRef.current.forEach((o) => {
+      map.removeOverLay(o);
+    });
     overlayRef.current = [];
 
     if (fenceType === 'CIRCLE' && center && Number.isFinite(radius) && (radius ?? 0) > 0) {

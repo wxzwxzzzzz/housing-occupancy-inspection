@@ -66,6 +66,7 @@ const iconMap: Record<string, React.ReactNode> = {
 // 路由标题映射
 const routeTitleMap: Record<string, string> = {
   '/dashboard': '工作台',
+  '/residents': '居民档案',
   '/monitor/attendance': '打卡核验',
   '/monitor/alert': '预警处置',
   '/approval/material': '材料审批',
@@ -84,6 +85,16 @@ const routeTitleMap: Record<string, string> = {
   '/system/fence': '电子围栏',
   '/profile': '个人中心',
   '/settings': '账户设置',
+}
+
+/** 动态路径生成 Tab 标题:目前只支持 /residents/:id */
+function dynamicTabTitle(pathname: string): string | null {
+  const matchResident = pathname.match(/^\/residents\/([^/]+)$/);
+  if (matchResident) {
+    const id = matchResident[1];
+    return `居民 ${id.length > 8 ? id.slice(-6) : id}`;
+  }
+  return null;
 }
 
 // 本地存储键名
@@ -124,7 +135,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
   // 监听路由变化,自动添加页签
   useEffect(() => {
     const currentPath = location.pathname
-    const title = routeTitleMap[currentPath]
+    const title = routeTitleMap[currentPath] ?? dynamicTabTitle(currentPath)
 
     if (title && !tabs.find(tab => tab.path === currentPath)) {
       const newTab: TabItem = {
@@ -198,6 +209,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
   // 给每个菜单标记可见角色;ADMIN 默认看全部。
   const menuAcl: Record<string, string[]> = {
     '/dashboard': [], // 所有人可见
+    '/residents': [ROLE.APPROVER, ROLE.STAFF],
     '/monitor': [ROLE.APPROVER, ROLE.STAFF],
     '/monitor/attendance': [ROLE.APPROVER, ROLE.STAFF],
     '/monitor/alert': [ROLE.APPROVER, ROLE.STAFF],
@@ -235,6 +247,11 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
       key: '/dashboard',
       icon: iconMap['dashboard'],
       label: <Link to="/dashboard">工作台</Link>,
+    },
+    {
+      key: '/residents',
+      icon: iconMap['team'],
+      label: <Link to="/residents">居民档案</Link>,
     },
     {
       key: '/monitor',

@@ -45,6 +45,7 @@
     "@logicflow/extension": "^2.0.12",
     "@react-awesome-query-builder/antd": "^6.7.0-alpha.0",
     "@react-awesome-query-builder/ui": "^6.7.0-alpha.0",
+    "ahooks": "^3.9.7",
     "antd": "^5.29.0",
     "antd-style": "^3.7.0",
     "axios": "^1.13.2",

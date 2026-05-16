@@ -5,6 +5,7 @@ import { leaveService } from '@/services/domains/leave';
 import { OT } from '@/services/ontology/object-types';
 import type { Leave } from '@/types/ontology/prh/entities/leave';
 import { EnumLabels } from '@/utils/enum-options';
+import ResidentLink from '@/components/ResidentLink';
 
 const ApprovalLeave: React.FC = () => (
   <ApprovalListPage<Leave & { id: string }>
@@ -12,16 +13,21 @@ const ApprovalLeave: React.FC = () => (
     objectType={OT.Leave}
     service={leaveService as any}
     baseColumns={[
-      { title: '编号', dataIndex: 'id', width: 200, render: (v: string) => `#${v.slice(-6)}` },
-      { title: '居民', dataIndex: 'resident', width: 140 },
-      { title: '请假类型', dataIndex: 'leaveType', width: 130 },
-      { title: '开始日期', dataIndex: 'startDate', width: 120 },
-      { title: '结束日期', dataIndex: 'endDate', width: 120 },
-      { title: '事由', dataIndex: 'reason', ellipsis: true },
+      { title: '编号', dataIndex: 'id', width: 110, render: (v: string) => `#${v.slice(-6)}` },
+      {
+        title: '居民',
+        dataIndex: 'resident',
+        width: 110,
+        render: (v: string) => (v ? <ResidentLink id={String(v)}>{String(v)}</ResidentLink> : '-'),
+      },
+      { title: '请假类型', dataIndex: 'leaveType', width: 110 },
+      { title: '开始日期', dataIndex: 'startDate', width: 110 },
     ]}
     renderDetail={(record) => (
       <Descriptions bordered column={1} size="middle">
-        <Descriptions.Item label="居民">{String(record.resident)}</Descriptions.Item>
+        <Descriptions.Item label="居民">
+          {record.resident ? <ResidentLink id={String(record.resident)} /> : '-'}
+        </Descriptions.Item>
         <Descriptions.Item label="请假类型">{String(record.leaveType)}</Descriptions.Item>
         <Descriptions.Item label="开始日期">{record.startDate as any}</Descriptions.Item>
         <Descriptions.Item label="结束日期">{record.endDate as any}</Descriptions.Item>

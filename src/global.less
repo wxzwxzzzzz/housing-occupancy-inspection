@@ -114,3 +114,33 @@ ol {
     margin-right: 16px;
   }
 }
+
+/*
+ * 主从布局工具栏专属:Card body 内 inline Form 上下留白
+ * 因为 Card body 已经有 14/12 padding,Form 内部如果折行,row-gap 仍生效
+ */
+.ant-card-small > .ant-card-body .ant-form-inline {
+  row-gap: 14px;
+}
+
+/*
+ * PC 大屏视觉间距统一:行高 / Card 边距
+ *
+ * 用户场景仅 PC + 大屏平板,信息密度可以适当拉开。
+ * - 表格行高从默认 ~54px 提升到 ~58px(数据行更易读)
+ * - Card 内 padding 保持 antd 默认 24,Card 之间间距统一 20
+ */
+.ant-table-cell {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+
+/* 主从布局:列表行选中态高亮(替代 antd 默认浅蓝,与本项目主色更协调) */
+.master-list-row-selected,
+.master-list-row-selected > td {
+  background: #e6f4ff !important;
+}
+
+.master-list-row-selected:hover > td {
+  background: #bae0ff !important;
+}

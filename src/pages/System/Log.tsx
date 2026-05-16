@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Input, Select, Space, Table, Tag } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Button, Card, Input, Select, Space, Table, Tag } from 'antd';
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { invokeQuery } from '@/services/ontology/client';
 import { qb } from '@/services/ontology/query';
 
@@ -54,7 +54,7 @@ const SystemLog: React.FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <Card title="日志审计">
-        <Space style={{ marginBottom: 16 }}>
+        <Space style={{ marginBottom: 16 }} wrap>
           <Input
             placeholder="操作人"
             prefix={<SearchOutlined />}
@@ -72,7 +72,25 @@ const SystemLog: React.FC = () => {
             style={{ width: 160 }}
             options={Object.entries(ACTION_LABEL).map(([value, label]) => ({ value, label }))}
           />
-          <a onClick={() => load(1, pageSize)}>查询</a>
+          <Button
+            type="primary"
+            icon={<SearchOutlined />}
+            onClick={() => load(1, pageSize)}
+          >
+            查询
+          </Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              setOperator('');
+              setAction(undefined);
+              setPageNo(1);
+              // 让最新的 state 反映到下一次请求,这里直接调一次 load 用空条件
+              setTimeout(() => load(1, pageSize), 0);
+            }}
+          >
+            重置
+          </Button>
         </Space>
         <Table<LogRow>
           rowKey="id"

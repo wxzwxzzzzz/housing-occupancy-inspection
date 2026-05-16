@@ -20,6 +20,18 @@ export default [
         component: './Dashboard',
       },
       {
+        path: '/residents',
+        name: '居民档案',
+        icon: 'team',
+        component: './Residents',
+      },
+      {
+        path: '/residents/:id',
+        name: '居民详情',
+        component: './Residents/Detail',
+        hideInMenu: true,
+      },
+      {
         name: '监测与处置',
         icon: 'monitor',
         path: '/monitor',
