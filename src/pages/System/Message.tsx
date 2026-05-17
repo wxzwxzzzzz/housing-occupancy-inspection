@@ -42,6 +42,21 @@ const SystemMessage: React.FC = () => {
     load();
   }, []);
 
+  const markAllRead = async () => {
+    const unread = rows.filter((r) => !r.read);
+    if (unread.length === 0) return;
+    await Promise.all(
+      unread.map((row) =>
+        invokeAction({
+          objectType: MSG_TYPE,
+          actionName: 'modify',
+          payload: { id: row.id, read: true },
+        }),
+      ),
+    );
+    load();
+  };
+
   const markRead = async (row: MessageRow) => {
     await invokeAction({
       objectType: MSG_TYPE,
@@ -54,7 +69,15 @@ const SystemMessage: React.FC = () => {
   const unreadCount = rows.filter((r) => !r.read).length;
 
   return (
-    <div style={{ padding: 24 }}>
+    <div
+      style={{
+        padding: 24,
+        height: 'calc(100vh - 64px - 45px)', // Header + TabBar
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+      }}
+    >
       <Card
         title={
           <Space>
@@ -62,41 +85,70 @@ const SystemMessage: React.FC = () => {
             <Badge count={unreadCount} />
           </Space>
         }
-        extra={<Button onClick={load}>刷新</Button>}
+        extra={
+          <Space>
+            <Button onClick={markAllRead} disabled={unreadCount === 0}>
+              全部标为已读
+            </Button>
+            <Button onClick={load}>刷新</Button>
+          </Space>
+        }
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        styles={{
+          body: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
+            padding: 0,
+          },
+        }}
       >
-        <List
-          loading={loading}
-          dataSource={rows}
-          renderItem={(item) => (
-            <List.Item
-              actions={[
-                !item.read && (
-                  <a key="read" onClick={() => markRead(item)}>
-                    标记已读
-                  </a>
-                ),
-              ].filter(Boolean) as any}
-            >
-              <List.Item.Meta
-                avatar={<Tag color={LEVEL_COLOR[item.level] ?? 'default'}>{item.level}</Tag>}
-                title={
-                  <Space>
-                    {item.title}
-                    {!item.read && <Badge status="processing" text="未读" />}
-                  </Space>
-                }
-                description={
-                  <Space direction="vertical">
-                    <span>{item.content}</span>
-                    <span style={{ color: '#999', fontSize: 12 }}>
-                      {item.createAt ? new Date(item.createAt).toLocaleString() : '-'}
-                    </span>
-                  </Space>
-                }
-              />
-            </List.Item>
-          )}
-        />
+        {/* 列表区:flex:1 自滚动 */}
+        <div
+          className="md-list-scroll"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: 'auto',
+            padding: '0 24px',
+          }}
+        >
+          <List
+            loading={loading}
+            dataSource={rows}
+            renderItem={(item) => (
+              <List.Item
+                actions={[
+                  !item.read && (
+                    <a key="read" onClick={() => markRead(item)}>
+                      标记已读
+                    </a>
+                  ),
+                ].filter(Boolean) as any}
+              >
+                <List.Item.Meta
+                  avatar={<Tag color={LEVEL_COLOR[item.level] ?? 'default'}>{item.level}</Tag>}
+                  title={
+                    <Space>
+                      {item.title}
+                      {!item.read && <Badge status="processing" text="未读" />}
+                    </Space>
+                  }
+                  description={
+                    <Space direction="vertical">
+                      <span>{item.content}</span>
+                      <span style={{ color: '#999', fontSize: 12 }}>
+                        {item.createAt ? new Date(item.createAt).toLocaleString() : '-'}
+                      </span>
+                    </Space>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        </div>
       </Card>
     </div>
   );

@@ -25,7 +25,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Card, Empty, Space, Table } from 'antd';
+import { Card, Empty, Pagination, Space, Table } from 'antd';
 import { useKeyPress } from 'ahooks';
 import type { ColumnsType, TableProps } from 'antd/es/table';
 import type { EntityApi } from '@/services/ontology/crud';
@@ -329,58 +329,124 @@ export function MasterDetailListPage<T extends { id: string }>(
             },
           }}
         >
-          <Table<T>
-            rowKey="id"
-            size="middle"
-            columns={columns}
-            dataSource={data}
-            loading={loading}
-            sticky
-            scroll={{ y: 'calc(100% - 56px)' }}
-            rowClassName={(r) =>
-              selected?.id === r.id ? 'master-list-row-selected' : ''
-            }
-            onRow={onRow}
-            pagination={{
-              current: pageNo,
-              pageSize,
-              total,
-              size: 'small',
-              showSizeChanger: true,
-              showTotal: (t) => `共 ${t} 条`,
-              onChange: (p, s) => {
+          {/* 表格区:flex:1 占满,内部滚动;sticky 让表头粘在顶部 */}
+          <div
+            className="md-list-scroll"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflow: 'auto',
+              position: 'relative',
+            }}
+          >
+            <Table<T>
+              rowKey="id"
+              size="middle"
+              columns={columns}
+              dataSource={data}
+              loading={loading}
+              sticky={{ offsetHeader: 0 }}
+              rowClassName={(r) =>
+                selected?.id === r.id ? 'master-list-row-selected' : ''
+              }
+              onRow={onRow}
+              pagination={false}
+            />
+          </div>
+          {/* 分页固定在底部 */}
+          <div
+            style={{
+              padding: '8px 12px',
+              borderTop: '1px solid #f0f0f0',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              flexShrink: 0,
+            }}
+          >
+            <Pagination
+              current={pageNo}
+              pageSize={pageSize}
+              total={total}
+              size="small"
+              showSizeChanger
+              showTotal={(t) => `共 ${t} 条`}
+              onChange={(p, s) => {
                 setPageNo(p);
                 setPageSize(s);
                 load(p, s);
-              },
-            }}
-            style={{ flex: 1 }}
-          />
-          {/* 隐藏占位:语义化容器,不渲染实际内容 */}
+              }}
+            />
+          </div>
         </Card>
 
-        {/* 中:可拖拽分隔条 */}
+        {/* 中:可拖拽分隔条(带视觉标识) */}
         <div
+          className="md-splitter"
           onMouseDown={handleDragStart}
           style={{
-            width: 6,
+            width: 8,
             cursor: 'col-resize',
             background: 'transparent',
             position: 'relative',
             flexShrink: 0,
           }}
         >
+          {/* 竖线 */}
           <div
+            className="md-splitter-line"
             style={{
               position: 'absolute',
               left: '50%',
               top: 0,
               bottom: 0,
               width: 2,
-              background: '#f0f0f0',
+              background: '#e0e0e0',
               transform: 'translateX(-50%)',
+              transition: 'background 0.2s',
             }}
           />
+          {/* 中点把手 */}
+          <div
+            className="md-splitter-handle"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 16,
+              height: 40,
+              borderRadius: 4,
+              background: '#fff',
+              border: '1px solid #d9d9d9',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              pointerEvents: 'none',
+            }}
+          >
+            {/* 把手内的拖拽指示符:6 个点 */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 2px)',
+                gap: 2,
+              }}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 2,
+                    height: 2,
+                    borderRadius: '50%',
+                    background: '#bfbfbf',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* 右:详情 */}

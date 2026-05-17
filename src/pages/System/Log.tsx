@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Input, Select, Space, Table, Tag } from 'antd';
+import { Button, Card, Input, Pagination, Select, Space, Table, Tag } from 'antd';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { invokeQuery } from '@/services/ontology/client';
 import { qb } from '@/services/ontology/query';
@@ -32,12 +32,18 @@ const SystemLog: React.FC = () => {
   const [operator, setOperator] = useState('');
   const [action, setAction] = useState<string | undefined>();
 
-  async function load(page = pageNo, size = pageSize) {
+  async function load(
+    page = pageNo,
+    size = pageSize,
+    overrides?: { operator?: string; action?: string },
+  ) {
     setLoading(true);
     try {
+      const op = overrides?.operator ?? operator;
+      const act = overrides?.action ?? action;
       const builder = qb(LOG_TYPE).orderBy('operatedAt', 'DESC').page(page, size);
-      if (operator) builder.like('operator', operator);
-      if (action) builder.eq('action', action);
+      if (op) builder.like('operator', op);
+      if (act) builder.eq('action', act);
       const env = await invokeQuery<LogRow>(LOG_TYPE, builder.build());
       setRows(env.data);
       setTotal(env.page?.total ?? env.data.length);
@@ -52,9 +58,34 @@ const SystemLog: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title="日志审计">
-        <Space style={{ marginBottom: 16 }} wrap>
+    <div
+      style={{
+        padding: 24,
+        height: 'calc(100vh - 64px - 45px)', // Header + TabBar
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+      }}
+    >
+      <Card
+        title="日志审计"
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        styles={{
+          body: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
+            padding: 0,
+          },
+        }}
+      >
+        {/* 工具栏 */}
+        <Space
+          style={{ padding: '16px 24px', flexShrink: 0, borderBottom: '1px solid #f0f0f0' }}
+          wrap
+        >
           <Input
             placeholder="操作人"
             prefix={<SearchOutlined />}
@@ -85,46 +116,75 @@ const SystemLog: React.FC = () => {
               setOperator('');
               setAction(undefined);
               setPageNo(1);
-              // 让最新的 state 反映到下一次请求,这里直接调一次 load 用空条件
-              setTimeout(() => load(1, pageSize), 0);
+              load(1, pageSize, { operator: '', action: undefined });
             }}
           >
             重置
           </Button>
         </Space>
-        <Table<LogRow>
-          rowKey="id"
-          dataSource={rows}
-          loading={loading}
-          pagination={{
-            current: pageNo,
-            pageSize,
-            total,
-            onChange: (p, s) => {
+
+        {/* 表格区:flex:1 自滚动 + 表头粘性 */}
+        <div
+          className="md-list-scroll"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: 'auto',
+            position: 'relative',
+            padding: '0 12px',
+          }}
+        >
+          <Table<LogRow>
+            rowKey="id"
+            size="middle"
+            dataSource={rows}
+            loading={loading}
+            sticky={{ offsetHeader: 0 }}
+            pagination={false}
+            columns={[
+              { title: '操作人', dataIndex: 'operator', width: 140 },
+              {
+                title: '操作类型',
+                dataIndex: 'action',
+                width: 110,
+                render: (v: string) => <Tag>{ACTION_LABEL[v] ?? v}</Tag>,
+              },
+              { title: '目标', dataIndex: 'target', width: 200 },
+              { title: 'IP', dataIndex: 'ipAddress', width: 140 },
+              {
+                title: '时间',
+                dataIndex: 'operatedAt',
+                width: 200,
+                render: (v: string) => (v ? new Date(v).toLocaleString() : '-'),
+              },
+            ]}
+          />
+        </div>
+
+        {/* 分页栏:固定底部 */}
+        <div
+          style={{
+            padding: '8px 24px',
+            borderTop: '1px solid #f0f0f0',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            flexShrink: 0,
+          }}
+        >
+          <Pagination
+            current={pageNo}
+            pageSize={pageSize}
+            total={total}
+            size="small"
+            showSizeChanger
+            showTotal={(t) => `共 ${t} 条`}
+            onChange={(p, s) => {
               setPageNo(p);
               setPageSize(s);
               load(p, s);
-            },
-            showTotal: (t) => `共 ${t} 条`,
-          }}
-          columns={[
-            { title: '操作人', dataIndex: 'operator', width: 140 },
-            {
-              title: '操作类型',
-              dataIndex: 'action',
-              width: 110,
-              render: (v: string) => <Tag>{ACTION_LABEL[v] ?? v}</Tag>,
-            },
-            { title: '目标', dataIndex: 'target', width: 200 },
-            { title: 'IP', dataIndex: 'ipAddress', width: 140 },
-            {
-              title: '时间',
-              dataIndex: 'operatedAt',
-              width: 200,
-              render: (v: string) => (v ? new Date(v).toLocaleString() : '-'),
-            },
-          ]}
-        />
+            }}
+          />
+        </div>
       </Card>
     </div>
   );

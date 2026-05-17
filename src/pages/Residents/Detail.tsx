@@ -64,6 +64,7 @@ import type { Residence } from '@/types/ontology/prh/entities/residence';
 import type { Employment } from '@/types/ontology/prh/entities/employment';
 import type { AttendanceFact } from '@/types/ontology/prh/facts/attendance_fact';
 import { EnumLabels, StatusColors } from '@/utils/enum-options';
+import './Detail.less';
 
 const { Title, Text } = Typography;
 
@@ -91,9 +92,28 @@ const ResidentDetail: React.FC = () => {
   const headerName = (resident as any)?.fullName ?? id;
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card>
-        <Space size={16} align="center" style={{ marginBottom: 16 }}>
+    <div
+      style={{
+        padding: 24,
+        height: 'calc(100vh - 64px - 45px)', // Header(64) + TabBar(45)
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+      }}
+    >
+      <Card
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        styles={{
+          body: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <Space size={16} align="center" style={{ marginBottom: 16, flexShrink: 0 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
             返回
           </Button>
@@ -133,6 +153,9 @@ const ResidentDetail: React.FC = () => {
         ) : (
           <Tabs
             defaultActiveKey="profile"
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+            tabBarStyle={{ flexShrink: 0, marginBottom: 16 }}
+            className="resident-360-tabs"
             items={[
               { key: 'profile', label: '档案', children: <ProfileTab record={resident} /> },
               { key: 'family', label: '家庭', children: <FamilyTab residentId={id} /> },

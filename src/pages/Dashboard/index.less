@@ -1,8 +1,9 @@
 // Dashboard 容器
+// 不设 min-height,让内容自然高度(BasicLayout 的 Content 已带 overflow: auto)
+// 底部多 24px padding,避免最后一行被裁切
 .dashboard-container {
-  padding: 24px;
+  padding: 24px 24px 48px;
   background: #f0f2f5;
-  min-height: calc(100vh - 64px);
 }
 
 // 统计卡片
@@ -63,11 +64,64 @@
   }
 }
 
+// "今日打卡率"卡:进度条与"较昨日"放在 footer 同行
+.stat-footer-progress {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .stat-rate-progress {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .stat-trend {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+// 最近预警 / 到期提醒:Card 内容固定 380px,超出滚动
+// 占位提示(实际规则在通用样式之后,见文件末尾)
+
 // 卡片通用样式
 :global {
   .dashboard-container .ant-card {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  }
+
+  // 让同一 Row 内的 Card 高度一致
+  // Antd Row 默认 align-items: flex-start,需要强制 stretch 让 Col 撑到最高高度
+  // 注意:.dashboard-scroll-row 这一行通过 body inline style 固定 380px,
+  // 不需要 stretch,因此排除它。
+  .dashboard-container .ant-row:not(.dashboard-scroll-row) {
+    align-items: stretch;
+  }
+
+  .dashboard-container .ant-row:not(.dashboard-scroll-row) > .ant-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard-container
+    .ant-row:not(.dashboard-scroll-row)
+    > .ant-col
+    > .ant-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .dashboard-container
+    .ant-row:not(.dashboard-scroll-row)
+    > .ant-col
+    > .ant-card
+    > .ant-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .dashboard-container .ant-card-head-title {
@@ -127,5 +181,37 @@
         font-size: 20px;
       }
     }
+  }
+}
+
+// 最近预警 / 到期提醒:Card 内容固定 380px,超出滚动
+// 必须放在 "通用 .ant-row > .ant-col > .ant-card { flex: 1 }" 规则之后,
+// 同特异性时后写胜出。
+:global {
+  .dashboard-container .ant-row > .ant-col.dashboard-scroll-col {
+    display: block !important;
+    align-self: flex-start !important;
+  }
+
+  .dashboard-container
+    .ant-row
+    > .ant-col
+    > .ant-card.dashboard-scroll-card {
+    flex: none !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .dashboard-container
+    .ant-row
+    > .ant-col
+    > .ant-card.dashboard-scroll-card
+    > .ant-card-body {
+    flex: none !important;
+    display: block !important;
+    height: 380px !important;
+    max-height: 380px !important;
+    overflow-y: auto;
+    padding-top: 8px;
   }
 }

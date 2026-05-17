@@ -1,0 +1,25 @@
+/* 居民 360 视图:Tab 内容区独立滚动 */
+:global {
+  .resident-360-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .resident-360-tabs > .ant-tabs-content-holder {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .resident-360-tabs > .ant-tabs-content-holder > .ant-tabs-content {
+    height: 100%;
+  }
+
+  .resident-360-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+}

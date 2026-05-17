@@ -8,14 +8,13 @@ import {
   ClockCircleOutlined,
   WarningOutlined,
   FileTextOutlined,
-  EnvironmentOutlined,
   TeamOutlined,
   RiseOutlined,
   FallOutlined,
   LineChartOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
-import { Line, Column, Area } from '@ant-design/charts';
+import { Line, Column } from '@ant-design/charts';
 import { useNavigate } from '@umijs/max';
 import { dashboardStore, alertStore } from '@/stores';
 import './index.less';
@@ -61,12 +60,29 @@ const Dashboard: React.FC = observer(() => {
       { id: '1', name: '张三', type: 'leave', expireDate: '2025-11-20', days: 2 },
       { id: '2', name: '李四', type: 'filing', expireDate: '2025-11-22', days: 4 },
       { id: '3', name: '王五', type: 'leave', expireDate: '2025-11-19', days: 1 },
+      { id: '4', name: '赵六', type: 'filing', expireDate: '2025-11-23', days: 5 },
+      { id: '5', name: '钱七', type: 'leave', expireDate: '2025-11-21', days: 3 },
+      { id: '6', name: '孙八', type: 'filing', expireDate: '2025-11-25', days: 7 },
+      { id: '7', name: '周九', type: 'leave', expireDate: '2025-11-19', days: 1 },
+      { id: '8', name: '吴十', type: 'filing', expireDate: '2025-11-26', days: 8 },
+      { id: '9', name: '郑十一', type: 'leave', expireDate: '2025-11-22', days: 4 },
+      { id: '10', name: '王十二', type: 'filing', expireDate: '2025-11-28', days: 10 },
+      { id: '11', name: '冯十三', type: 'leave', expireDate: '2025-11-20', days: 2 },
+      { id: '12', name: '陈十四', type: 'filing', expireDate: '2025-12-01', days: 13 },
     ],
     recentAlerts: [
       { id: '1', user: '赵六', type: '位置偏离', level: 'critical', time: '10分钟前' },
       { id: '2', user: '孙七', type: '人脸不匹配', level: 'warning', time: '25分钟前' },
       { id: '3', user: '周八', type: '连续缺卡', level: 'critical', time: '1小时前' },
       { id: '4', user: '吴九', type: '位置偏离', level: 'info', time: '2小时前' },
+      { id: '5', user: '郑十', type: '请假超时', level: 'warning', time: '3小时前' },
+      { id: '6', user: '王二', type: '人脸不匹配', level: 'critical', time: '4小时前' },
+      { id: '7', user: '李五', type: '位置偏离', level: 'warning', time: '5小时前' },
+      { id: '8', user: '张三', type: '连续缺卡', level: 'info', time: '6小时前' },
+      { id: '9', user: '陈一', type: '备案过期', level: 'warning', time: '8小时前' },
+      { id: '10', user: '刘四', type: '异常打卡', level: 'critical', time: '昨天' },
+      { id: '11', user: '黄二', type: '位置偏离', level: 'info', time: '昨天' },
+      { id: '12', user: '林六', type: '人脸不匹配', level: 'warning', time: '昨天' },
     ],
   };
 
@@ -190,6 +206,12 @@ const Dashboard: React.FC = observer(() => {
     { date: '11-17', count: 1169 },
     { date: '11-18', count: 1201 },
     { date: '11-19', count: 1195 },
+    { date: '11-20', count: 2195 },
+    { date: '11-21', count: 2895 },
+    { date: '11-22', count: 2895 },
+    { date: '11-23', count: 2895 },
+    { date: '11-24', count: 895 },
+    { date: '11-25', count: 1895 },
   ];
 
   const alertLevelConfig = {
@@ -286,7 +308,7 @@ const Dashboard: React.FC = observer(() => {
           <Button
             type="link"
             size="small"
-            onClick={() => navigate(`/alert/detail/${record.id}`)}
+            onClick={() => navigate(`/monitor/alert/detail/${record.id}`)}
           >
             查看
           </Button>
@@ -349,8 +371,15 @@ const Dashboard: React.FC = observer(() => {
               prefix={<UserOutlined />}
               valueStyle={{ color: '#3f8600' }}
             />
-            <div className="stat-footer">
-              <Space>
+            <div className="stat-footer stat-footer-progress">
+              <Progress
+                className="stat-rate-progress"
+                percent={parseFloat(liveStats?.attendanceRate ?? '0') || mockData.attendance.rate}
+                strokeColor="#52c41a"
+                showInfo={false}
+                size="small"
+              />
+              <Space size={4} className="stat-trend">
                 {mockData.attendance.trend > 0 ? (
                   <RiseOutlined style={{ color: '#3f8600' }} />
                 ) : (
@@ -362,13 +391,6 @@ const Dashboard: React.FC = observer(() => {
                 <span className="trend-desc">较昨日</span>
               </Space>
             </div>
-            <Progress
-              percent={parseFloat(liveStats?.attendanceRate ?? '0') || mockData.attendance.rate}
-              strokeColor="#52c41a"
-              showInfo={false}
-              size="small"
-              style={{ marginTop: 8 }}
-            />
           </Card>
         </Col>
 
@@ -427,17 +449,28 @@ const Dashboard: React.FC = observer(() => {
       </Row>
 
       {/* 数据展示区域 */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }} align="top" className="dashboard-scroll-row">
         {/* 最近预警 */}
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={12} className="dashboard-scroll-col">
           <Card
+            className="dashboard-scroll-card"
+            styles={{
+              body: {
+                height: 380,
+                maxHeight: 380,
+                overflowY: 'auto',
+                display: 'block',
+                flex: 'none',
+                padding: '8px 24px 16px',
+              },
+            }}
             title={
               <Space>
                 <WarningOutlined />
                 最近预警
               </Space>
             }
-            extra={<a onClick={() => navigate('/alert/list')}>查看全部</a>}
+            extra={<a onClick={() => navigate('/monitor/alert-list')}>查看全部</a>}
             bordered={false}
           >
             <List
@@ -445,7 +478,7 @@ const Dashboard: React.FC = observer(() => {
               renderItem={(item) => (
                 <List.Item
                   actions={[
-                    <Button type="link" size="small" onClick={() => navigate(`/alert/detail/${item.id}`)}>
+                    <Button type="link" size="small" onClick={() => navigate(`/monitor/alert/detail/${item.id}`)}>
                       处理
                     </Button>,
                   ]}
@@ -478,8 +511,19 @@ const Dashboard: React.FC = observer(() => {
         </Col>
 
         {/* 到期提醒 */}
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={12} className="dashboard-scroll-col">
           <Card
+            className="dashboard-scroll-card"
+            styles={{
+              body: {
+                height: 380,
+                maxHeight: 380,
+                overflowY: 'auto',
+                display: 'block',
+                flex: 'none',
+                padding: '8px 24px 16px',
+              },
+            }}
             title={
               <Space>
                 <ClockCircleOutlined />
@@ -500,7 +544,7 @@ const Dashboard: React.FC = observer(() => {
         </Col>
       </Row>
 
-      {/* 图表展示区域 */}
+      {/* 图表展示区域:第 1 行 — 打卡率趋势 + 预警类型分布 */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         {/* 打卡率趋势折线图 */}
         <Col xs={24} lg={12}>
@@ -532,11 +576,11 @@ const Dashboard: React.FC = observer(() => {
                 min: 90,
                 max: 100,
                 label: {
-                  formatter: (v) => `${v}%`,
+                  formatter: (v:any) => `${v}%`,
                 },
               }}
               tooltip={{
-                formatter: (datum) => {
+                formatter: (datum:any) => {
                   return { name: '打卡率', value: `${datum.rate}%` };
                 },
               }}
@@ -545,44 +589,7 @@ const Dashboard: React.FC = observer(() => {
           </Card>
         </Col>
 
-        {/* 打卡人数趋势面积图 */}
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <Space>
-                <LineChartOutlined />
-                打卡人数趋势
-              </Space>
-            }
-            bordered={false}
-          >
-            <Area
-              data={attendanceCountData}
-              xField="date"
-              yField="count"
-              smooth
-              areaStyle={{
-                fill: 'l(270) 0:#ffffff 0.5:#7ec2f3 1:#1890ff',
-              }}
-              color="#1890ff"
-              yAxis={{
-                label: {
-                  formatter: (v) => `${v}人`,
-                },
-              }}
-              tooltip={{
-                formatter: (datum) => {
-                  return { name: '打卡人数', value: `${datum.count}人` };
-                },
-              }}
-              height={300}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 预警统计柱状图 */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        {/* 预警类型分布柱状图 */}
         <Col xs={24} lg={12}>
           <Card
             title={
@@ -610,11 +617,11 @@ const Dashboard: React.FC = observer(() => {
               }}
               yAxis={{
                 label: {
-                  formatter: (v) => `${v}次`,
+                  formatter: (v:number) => `${v}次`,
                 },
               }}
               tooltip={{
-                formatter: (datum) => {
+                formatter: (datum:any) => {
                   return { name: '预警次数', value: `${datum.count}次` };
                 },
               }}
@@ -622,41 +629,42 @@ const Dashboard: React.FC = observer(() => {
             />
           </Card>
         </Col>
+      </Row>
 
-        {/* 快捷操作 */}
-        <Col xs={24} lg={12}>
-          <Card title="快捷操作" bordered={false}>
-            <Space size="large" wrap>
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => navigate('/approval/list')}
-                size="large"
-              >
-                审批队列
-              </Button>
-              <Button
-                icon={<WarningOutlined />}
-                onClick={() => navigate('/alert/list')}
-                size="large"
-              >
-                预警处置
-              </Button>
-              <Button
-                icon={<UserOutlined />}
-                onClick={() => navigate('/attendance/list')}
-                size="large"
-              >
-                打卡记录
-              </Button>
-              <Button
-                icon={<EnvironmentOutlined />}
-                onClick={() => navigate('/report/export')}
-                size="large"
-              >
-                导出报表
-              </Button>
-            </Space>
+      {/* 图表展示区域:第 2 行 — 打卡人数趋势(整行) */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col span={24}>
+          <Card
+            title={
+              <Space>
+                <LineChartOutlined />
+                打卡人数趋势
+              </Space>
+            }
+            bordered={false}
+          >
+            <Line
+              data={attendanceCountData}
+              xField="date"
+              yField="count"
+              smooth
+              point={{
+                size: 5,
+                shape: 'circle',
+              }}
+              color="#1890ff"
+              yAxis={{
+                label: {
+                  formatter: (v: number) => `${v}人`,
+                },
+              }}
+              tooltip={{
+                formatter: (datum: any) => {
+                  return { name: '打卡人数', value: `${datum.count}人` };
+                },
+              }}
+              height={300}
+            />
           </Card>
         </Col>
       </Row>
@@ -676,7 +684,7 @@ const Dashboard: React.FC = observer(() => {
                 <Button
                   type="primary"
                   size="small"
-                  onClick={() => navigate('/alert/list')}
+                  onClick={() => navigate('/monitor/alert-list')}
                 >
                   查看更多
                 </Button>
