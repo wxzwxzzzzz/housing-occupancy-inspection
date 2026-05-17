@@ -1,100 +1,407 @@
 // Dashboard 容器
 // 不设 min-height,让内容自然高度(BasicLayout 的 Content 已带 overflow: auto)
 // 底部多 24px padding,避免最后一行被裁切
+// max-width 1320px 居中(对齐 OMS 原型 .container-xl,大屏不会拉满)
 .dashboard-container {
+  max-width: 1320px;
+  margin: 0 auto;
   padding: 24px 24px 48px;
-  background: #f0f2f5;
+  background: transparent;
 }
 
-// 统计卡片
-.stat-card {
+// =================== 顶部欢迎行 ===================
+//
+// 左:欢迎卡(大标题 + 副文案 + 2 个内嵌 mini-stat + 操作按钮)
+// 右:4 张业务 stat 小卡(配色方头像 + 大数字 + 副文案)
+.welcome-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.85);
+  border: 0;
+  box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+
+  :global {
+    .ant-card-body {
+      padding: 24px 28px !important;
+    }
+  }
+
+  .welcome-body {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 24px;
+    align-items: center;
+    min-height: 168px;
+  }
+
+  .welcome-text {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .welcome-greeting {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #1f1f1f;
+  }
+
+  .welcome-subtitle {
+    font-size: 13px;
+    color: #595959;
+    line-height: 1.6;
+  }
+
+  .welcome-mini-stats {
+    display: flex;
+    gap: 32px;
+    margin-top: 8px;
+  }
+
+  .mini-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mini-label {
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+
+  .mini-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .mini-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f1f1f;
+    line-height: 1;
+  }
+
+  .mini-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+
+    &.trend-up {
+      color: #389e0d;
+    }
+    &.trend-down {
+      color: #cf1322;
+    }
+    &.trend-flat {
+      color: #8c8c8c;
+    }
+  }
+
+  .welcome-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+
+    :global(.ant-btn) {
+      border-radius: 6px;
+    }
+  }
+
+  // 右侧业务图标网格 — 2x2,4 块
+  .welcome-illustration {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+    height: 168px;
+
+    .illu-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border-radius: 10px;
+      padding: 10px 6px;
+      background: rgba(0, 0, 0, 0.03);
+      transition: background 0.15s ease;
+
+      :global(.anticon) {
+        font-size: 18px;
+        margin-bottom: 2px;
+      }
+    }
+    .illu-num {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      color: #1f1f1f;
+    }
+    .illu-label {
+      font-size: 11px;
+      color: #8c8c8c;
+      line-height: 1.2;
+    }
+    .illu-blue {
+      background: rgba(22, 119, 255, 0.08);
+      :global(.anticon) {
+        color: #1677ff;
+      }
+    }
+    .illu-red {
+      background: rgba(255, 77, 79, 0.08);
+      :global(.anticon) {
+        color: #cf1322;
+      }
+    }
+    .illu-purple {
+      background: rgba(114, 46, 209, 0.08);
+      :global(.anticon) {
+        color: #722ed1;
+      }
+    }
+    .illu-orange {
+      background: rgba(250, 140, 22, 0.08);
+      :global(.anticon) {
+        color: #fa8c16;
+      }
+    }
+  }
+}
+
+// 4 张业务 stat 小卡 — 对齐 Tabler card-sm 风格
+// 图标方块(avatar avatar-square) + 中等字重主标题 + 副文案
+.stat-mini {
   border-radius: 8px;
-  transition: all 0.3s;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(18, 18, 23, 0.06);
   }
 
   :global {
-    .ant-statistic-title {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-    }
-
-    .ant-statistic-content {
-      font-size: 24px;
-      font-weight: 600;
+    .ant-card-body {
+      padding: 12px 14px !important;
     }
   }
-}
 
-.stat-footer {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-  font-size: 12px;
-
-  .trend-up {
-    color: #3f8600;
+  .stat-mini-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  .trend-down {
-    color: #cf1322;
-  }
-
-  .trend-desc {
-    color: #999;
-  }
-
-  .alert-critical {
-    color: #cf1322;
-    font-weight: 500;
-  }
-
-  .alert-warning {
-    color: #faad14;
-    font-weight: 500;
-  }
-
-  .alert-info {
-    color: #1890ff;
-    font-weight: 500;
-  }
-}
-
-// "今日打卡率"卡:进度条与"较昨日"放在 footer 同行
-.stat-footer-progress {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  .stat-rate-progress {
-    flex: 1;
-    margin-bottom: 0;
-  }
-
-  .stat-trend {
+  // 方形彩色头像(对齐 .avatar-square 36×36 + 4px 圆角)
+  .stat-mini-icon {
     flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+  }
+
+  .stat-mini-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  // 主标题:fw-medium(500) + 14px,不是大数字
+  .stat-mini-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #262626;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // 副文案:text-secondary 灰 + 13px
+  .stat-mini-sub {
+    font-size: 13px;
+    color: #8c8c8c;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 }
 
-// 最近预警 / 到期提醒:Card 内容固定 380px,超出滚动
-// 占位提示(实际规则在通用样式之后,见文件末尾)
+// =================== KPI 卡片(借鉴 OMS 原型) ===================
+//
+// 范式:左上 subheader 灰标签 → 右上彩色涨跌徽章 → 大粗数字 32px →
+//       副文案 → 卡片底部 sparkline 占满宽度,不占行高
+.kpi-card {
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 
-// 卡片通用样式
+  &:hover {
+    box-shadow: 0 4px 12px rgba(18, 18, 23, 0.08), 0 10px 15px -3px rgba(18, 18, 23, 0.06);
+  }
+
+  :global {
+    .ant-card-body {
+      padding: 0 !important;
+    }
+  }
+
+  .kpi-body {
+    padding: 18px 20px 8px;
+  }
+
+  .kpi-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8c8c8c;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .kpi-value {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #1f1f1f;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .kpi-subtext {
+    font-size: 12px;
+    color: #8c8c8c;
+    line-height: 1.5;
+    min-height: 18px;
+  }
+
+  .kpi-sparkline {
+    height: 60px;
+    margin-top: 8px;
+    pointer-events: none;
+  }
+
+  // 大尺寸 KPI 卡(第一行右侧两张) — 96px sparkline 底纹
+  &.kpi-card-lg {
+    .kpi-body {
+      padding: 18px 20px 4px;
+    }
+    .kpi-value {
+      font-size: 36px;
+    }
+  }
+
+  .kpi-sparkline-lg {
+    height: 96px;
+  }
+
+  // 仪表盘卡(gauge) — 内部 sparkline 改成不浮在底,而是占 130px
+  &.kpi-card-gauge {
+    .kpi-body {
+      padding: 18px 20px 0;
+    }
+    .kpi-sparkline {
+      height: 130px !important;
+    }
+  }
+
+  // 仪表盘容器(今日打卡率 Ring)
+  .kpi-gauge {
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  // 涨跌徽章 — 无背景纯色字 + 小箭头(贴近 OMS 原型)
+  .kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+
+    &.trend-up {
+      color: #389e0d;
+    }
+    &.trend-down {
+      color: #cf1322;
+    }
+    &.trend-flat {
+      color: #8c8c8c;
+    }
+  }
+}
+
+// 副文案行内分项徽章(预警细分:红色/活跃/已处置)
+.kpi-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: #595959;
+
+  .pill-critical {
+    color: #cf1322;
+    font-weight: 500;
+  }
+  .pill-warning {
+    color: #d46b08;
+    font-weight: 500;
+  }
+  .pill-info {
+    color: #1677ff;
+    font-weight: 500;
+  }
+}
+
+// =================== squircle 圆角(渐进增强) ===================
+//
+// Chrome 145+ 支持 corner-shape: squircle,做出 iOS 那种"软圆角"
+// 不支持的浏览器 fallback 到普通 8px 圆角
+@supports (corner-shape: squircle) {
+  .dashboard-container .ant-card {
+    corner-shape: squircle;
+    border-radius: 20px !important;
+  }
+}
+
+// =================== 卡片通用样式 ===================
 :global {
   .dashboard-container .ant-card {
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+    transition: box-shadow 0.2s ease;
   }
 
   // 让同一 Row 内的 Card 高度一致
-  // Antd Row 默认 align-items: flex-start,需要强制 stretch 让 Col 撑到最高高度
-  // 注意:.dashboard-scroll-row 这一行通过 body inline style 固定 380px,
-  // 不需要 stretch,因此排除它。
   .dashboard-container .ant-row:not(.dashboard-scroll-row) {
     align-items: stretch;
   }
@@ -126,7 +433,7 @@
 
   .dashboard-container .ant-card-head-title {
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .dashboard-container .ant-list-item {
@@ -139,33 +446,129 @@
 
   .dashboard-container .ant-table-small {
     .ant-table-tbody > tr > td {
-      padding: 8px;
+      padding: 8px 12px;
     }
   }
 
-  // 预警列表表格样式
-  .dashboard-container .ant-table {
-    .ant-table-thead > tr > th {
-      background: #fafafa;
-      font-weight: 600;
-      color: #262626;
-    }
+  // ============================================================
+  // Dashboard 表格 — 对齐 OMS 原型 .table.card-table
+  //
+  // 用 body 前缀提优先级,所有 selector 展平,避免 less 嵌套编译歧义
+  // ============================================================
 
-    .ant-table-tbody > tr {
-      transition: all 0.2s;
+  // ---------- 表头 ----------
+  body .dashboard-container .ant-table-wrapper .ant-table-thead > tr > th {
+    background: #f5f5f5 !important;
+    color: rgba(0, 0, 0, 0.45) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    line-height: 16px !important;
+    padding: 10px 12px !important;
+    white-space: nowrap !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+  body .dashboard-container .ant-table-wrapper .ant-table-thead > tr > th:last-child {
+    border-right: 0 !important;
+  }
+  // 抹掉 antd 默认的列分隔伪元素
+  body .dashboard-container .ant-table-wrapper .ant-table-thead > tr > th::before {
+    display: none !important;
+    width: 0 !important;
+    background-color: transparent !important;
+  }
 
-      &:hover {
-        background: #f5f5f5;
-      }
-    }
+  // ---------- 表体单元格 ----------
+  body .dashboard-container .ant-table-wrapper .ant-table-tbody > tr > td {
+    background: #fff !important;
+    color: rgba(0, 0, 0, 0.85) !important;
+    font-size: 13px !important;
+    padding: 12px 12px !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  }
+  // size="small" 时减 padding
+  body .dashboard-container .ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
+    padding: 8px 12px !important;
+  }
 
-    .ant-table-cell {
-      font-size: 13px;
-    }
+  // ---------- 行 hover (覆盖 antd 5.7+ 的 .ant-table-cell-row-hover) ----------
+  body .dashboard-container .ant-table-wrapper .ant-table-tbody > tr:hover > td,
+  body .dashboard-container .ant-table-wrapper .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+  }
 
-    .ant-btn-link {
-      padding: 0 8px;
-    }
+  // ---------- 行选中 ----------
+  body .dashboard-container .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
+    background: rgba(22, 119, 255, 0.05) !important;
+  }
+
+  // ---------- 行内文字按钮 ----------
+  body .dashboard-container .ant-table-wrapper .ant-btn-link {
+    padding: 0 !important;
+    height: auto !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+  }
+  body .dashboard-container .ant-table-wrapper .ant-btn-link + .ant-btn-link {
+    margin-left: 10px !important;
+  }
+
+  // ============================================================
+  // Dashboard Tag — 对齐 Tabler bg-{color}-lt
+  // 「同色文字 + 同色 12% 浅底 + 0 边框 + 4px 圆角」
+  // ============================================================
+
+  body .dashboard-container .ant-tag {
+    border: 0 !important;
+    padding: 2px 8px !important;
+    line-height: 18px !important;
+    font-size: 12px !important;
+    border-radius: 4px !important;
+    margin-inline-end: 4px !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: rgba(0, 0, 0, 0.65) !important;
+  }
+  // 红色系
+  body .dashboard-container .ant-tag.ant-tag-red,
+  body .dashboard-container .ant-tag.ant-tag-error {
+    color: #cf1322 !important;
+    background: rgba(255, 77, 79, 0.12) !important;
+  }
+  // 橙色系
+  body .dashboard-container .ant-tag.ant-tag-orange,
+  body .dashboard-container .ant-tag.ant-tag-warning {
+    color: #d46b08 !important;
+    background: rgba(250, 140, 22, 0.12) !important;
+  }
+  // 黄色系
+  body .dashboard-container .ant-tag.ant-tag-gold,
+  body .dashboard-container .ant-tag.ant-tag-yellow {
+    color: #d48806 !important;
+    background: rgba(250, 173, 20, 0.12) !important;
+  }
+  // 绿色系
+  body .dashboard-container .ant-tag.ant-tag-green,
+  body .dashboard-container .ant-tag.ant-tag-success {
+    color: #389e0d !important;
+    background: rgba(82, 196, 26, 0.12) !important;
+  }
+  // 蓝色系
+  body .dashboard-container .ant-tag.ant-tag-blue,
+  body .dashboard-container .ant-tag.ant-tag-processing {
+    color: #1677ff !important;
+    background: rgba(22, 119, 255, 0.12) !important;
+  }
+  // 紫色系
+  body .dashboard-container .ant-tag.ant-tag-purple {
+    color: #722ed1 !important;
+    background: rgba(114, 46, 209, 0.12) !important;
+  }
+  // 青色系
+  body .dashboard-container .ant-tag.ant-tag-cyan {
+    color: #08979c !important;
+    background: rgba(19, 194, 194, 0.12) !important;
   }
 }
 
@@ -175,18 +578,12 @@
     padding: 16px;
   }
 
-  .stat-card {
-    :global {
-      .ant-statistic-content {
-        font-size: 20px;
-      }
-    }
+  .kpi-card .kpi-value {
+    font-size: 24px;
   }
 }
 
 // 最近预警 / 到期提醒:Card 内容固定 380px,超出滚动
-// 必须放在 "通用 .ant-row > .ant-col > .ant-card { flex: 1 }" 规则之后,
-// 同特异性时后写胜出。
 :global {
   .dashboard-container .ant-row > .ant-col.dashboard-scroll-col {
     display: block !important;

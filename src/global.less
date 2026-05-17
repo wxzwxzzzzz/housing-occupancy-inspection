@@ -154,3 +154,142 @@ ol {
   border-color: #1677ff !important;
   box-shadow: 0 2px 8px rgba(22, 119, 255, 0.25) !important;
 }
+
+/*
+ * Layout: Header 项目名 logo 区(可点击切换左 rail)
+ * - hover 浅灰反馈
+ */
+.layout-brand:hover {
+  opacity: 0.78;
+}
+.layout-brand:active {
+  opacity: 0.65;
+}
+
+/*
+ * Layout: Tab 栏(鱼鳍风) — 借鉴 OMS 原型
+ * - 容器灰色底 + 主色 10% 底边
+ * - 单 Tab 30px 高、圆角顶、active 主色 10% 背景 + 主色文字
+ * - active 左右底部用 radial-gradient 做切角
+ * - X 按钮默认隐藏,hover/active 才显
+ */
+.app-layout-tabbar {
+  border-bottom: 1px solid color-mix(in srgb, #1677ff 12%, transparent);
+}
+.app-layout-tabs.ant-tabs {
+  /* 容器整体 */
+  .ant-tabs-nav {
+    margin: 0;
+    height: 36px;
+    min-height: 36px;
+  }
+  .ant-tabs-nav::before {
+    display: none;
+  }
+  .ant-tabs-nav-list {
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  /* 单个 Tab 卡片 */
+  .ant-tabs-tab {
+    height: 30px;
+    margin: 0 !important;
+    padding: 0 12px 0 14px !important;
+    border: 0 !important;
+    background: transparent !important;
+    border-radius: 8px 8px 0 0 !important;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.55) !important;
+    transition: background 0.15s ease, color 0.15s ease;
+    position: relative;
+  }
+  .ant-tabs-tab:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: rgba(0, 0, 0, 0.88) !important;
+  }
+  .ant-tabs-tab-active {
+    background: color-mix(in srgb, #1677ff 10%, transparent) !important;
+    border-radius: 10px 10px 0 0 !important;
+    overflow: visible !important;
+  }
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #1677ff !important;
+    font-weight: 600 !important;
+  }
+  /* 鱼鳍切角:active tab 左右底部用 radial-gradient 做出弧形 */
+  .ant-tabs-tab-active::before,
+  .ant-tabs-tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+  }
+  .ant-tabs-tab-active::before {
+    left: -10px;
+    background: radial-gradient(
+      circle at 0 0,
+      transparent 10px,
+      color-mix(in srgb, #1677ff 10%, transparent) 10px
+    );
+  }
+  .ant-tabs-tab-active::after {
+    right: -10px;
+    background: radial-gradient(
+      circle at 100% 0,
+      transparent 10px,
+      color-mix(in srgb, #1677ff 10%, transparent) 10px
+    );
+  }
+
+  /* X 关闭按钮:默认隐藏,hover/active 显示 */
+  .ant-tabs-tab .ant-tabs-tab-remove {
+    margin-left: 6px;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    color: inherit !important;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .ant-tabs-tab:hover .ant-tabs-tab-remove,
+  .ant-tabs-tab-active .ant-tabs-tab-remove {
+    opacity: 1;
+  }
+  .ant-tabs-tab-remove:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* 隐藏底部 ink-bar(card 模式不需要) */
+  .ant-tabs-ink-bar {
+    display: none !important;
+  }
+}
+
+/*
+ * Layout: 左侧主菜单 inline item — 紧凑 + 选中态左 3px 主色边
+ */
+.ant-layout-sider .ant-menu-inline > .ant-menu-item,
+.ant-layout-sider .ant-menu-inline .ant-menu-submenu-title {
+  height: 36px !important;
+  line-height: 36px !important;
+  margin-block: 2px !important;
+}
+.ant-layout-sider .ant-menu-inline .ant-menu-item-selected {
+  position: relative;
+}
+.ant-layout-sider .ant-menu-inline .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  background: #1677ff;
+  border-radius: 0 2px 2px 0;
+}

@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useEffect} from 'react'
-import {Layout, Menu, Avatar, Dropdown, Badge, Popover, List, Button, Space, Tabs} from 'antd'
+import {Layout, Menu, Avatar, Dropdown, Badge, Popover, List, Button, Space, Tabs, Tooltip} from 'antd'
 import {
   FileTextOutlined,
   WarningOutlined,
@@ -99,13 +99,24 @@ function dynamicTabTitle(pathname: string): string | null {
 
 // 本地存储键名
 const TABS_STORAGE_KEY = 'app_tabs'
+const LEFT_RAIL_KEY = 'layout_left_rail_expanded'
 
 const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({children}) => {
   const location = useLocation()
   const navigate = useNavigate()
   const [notificationOpen, setNotificationOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
   const [activeQuickMenu, setActiveQuickMenu] = useState<string | null>(null)
+
+  // 左侧主菜单 rail 展开/收起 — 收起时 56px 只显图标(rail 模式)
+  const [leftExpanded, setLeftExpanded] = useState<boolean>(() => {
+    const v = localStorage.getItem(LEFT_RAIL_KEY)
+    return v === null ? true : v === 'true'
+  })
+  useEffect(() => {
+    localStorage.setItem(LEFT_RAIL_KEY, String(leftExpanded))
+  }, [leftExpanded])
+
+  const collapsed = !leftExpanded
 
   // 页签状态管理
   const [tabs, setTabs] = useState<TabItem[]>(() => {
@@ -174,6 +185,22 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
 
     setTabs(newTabs)
   }
+
+  // Ctrl/Cmd + W 关闭当前 Tab(工作台不可关闭)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'w' || e.key === 'W')) {
+        const current = tabs.find(t => t.path === location.pathname)
+        if (current && current.closable) {
+          e.preventDefault()
+          handleTabRemove(current.key)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs, location.pathname])
 
   // 关闭其他页签
   const handleCloseOthers = () => {
@@ -543,22 +570,37 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          boxShadow: '0 1px 4px rgba(0,21,41,.08)',
+          borderBottom: '1px solid #f0f0f0',
           height: 64,
           flexShrink: 0,
         }}>
-          <div style={{
-            height: 64,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18,
-            fontWeight: 600,
-            color: '#000',
-            background: 'rgba(255,255,255,0.1)'
-          }}>
-            {collapsed ? '公租房' : '公租房监测系统'}
-          </div>
+          <Tooltip
+            placement="bottomRight"
+            title={leftExpanded ? '收起菜单' : '展开菜单'}
+            mouseEnterDelay={0.4}
+          >
+            <div
+              className="layout-brand"
+              onClick={() => setLeftExpanded(v => !v)}
+              style={{
+                height: 64,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: 10,
+                paddingRight: 16,
+                fontSize: 18,
+                fontWeight: 600,
+                color: '#1677ff',
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'opacity .15s ease',
+              }}
+            >
+              <DashboardOutlined style={{fontSize: 22}}/>
+              {collapsed ? '公租房' : '公租房监测系统'}
+            </div>
+          </Tooltip>
           <Space size={24}>
 
             {/* 通知消息 */}
@@ -587,16 +629,17 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
             </Dropdown>
           </Space>
         </Header>
-        <Layout style={{height: 'calc(100vh - 64px)'}}>
+        <Layout style={{height: 'calc(100vh - 64px)', position: 'relative'}}>
           <Sider
-            collapsible
             collapsed={collapsed}
-            onCollapse={setCollapsed}
+            collapsedWidth={56}
             width={220}
-            theme={"light" }
+            theme={"light"}
+            trigger={null}
             style={{
               height: '100%',
               overflow: 'auto',
+              transition: 'width .2s cubic-bezier(.2,.8,.2,1)',
             }}
           >
 
@@ -619,13 +662,13 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
             height: 'calc(100vh - 64px)', // 减去 Header 高度
           }}>
             {/* 页签栏 */}
-            <div style={{
-              background: '#fff',
+            <div className="app-layout-tabbar" style={{
+              background: '#fafafa',
               padding: '0',
-              borderBottom: '1px solid #f0f0f0',
-              flexShrink: 0, // 防止页签栏被压缩
+              flexShrink: 0,
             }}>
               <Tabs
+                className="app-layout-tabs"
                 type="editable-card"
                 activeKey={location.pathname}
                 onChange={handleTabChange}
@@ -659,7 +702,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
                       }}
                       trigger={['click']}
                     >
-                      <Button type="primary"  size="small" style={{marginRight: 8}}>
+                      <Button type="text"  size="small" style={{marginRight: 8}}>
                         操作
                       </Button>
                     </Dropdown>
@@ -667,7 +710,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
                 }}
                 style={{
                   margin: 0,
-                  padding: '4px 16px 0',
+                  padding: '6px 12px 0',
                 }}
               />
             </div>
@@ -681,50 +724,45 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
             </Content>
           </Layout>
 
-          {/* 右侧快捷菜单面板 - 优化后的设计 */}
+          {/* 右侧快捷菜单子面板 — 点击 rail 图标弹出 */}
           {activeQuickMenu && (
             <Sider
-              width={260}
+              width={280}
               theme="light"
               style={{
                 background: '#fff',
-                borderLeft: '1px solid #e8e8e8',
-                boxShadow: '-4px 0 12px rgba(0,0,0,0.04)',
+                borderLeft: '1px solid #f0f0f0',
               }}
             >
-              {/* 面板标题 */}
+              {/* 面板头部 — 紧凑纯白 */}
               <div style={{
-                padding: '20px 24px',
+                padding: '12px 16px',
                 borderBottom: '1px solid #f0f0f0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: `linear-gradient(135deg, ${quickMenuGroups.find((g) => g.key === activeQuickMenu)?.lightColor} 0%, #fff 100%)`,
+                background: '#fff',
+                height: 48,
+                flexShrink: 0,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{
-                    fontSize: 20,
-                    color: quickMenuGroups.find((g) => g.key === activeQuickMenu)?.color,
-                  }}>
-                    {quickMenuGroups.find((g) => g.key === activeQuickMenu)?.icon}
-                  </span>
-                  <span style={{
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: '#262626',
-                    letterSpacing: '0.3px',
-                  }}>
-                    {quickMenuGroups.find((g) => g.key === activeQuickMenu)?.label}
-                  </span>
-                </div>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CloseOutlined />}
+                <span style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#262626',
+                }}>
+                  {quickMenuGroups.find((g) => g.key === activeQuickMenu)?.label}
+                </span>
+                <div
                   onClick={() => setActiveQuickMenu(null)}
                   style={{
+                    width: 28,
+                    height: 28,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
                     color: '#8c8c8c',
-                    transition: 'all 0.2s',
+                    transition: 'background .15s ease, color .15s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = '#262626';
@@ -734,85 +772,65 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
                     e.currentTarget.style.color = '#8c8c8c';
                     e.currentTarget.style.background = 'transparent';
                   }}
-                />
+                >
+                  <CloseOutlined style={{fontSize: 14}}/>
+                </div>
               </div>
 
-              {/* 菜单列表 */}
+              {/* 菜单列表 — 紧凑 */}
               <div style={{
-                height: 'calc(100vh - 64px - 61px)',
+                height: 'calc(100vh - 64px - 48px)',
                 overflowY: 'auto',
-                padding: '12px 8px',
+                padding: '8px 8px',
               }}>
                 {quickMenuGroups
                   .find((g) => g.key === activeQuickMenu)
                   ?.children.map((item, index) => {
                     const isActive = location.pathname === item.path;
-                    const groupColor = quickMenuGroups.find((g) => g.key === activeQuickMenu)?.color || '#1890ff';
+                    const groupColor = quickMenuGroups.find((g) => g.key === activeQuickMenu)?.color || '#1677ff';
 
                     return (
                       <div
                         key={index}
                         style={{
-                          margin: '4px 0',
-                          padding: '14px 16px',
+                          margin: '2px 0',
+                          padding: '10px 12px',
+                          paddingLeft: isActive ? 9 : 12,
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 14,
-                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                          background: isActive
-                            ? `linear-gradient(90deg, ${groupColor}15 0%, ${groupColor}08 100%)`
-                            : 'transparent',
-                          borderRadius: 10,
+                          gap: 10,
+                          transition: 'background .15s ease, color .15s ease',
+                          background: isActive ? `${groupColor}14` : 'transparent',
+                          borderRadius: 6,
                           borderLeft: isActive ? `3px solid ${groupColor}` : '3px solid transparent',
-                          position: 'relative',
-                          overflow: 'hidden',
                         }}
                         onClick={() => handleQuickMenuItemClick(item.path)}
                         onMouseEnter={(e) => {
                           if (!isActive) {
                             e.currentTarget.style.background = '#fafafa';
-                            e.currentTarget.style.transform = 'translateX(2px)';
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (!isActive) {
                             e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.transform = 'translateX(0)';
                           }
                         }}
                       >
-                        {/* 激活状态的背景装饰 */}
-                        {isActive && (
-                          <div style={{
-                            position: 'absolute',
-                            right: -10,
-                            top: -10,
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            background: `${groupColor}10`,
-                            pointerEvents: 'none',
-                          }} />
-                        )}
-
                         <span style={{
-                          fontSize: 20,
+                          fontSize: 16,
                           color: isActive ? groupColor : '#8c8c8c',
-                          transition: 'all 0.25s',
-                          position: 'relative',
-                          zIndex: 1,
+                          lineHeight: 1,
+                          display: 'flex',
+                          alignItems: 'center',
                         }}>
                           {item.icon}
                         </span>
                         <span style={{
-                          fontSize: 14,
+                          fontSize: 13,
                           color: isActive ? groupColor : '#262626',
-                          fontWeight: isActive ? 600 : 500,
-                          transition: 'all 0.25s',
-                          position: 'relative',
-                          zIndex: 1,
-                          letterSpacing: '0.3px',
+                          fontWeight: isActive ? 600 : 400,
+                          lineHeight: 1,
                         }}>
                           {item.label}
                         </span>
@@ -823,84 +841,57 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(({childre
             </Sider>
           )}
 
-          {/* 右侧快捷菜单按钮 - 极简线条风格优化版 */}
+          {/* 右侧 rail — 固定 44px,点图标弹/收子菜单 */}
           <Sider
-            width={72}
+            width={44}
             theme="light"
             style={{
               background: '#fff',
               borderLeft: '1px solid #f0f0f0',
+              flex: '0 0 auto',
             }}
           >
             <div style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              padding: '40px 0',
-              gap: 32,
+              padding: '12px 0',
+              gap: 8,
             }}>
               {quickMenuGroups.map((group) => {
                 const isActive = activeQuickMenu === group.key;
                 return (
-                  <div
-                    key={group.key}
-                    style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: 14,
-                      background: isActive ? `${group.color}08` : 'transparent',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      border: isActive ? `1.5px solid ${group.color}` : '1.5px solid transparent',
-                      position: 'relative',
-                      padding: '10px 6px',
-                    }}
-                    onClick={() => handleQuickMenuToggle(group.key)}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = '#fafafa';
-                        e.currentTarget.style.border = `1.5px solid #e8e8e8`;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.border = '1.5px solid transparent';
-                      }
-                    }}
-                  >
-                    <span
-                      className="quick-icon"
+                  <Tooltip key={group.key} placement="left" title={group.label} mouseEnterDelay={0.3}>
+                    <div
                       style={{
-                        fontSize: 24,
-                        color: isActive ? group.color : '#bfbfbf',
-                        transition: 'color 0.2s ease',
-                        fontWeight: 300,
-                        lineHeight: 1,
-                        marginBottom: 8,
+                        width: 34,
+                        height: 34,
+                        borderRadius: 8,
+                        background: isActive ? `${group.color}15` : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        color: isActive ? group.color : '#8c8c8c',
+                      }}
+                      onClick={() => handleQuickMenuToggle(group.key)}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = '#fafafa';
+                          e.currentTarget.style.color = '#1677ff';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = '#8c8c8c';
+                        }
                       }}
                     >
-                      {group.icon}
-                    </span>
-                    <span
-                      className="quick-label"
-                      style={{
-                        fontSize: 11,
-                        color: isActive ? group.color : '#bfbfbf',
-                        fontWeight: isActive ? 500 : 400,
-                        transition: 'color 0.2s ease',
-                        letterSpacing: '0.3px',
-                        lineHeight: 1.2,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {group.label}
-                    </span>
-                  </div>
+                      <span style={{fontSize: 18, lineHeight: 1}}>{group.icon}</span>
+                    </div>
+                  </Tooltip>
                 );
               })}
             </div>
