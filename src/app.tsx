@@ -1,7 +1,8 @@
 import '@ant-design/v5-patch-for-react-19';
 import { history } from '@umijs/max';
-import { userStore, appStore, dashboardStore } from './stores';
 import { errorConfig } from './requestErrorConfig';
+import { appStore, dashboardStore, userStore } from './stores';
+import type { CurrentUser } from './stores/userStore';
 
 const loginPath = '/login';
 
@@ -9,7 +10,7 @@ const loginPath = '/login';
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
  */
 export async function getInitialState(): Promise<{
-  currentUser?: any;
+  currentUser?: CurrentUser | null;
   loading?: boolean;
 }> {
   const { location } = history;

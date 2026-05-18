@@ -14,7 +14,16 @@
       "WebFetch(domain:site.logic-flow.cn)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.logic-flow.cn)",
-      "Bash(npm i:*)"
+      "Bash(npm i:*)",
+      "Bash(awk 'NR==12' /Users/xz/work/housing-occupancy-inspection/src/app.tsx)",
+      "Bash(xxd)",
+      "Bash(awk 'NR>=11 && NR<=14' /Users/xz/work/housing-occupancy-inspection/src/app.tsx)",
+      "Bash(awk NR>=10 && NR<=15 {print NR\": \"$0} *)",
+      "Bash(awk NR>=1 && NR<=10 {print NR\": \"$0} *)",
+      "Bash(awk NR<=8 {print NR\": \"$0} *)",
+      "Bash(awk NR>=140 *)",
+      "Bash(awk NR>=140 && NR<=170 {print NR\": \"$0} *)",
+      "Bash(git stash *)"
     ],
     "deny": [],
     "ask": []
