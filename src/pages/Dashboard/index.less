@@ -20,10 +20,12 @@
   color: rgba(0, 0, 0, 0.85);
   border: 0;
   box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+  height: 100%;
 
   :global {
     .ant-card-body {
       padding: 24px 28px !important;
+      height: 100%;
     }
   }
 
@@ -32,6 +34,7 @@
     grid-template-columns: 1fr 220px;
     gap: 24px;
     align-items: center;
+    height: 100%;
     min-height: 168px;
   }
 
@@ -249,6 +252,7 @@
   border-radius: 8px;
   overflow: hidden;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  height: 100%;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(18, 18, 23, 0.08), 0 10px 15px -3px rgba(18, 18, 23, 0.06);
@@ -257,11 +261,15 @@
   :global {
     .ant-card-body {
       padding: 0 !important;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
   }
 
   .kpi-body {
     padding: 18px 20px 8px;
+    flex-shrink: 0;
   }
 
   .kpi-head {
@@ -300,9 +308,18 @@
     height: 60px;
     margin-top: 8px;
     pointer-events: none;
+    flex: 1;
+    min-height: 60px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: stretch;
+
+    > div {
+      width: 100%;
+    }
   }
 
-  // 大尺寸 KPI 卡(第一行右侧两张) — 96px sparkline 底纹
+  // 大尺寸 KPI 卡(第一行右侧两张) — sparkline 占满剩余高度
   &.kpi-card-lg {
     .kpi-body {
       padding: 18px 20px 4px;
@@ -310,19 +327,54 @@
     .kpi-value {
       font-size: 36px;
     }
+    .kpi-sparkline {
+      min-height: 96px;
+    }
   }
 
   .kpi-sparkline-lg {
-    height: 96px;
+    min-height: 96px;
   }
 
-  // 仪表盘卡(gauge) — 内部 sparkline 改成不浮在底,而是占 130px
+  // 仪表盘卡(gauge) — Ring 居中
   &.kpi-card-gauge {
     .kpi-body {
       padding: 18px 20px 0;
     }
     .kpi-sparkline {
-      height: 130px !important;
+      align-items: center;
+      justify-content: center;
+      min-height: 130px !important;
+    }
+  }
+
+  // 简洁版 KPI 卡(无 sparkline,大数字居中) — 跟 gauge 卡对称
+  &.kpi-card-simple {
+    .kpi-body {
+      padding: 18px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .kpi-big-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 0;
+    }
+    .kpi-big-value {
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1;
+      color: #1f1f1f;
+      letter-spacing: -1px;
+    }
+    .kpi-big-sub {
+      font-size: 13px;
+      color: #8c8c8c;
     }
   }
 

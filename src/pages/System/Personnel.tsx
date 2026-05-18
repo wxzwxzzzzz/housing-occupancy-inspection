@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Avatar,
   Button,
-  Descriptions,
   Form,
   Input,
   message,
@@ -16,16 +15,20 @@ import {
   EditOutlined,
   LockOutlined,
   PlusOutlined,
-  SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from '@umijs/max';
 import type { ColumnsType } from 'antd/es/table';
 import { userService } from '@/services/domains/arche';
 import { authService } from '@/services/domains/auth';
 import { qb } from '@/services/ontology/query';
 import { OT } from '@/services/ontology/object-types';
 import type { User } from '@/types/ontology/ap/arche/user';
-import MasterDetailListPage from '@/components/MasterDetailListPage';
+import {
+  OmnibarListPage,
+  type FilterConfig,
+  type ToolbarAction,
+} from '@/components/OmnibarPage';
 
 const ROLE_OPTIONS = [
   { label: '系统管理员', value: 'ADMIN' },
@@ -46,22 +49,42 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const SystemPersonnel: React.FC = () => {
-  const [searchForm] = Form.useForm<{ keyword?: string; roleFilter?: string }>();
-  const [filters, setFilters] = useState<{ keyword?: string; roleFilter?: string }>({});
+  const navigate = useNavigate();
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [data, setData] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
 
-  const buildQuery = useMemo(
-    () => () => {
-      const builder = qb(OT.User).orderBy('createAt', 'DESC');
-      if (filters.keyword) builder.like('account', filters.keyword);
-      if (filters.roleFilter) builder.eq('userType', filters.roleFilter);
-      return builder.build();
+  const load = useCallback(
+    async (p = page, s = pageSize, override?: Record<string, any>) => {
+      setLoading(true);
+      try {
+        const v = override ?? filterValues;
+        const builder = qb(OT.User).orderBy('createAt', 'DESC').page(p, s);
+        if (v.keyword) builder.like('account', v.keyword);
+        if (v.userType) builder.eq('userType', v.userType);
+        const env = await userService.list(builder.build() as any);
+        setData(env.data);
+        setTotal(env.page?.total ?? env.data.length);
+      } finally {
+        setLoading(false);
+      }
     },
-    [filters],
+    [filterValues, page, pageSize],
   );
+
+  useEffect(() => {
+    load(1, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAdd = () => {
     setEditing(null);
@@ -73,7 +96,7 @@ const SystemPersonnel: React.FC = () => {
   const handleEdit = (record: User) => {
     setEditing(record);
     form.setFieldsValue({
-      account: record.account,
+      account: (record as any).account,
       fullName: (record as any).fullName,
       phone: (record as any).phone,
       email: (record as any).email,
@@ -100,28 +123,52 @@ const SystemPersonnel: React.FC = () => {
         message.success('新增成功');
       }
       setModalOpen(false);
+      load(1, pageSize);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const filters: FilterConfig[] = [
+    { key: 'keyword', label: '账号', type: 'input', placeholder: '账号关键字' },
+    {
+      key: 'userType',
+      label: '用户类型',
+      type: 'quick',
+      options: [
+        { value: '', label: '全部' },
+        ...ROLE_OPTIONS.map((r) => ({ value: r.value, label: r.label })),
+      ],
+    },
+  ];
+
+  const toolbarActions: ToolbarAction[] = [
+    { key: 'add', label: '新增', type: 'primary', icon: <PlusOutlined />, onClick: handleAdd },
+  ];
+
   const columns: ColumnsType<User> = [
     {
       title: '账号',
       dataIndex: 'account',
-      width: 150,
-      render: (text: string) => (
+      width: 180,
+      render: (text: string, record: any) => (
         <Space>
           <Avatar icon={<UserOutlined />} size="small" />
-          <span>{text}</span>
+          <span
+            className="opp-link-cell"
+            onClick={() => navigate(`/system/personnel/detail/${record.id}`)}
+          >
+            {text}
+          </span>
         </Space>
       ),
     },
     { title: '姓名', dataIndex: 'fullName', width: 110 },
+    { title: '手机', dataIndex: 'phone', width: 130 },
     {
       title: '类型',
       dataIndex: 'userType',
-      width: 100,
+      width: 110,
       render: (v: string) => (
         <Tag color="blue">{ROLE_OPTIONS.find((r) => r.value === v)?.label ?? v}</Tag>
       ),
@@ -129,179 +176,99 @@ const SystemPersonnel: React.FC = () => {
     {
       title: '状态',
       dataIndex: 'status',
-      width: 90,
+      width: 100,
       render: (v: string) => (
         <Tag color={STATUS_COLOR[v] ?? 'default'}>{STATUS_LABEL[v] ?? v}</Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 220,
+      render: (_: any, record: any) => (
+        <span className="opp-row-actions">
+          <span
+            className="opp-row-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/system/personnel/detail/${record.id}`);
+            }}
+          >
+            查看
+          </span>
+          <span
+            className="opp-row-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(record);
+            }}
+          >
+            <EditOutlined /> 编辑
+          </span>
+          <span
+            className="opp-row-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              Modal.confirm({
+                title: '锁定账户',
+                content: `确定锁定 ${record.account}?`,
+                onOk: async () => {
+                  await authService.lockAccount(record.id);
+                  message.success('已锁定');
+                  load();
+                },
+              });
+            }}
+          >
+            <LockOutlined /> 锁定
+          </span>
+          <span
+            className="opp-row-action danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              Modal.confirm({
+                title: '删除人员',
+                content: `确定删除 ${record.account}?`,
+                okType: 'danger',
+                onOk: async () => {
+                  await userService.delete(record.id);
+                  message.success('已删除');
+                  load();
+                },
+              });
+            }}
+          >
+            <DeleteOutlined /> 删除
+          </span>
+        </span>
       ),
     },
   ];
 
   return (
-    <>
-      <MasterDetailListPage<User>
-        title="人员管理"
-        service={userService as any}
-        buildQuery={buildQuery}
+    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+      <OmnibarListPage<User>
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={setFilterValues}
+        onSearch={() => load(1, pageSize)}
+        toolbarActions={toolbarActions}
+        data={data}
         columns={columns}
-        storageKey="system-personnel"
-        rowContextMenuItems={(record, ctx) => [
-          {
-            key: 'edit',
-            label: '编辑',
-            onClick: () => handleEdit(record),
-          },
-          {
-            key: 'lock',
-            label: '锁定账户',
-            onClick: () =>
-              Modal.confirm({
-                title: '锁定账户',
-                content: `确定锁定 ${(record as any).account}?`,
-                onOk: async () => {
-                  await authService.lockAccount((record as any).id);
-                  message.success('已锁定');
-                  ctx.reload();
-                },
-              }),
-          },
-          { type: 'divider' },
-          {
-            key: 'delete',
-            label: '删除',
-            danger: true,
-            onClick: () =>
-              Modal.confirm({
-                title: '删除人员',
-                content: `确定删除 ${(record as any).account}?`,
-                okType: 'danger',
-                onOk: async () => {
-                  await userService.delete((record as any).id);
-                  message.success('已删除');
-                  ctx.reload();
-                },
-              }),
-          },
-        ]}
-        toolbar={
-          <Form
-            form={searchForm}
-            layout="inline"
-            onFinish={(v) => setFilters(v)}
-          >
-            <Form.Item name="keyword">
-              <Input
-                placeholder="账号关键字"
-                prefix={<SearchOutlined />}
-                style={{ width: 180 }}
-                allowClear
-              />
-            </Form.Item>
-            <Form.Item name="roleFilter">
-              <Select
-                placeholder="用户类型"
-                style={{ width: 130 }}
-                allowClear
-                options={ROLE_OPTIONS}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Space>
-                <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-                  查询
-                </Button>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                  新增
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        }
-        renderDetailHeader={(record) => (
-          <Space>
-            <Avatar size={36} icon={<UserOutlined />}>
-              {(record as any).fullName?.[0]}
-            </Avatar>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 600 }}>
-                {(record as any).fullName ?? (record as any).account}
-              </div>
-              <div style={{ color: '#8c8c8c', fontSize: 12 }}>
-                {(record as any).account}
-              </div>
-            </div>
-          </Space>
-        )}
-        renderDetail={(record) => (
-          <Descriptions bordered column={1} size="middle">
-            <Descriptions.Item label="账号">{(record as any).account}</Descriptions.Item>
-            <Descriptions.Item label="姓名">{(record as any).fullName ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="手机">{(record as any).phone ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="邮箱">{(record as any).email ?? '-'}</Descriptions.Item>
-            <Descriptions.Item label="用户类型">
-              <Tag color="blue">
-                {ROLE_OPTIONS.find((r) => r.value === (record as any).userType)?.label ??
-                  (record as any).userType}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="状态">
-              <Tag color={STATUS_COLOR[(record as any).status] ?? 'default'}>
-                {STATUS_LABEL[(record as any).status] ?? (record as any).status}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="最近登录">
-              {(record as any).lastSignInAt
-                ? new Date((record as any).lastSignInAt).toLocaleString()
-                : '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="创建时间">
-              {(record as any).createAt
-                ? new Date((record as any).createAt).toLocaleString()
-                : '-'}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-        renderDetailActions={(record, ctx) => (
-          <>
-            <Button icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-              编辑
-            </Button>
-            <Button
-              icon={<LockOutlined />}
-              onClick={() =>
-                Modal.confirm({
-                  title: '锁定账户',
-                  content: `确定锁定 ${(record as any).account}?`,
-                  onOk: async () => {
-                    await authService.lockAccount((record as any).id);
-                    message.success('已锁定');
-                    ctx.reload();
-                  },
-                })
-              }
-            >
-              锁定
-            </Button>
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() =>
-                Modal.confirm({
-                  title: '删除人员',
-                  content: `确定删除 ${(record as any).account}?`,
-                  okType: 'danger',
-                  onOk: async () => {
-                    await userService.delete((record as any).id);
-                    message.success('已删除');
-                    ctx.selectNext();
-                    ctx.reload();
-                  },
-                })
-              }
-            >
-              删除
-            </Button>
-          </>
-        )}
+        loading={loading}
+        rowKey="id"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+        showCheckbox
+        showIndex
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={(p, s) => {
+          setPage(p);
+          setPageSize(s);
+          load(p, s);
+        }}
       />
 
       <Modal
@@ -316,18 +283,10 @@ const SystemPersonnel: React.FC = () => {
         width={520}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="fullName"
-            label="姓名"
-            rules={[{ required: true, message: '请输入姓名' }]}
-          >
+          <Form.Item name="fullName" label="姓名" rules={[{ required: true, message: '请输入姓名' }]}>
             <Input placeholder="请输入姓名" />
           </Form.Item>
-          <Form.Item
-            name="account"
-            label="账号"
-            rules={[{ required: true, message: '请输入账号' }]}
-          >
+          <Form.Item name="account" label="账号" rules={[{ required: true, message: '请输入账号' }]}>
             <Input placeholder="请输入登录账号" disabled={!!editing} />
           </Form.Item>
           {!editing && (
@@ -346,11 +305,7 @@ const SystemPersonnel: React.FC = () => {
           >
             <Input placeholder="可选" maxLength={11} />
           </Form.Item>
-          <Form.Item
-            name="email"
-            label="邮箱"
-            rules={[{ type: 'email', message: '邮箱格式不正确' }]}
-          >
+          <Form.Item name="email" label="邮箱" rules={[{ type: 'email', message: '邮箱格式不正确' }]}>
             <Input placeholder="可选" />
           </Form.Item>
           <Form.Item name="userType" label="用户类型" rules={[{ required: true }]}>
@@ -366,7 +321,7 @@ const SystemPersonnel: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </>
+    </div>
   );
 };
 

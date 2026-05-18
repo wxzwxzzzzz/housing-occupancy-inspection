@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { Card, Table, Button, Space, Input, Modal, Form, message, Tag, Tree, Divider } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, message, Tag, Tree, Divider, Space } from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SafetyOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
+import {
+  OmnibarListPage,
+  type FilterConfig,
+  type ToolbarAction,
+} from '@/components/OmnibarPage';
 
 interface RoleItem {
   id: string;
@@ -15,6 +25,50 @@ interface RoleItem {
   createTime: string;
 }
 
+const permissionTreeData: DataNode[] = [
+  { title: '工作台', key: 'dashboard', children: [{ title: '查看工作台', key: 'dashboard:view' }] },
+  {
+    title: '监测与处置',
+    key: 'monitor',
+    children: [
+      { title: '打卡核验', key: 'monitor:attendance' },
+      { title: '预警处置', key: 'monitor:alert' },
+      { title: '预警详情', key: 'monitor:alert:detail' },
+    ],
+  },
+  {
+    title: '申请与审批',
+    key: 'approval',
+    children: [
+      { title: '材料审批', key: 'approval:material' },
+      { title: '请假管理', key: 'approval:leave' },
+      { title: '备案管理', key: 'approval:filing' },
+      { title: '审批通过', key: 'approval:approve' },
+      { title: '审批拒绝', key: 'approval:reject' },
+    ],
+  },
+  {
+    title: '分析与报表',
+    key: 'report',
+    children: [
+      { title: '数据统计', key: 'report:statistics' },
+      { title: '报表导出', key: 'report:export' },
+    ],
+  },
+  {
+    title: '系统与运维',
+    key: 'system',
+    children: [
+      { title: '消息中心', key: 'system:message' },
+      { title: '人员管理', key: 'system:personnel' },
+      { title: '角色管理', key: 'system:role' },
+      { title: '菜单配置', key: 'system:menu' },
+      { title: '系统配置', key: 'system:config' },
+      { title: '日志审计', key: 'system:log' },
+    ],
+  },
+];
+
 const SystemRole: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -24,13 +78,17 @@ const SystemRole: React.FC = () => {
   const [checkedKeys, setCheckedKeys] = useState<React.Key[]>([]);
   const [form] = Form.useForm();
 
-  // 模拟数据
-  const [dataSource] = useState<RoleItem[]>([
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+
+  const [dataSource, setDataSource] = useState<RoleItem[]>([
     {
       id: '1',
       name: '系统管理员',
       code: 'admin',
-      description: '系统最高权限，可管理所有功能',
+      description: '系统最高权限,可管理所有功能',
       userCount: 3,
       permissions: ['dashboard', 'monitor', 'approval', 'report', 'system'],
       status: 'active',
@@ -60,7 +118,7 @@ const SystemRole: React.FC = () => {
       id: '4',
       name: '只读用户',
       code: 'viewer',
-      description: '只能查看数据，无操作权限',
+      description: '只能查看数据,无操作权限',
       userCount: 5,
       permissions: ['dashboard', 'report'],
       status: 'active',
@@ -68,145 +126,21 @@ const SystemRole: React.FC = () => {
     },
   ]);
 
-  // 权限树数据
-  const permissionTreeData: DataNode[] = [
-    {
-      title: '工作台',
-      key: 'dashboard',
-      children: [
-        { title: '查看工作台', key: 'dashboard:view' },
-      ],
-    },
-    {
-      title: '监测与处置',
-      key: 'monitor',
-      children: [
-        { title: '打卡核验', key: 'monitor:attendance' },
-        { title: '预警处置', key: 'monitor:alert' },
-        { title: '预警详情', key: 'monitor:alert:detail' },
-      ],
-    },
-    {
-      title: '申请与审批',
-      key: 'approval',
-      children: [
-        { title: '材料审批', key: 'approval:material' },
-        { title: '请假管理', key: 'approval:leave' },
-        { title: '备案管理', key: 'approval:filing' },
-        { title: '审批通过', key: 'approval:approve' },
-        { title: '审批拒绝', key: 'approval:reject' },
-      ],
-    },
-    {
-      title: '分析与报表',
-      key: 'report',
-      children: [
-        { title: '数据统计', key: 'report:statistics' },
-        { title: '报表导出', key: 'report:export' },
-      ],
-    },
-    {
-      title: '系统与运维',
-      key: 'system',
-      children: [
-        { title: '消息中心', key: 'system:message' },
-        { title: '人员管理', key: 'system:personnel' },
-        { title: '角色管理', key: 'system:role' },
-        { title: '菜单配置', key: 'system:menu' },
-        { title: '系统配置', key: 'system:config' },
-        { title: '日志审计', key: 'system:log' },
-      ],
-    },
-  ];
+  const filtered = dataSource.filter((r) => {
+    if (filterValues.keyword) {
+      const kw = String(filterValues.keyword).toLowerCase();
+      if (!r.name.toLowerCase().includes(kw) && !r.code.toLowerCase().includes(kw)) return false;
+    }
+    if (filterValues.status && r.status !== filterValues.status) return false;
+    return true;
+  });
+  const start = (page - 1) * pageSize;
+  const pageList = filtered.slice(start, start + pageSize);
 
-  const statusConfig = {
+  const statusConfig: Record<string, { text: string; color: string }> = {
     active: { text: '启用', color: 'green' },
     inactive: { text: '停用', color: 'red' },
   };
-
-  const columns: ColumnsType<RoleItem> = [
-    {
-      title: '角色名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 150,
-      render: (text) => (
-        <Space>
-          <SafetyOutlined style={{ color: '#1890ff' }} />
-          <span>{text}</span>
-        </Space>
-      ),
-    },
-    {
-      title: '角色编码',
-      dataIndex: 'code',
-      key: 'code',
-      width: 120,
-      render: (text) => <Tag>{text}</Tag>,
-    },
-    {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: '用户数',
-      dataIndex: 'userCount',
-      key: 'userCount',
-      width: 100,
-      render: (count) => <Tag color="blue">{count} 人</Tag>,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: keyof typeof statusConfig) => (
-        <Tag color={statusConfig[status].color}>{statusConfig[status].text}</Tag>
-      ),
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 160,
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 250,
-      fixed: 'right',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleViewPermission(record)}
-          >
-            查看权限
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-            disabled={record.code === 'admin'}
-          >
-            删除
-          </Button>
-        </Space>
-      ),
-    },
-  ];
 
   const handleAdd = () => {
     setEditMode(false);
@@ -233,21 +167,13 @@ const SystemRole: React.FC = () => {
   const handleDelete = (record: RoleItem) => {
     Modal.confirm({
       title: '删除角色',
-      content: `确定要删除角色 ${record.name} 吗？此操作不可恢复。`,
+      content: `确定要删除角色 ${record.name} 吗?此操作不可恢复。`,
       okText: '确定',
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
-        setLoading(true);
-        try {
-          // TODO: 调用删除 API
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          message.success('删除成功');
-        } catch (error) {
-          message.error('删除失败');
-        } finally {
-          setLoading(false);
-        }
+        setDataSource(dataSource.filter((r) => r.id !== record.id));
+        message.success('删除成功');
       },
     });
   };
@@ -256,56 +182,136 @@ const SystemRole: React.FC = () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-
-      // TODO: 调用新增/编辑 API，包含权限
-      console.log({ ...values, permissions: checkedKeys });
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
+      // TODO: 调用真实接口
+      await new Promise((r) => setTimeout(r, 300));
+      if (editMode && currentRecord) {
+        setDataSource(
+          dataSource.map((r) =>
+            r.id === currentRecord.id
+              ? { ...r, ...values, permissions: checkedKeys as string[] }
+              : r,
+          ),
+        );
+      } else {
+        setDataSource([
+          {
+            id: Date.now().toString(),
+            ...values,
+            permissions: checkedKeys as string[],
+            userCount: 0,
+            status: 'active',
+            createTime: new Date().toLocaleString(),
+          },
+          ...dataSource,
+        ]);
+      }
       message.success(editMode ? '编辑成功' : '新增成功');
       setModalVisible(false);
       form.resetFields();
-    } catch (error) {
-      console.error('Failed to submit:', error);
+    } catch {
+      // 表单验证失败
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {/* 搜索筛选 */}
-          <Space wrap>
-            <Input
-              placeholder="搜索角色名称"
-              prefix={<SearchOutlined />}
-              style={{ width: 200 }}
-            />
-            <Button type="primary" icon={<SearchOutlined />}>
-              搜索
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新增角色
-            </Button>
-          </Space>
+  const filterConfigs: FilterConfig[] = [
+    { key: 'keyword', label: '关键字', type: 'input', placeholder: '名称 / 编码' },
+    {
+      key: 'status',
+      label: '状态',
+      type: 'quick',
+      options: [
+        { value: '', label: '全部' },
+        { value: 'active', label: '启用' },
+        { value: 'inactive', label: '停用' },
+      ],
+    },
+  ];
 
-          {/* 表格 */}
-          <Table
-            columns={columns}
-            dataSource={dataSource}
-            rowKey="id"
-            loading={loading}
-            scroll={{ x: 1200 }}
-            pagination={{
-              total: dataSource.length,
-              pageSize: 10,
-              showSizeChanger: true,
-              showTotal: (total) => `共 ${total} 条`,
-            }}
-          />
-        </Space>
-      </Card>
+  const toolbarActions: ToolbarAction[] = [
+    { key: 'add', label: '新增角色', type: 'primary', icon: <PlusOutlined />, onClick: handleAdd },
+  ];
+
+  const columns: ColumnsType<RoleItem> = [
+    {
+      title: '角色名称',
+      dataIndex: 'name',
+      width: 160,
+      render: (text, record) => (
+        <span className="opp-link-cell" onClick={() => handleEdit(record)}>
+          <SafetyOutlined style={{ marginRight: 4, color: '#1677ff' }} />
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: '角色编码',
+      dataIndex: 'code',
+      width: 120,
+      render: (text) => <Tag>{text}</Tag>,
+    },
+    { title: '描述', dataIndex: 'description', ellipsis: true },
+    {
+      title: '用户数',
+      dataIndex: 'userCount',
+      width: 100,
+      render: (count) => <Tag color="blue">{count} 人</Tag>,
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      width: 100,
+      render: (status: string) => (
+        <Tag color={statusConfig[status]?.color}>{statusConfig[status]?.text}</Tag>
+      ),
+    },
+    { title: '创建时间', dataIndex: 'createTime', width: 160 },
+    {
+      title: '操作',
+      key: 'action',
+      width: 220,
+      render: (_, record) => (
+        <span className="opp-row-actions">
+          <span className="opp-row-action" onClick={() => handleViewPermission(record)}>
+            权限
+          </span>
+          <span className="opp-row-action" onClick={() => handleEdit(record)}>
+            <EditOutlined /> 编辑
+          </span>
+          {record.code !== 'admin' && (
+            <span className="opp-row-action danger" onClick={() => handleDelete(record)}>
+              <DeleteOutlined /> 删除
+            </span>
+          )}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+      <OmnibarListPage<RoleItem>
+        filters={filterConfigs}
+        filterValues={filterValues}
+        onFilterChange={setFilterValues}
+        toolbarActions={toolbarActions}
+        data={pageList}
+        columns={columns}
+        loading={loading}
+        rowKey="id"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+        showCheckbox
+        showIndex
+        total={filtered.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={(p, s) => {
+          setPage(p);
+          setPageSize(s);
+        }}
+      />
 
       {/* 新增/编辑弹窗 */}
       <Modal

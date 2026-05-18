@@ -517,7 +517,7 @@ const Dashboard: React.FC = observer(() => {
           </Card>
         </Col>
 
-        {/* 右上两张大 KPI — 对应原型 Total Users / Active Users */}
+        {/* 右上两张大 KPI — 保障户总数(折线) + 今日打卡率(仪表盘) */}
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             label="保障户总数"
@@ -525,8 +525,7 @@ const Dashboard: React.FC = observer(() => {
             trendValue={mockData.households.trend}
             subText={`活跃家庭 ${liveStats?.activeHouseholds ?? mockData.households.active}`}
             sparkData={sparkHouseholds}
-            sparkType="area"
-            sparkHeight={96}
+            sparkType="line"
             color="#722ed1"
           />
         </Col>

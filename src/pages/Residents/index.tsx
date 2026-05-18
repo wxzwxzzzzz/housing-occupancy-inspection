@@ -1,27 +1,18 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Avatar,
-  Button,
-  Descriptions,
-  Form,
-  Input,
-  Select,
-  Space,
-  Tag,
-} from 'antd';
-import { SearchOutlined, UserOutlined } from '@ant-design/icons';
-import { Link } from '@umijs/max';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Avatar, Tag, Space, message } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import { useNavigate } from '@umijs/max';
 import type { ColumnsType } from 'antd/es/table';
 import { residentService } from '@/services/domains/resident';
 import { qb } from '@/services/ontology/query';
 import { OT } from '@/services/ontology/object-types';
 import type { Resident } from '@/types/ontology/prh/entities/resident';
-import {
-  GuaranteeType,
-  ResidentStatus,
-} from '@/types/ontology/prh/enums';
+import { GuaranteeType, ResidentStatus } from '@/types/ontology/prh/enums';
 import { EnumLabels, StatusColors, enumOptions } from '@/utils/enum-options';
-import MasterDetailListPage from '@/components/MasterDetailListPage';
+import {
+  OmnibarListPage,
+  type FilterConfig,
+} from '@/components/OmnibarPage';
 
 interface SearchValues {
   keyword?: string;
@@ -35,39 +26,86 @@ function maskIdCard(idCard?: string): string {
 }
 
 const ResidentsPage: React.FC = () => {
-  const [searchForm] = Form.useForm<SearchValues>();
-  const [filters, setFilters] = useState<SearchValues>({});
+  const navigate = useNavigate();
+  const [filterValues, setFilterValues] = useState<SearchValues>({});
+  const [data, setData] = useState<Resident[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
 
-  const buildQuery = useMemo(
-    () => () => {
-      const builder = qb(OT.Resident).orderBy('createAt', 'DESC');
-      if (filters.keyword) builder.like('fullName', filters.keyword);
-      if (filters.status) builder.eq('status', filters.status);
-      if (filters.guaranteeType) builder.eq('guaranteeType', filters.guaranteeType);
-      return builder.build();
+  const load = useCallback(
+    async (p = page, s = pageSize, override?: SearchValues) => {
+      setLoading(true);
+      try {
+        const v = override ?? filterValues;
+        const builder = qb(OT.Resident).orderBy('createAt', 'DESC').page(p, s);
+        if (v.keyword) builder.like('fullName', v.keyword);
+        if (v.status) builder.eq('status', v.status);
+        if (v.guaranteeType) builder.eq('guaranteeType', v.guaranteeType);
+        const env = await residentService.list(builder.build() as any);
+        setData(env.data);
+        setTotal(env.page?.total ?? env.data.length);
+      } finally {
+        setLoading(false);
+      }
     },
-    [filters],
+    [filterValues, page, pageSize],
   );
+
+  useEffect(() => {
+    load(1, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const filters: FilterConfig[] = [
+    { key: 'keyword', label: '姓名', type: 'input', placeholder: '输入姓名' },
+    {
+      key: 'status',
+      label: '状态',
+      type: 'select',
+      options: enumOptions(ResidentStatus, EnumLabels.ResidentStatus),
+    },
+    {
+      key: 'guaranteeType',
+      label: '保障类型',
+      type: 'select',
+      options: enumOptions(GuaranteeType, EnumLabels.GuaranteeType),
+    },
+  ];
 
   const columns: ColumnsType<Resident> = [
     {
       title: '姓名',
       dataIndex: 'fullName',
-      width: 110,
+      width: 180,
       render: (text: string, record: any) => (
         <Space>
           <Avatar size="small" icon={<UserOutlined />}>
             {text?.[0]}
           </Avatar>
-          <Link to={`/residents/${record.id}`}>{text}</Link>
+          <span
+            className="opp-link-cell"
+            onClick={() => navigate(`/residents/detail/${record.id}`)}
+          >
+            {text}
+          </span>
         </Space>
       ),
     },
     {
       title: '证件号',
       dataIndex: 'idCardNo',
-      width: 160,
+      width: 180,
       render: (v: string) => maskIdCard(v),
+    },
+    {
+      title: '保障类型',
+      dataIndex: 'guaranteeType',
+      width: 120,
+      render: (v: any) =>
+        EnumLabels.GuaranteeType[v as keyof typeof EnumLabels.GuaranteeType] ?? '-',
     },
     {
       title: '状态',
@@ -79,128 +117,65 @@ const ResidentsPage: React.FC = () => {
         </Tag>
       ),
     },
+    {
+      title: '操作',
+      key: 'action',
+      width: 200,
+      render: (_: any, record: any) => (
+        <span className="opp-row-actions">
+          <span
+            className="opp-row-action"
+            onClick={() => navigate(`/residents/detail/${record.id}`)}
+          >
+            查看
+          </span>
+          <span
+            className="opp-row-action"
+            onClick={() => navigate(`/residents/${record.id}`)}
+          >
+            360 视图
+          </span>
+          <span
+            className="opp-row-action"
+            onClick={() => {
+              if (record.idCardNo) {
+                navigator.clipboard.writeText(record.idCardNo);
+                message.success('已复制证件号');
+              }
+            }}
+          >
+            复制证件号
+          </span>
+        </span>
+      ),
+    },
   ];
 
   return (
-    <MasterDetailListPage<Resident>
-      title="居民档案"
-      service={residentService as any}
-      buildQuery={buildQuery}
-      columns={columns}
-      storageKey="residents"
-      rowContextMenuItems={(record) => [
-        {
-          key: 'goto-360',
-          label: '查看 360 视图',
-          onClick: () => window.open(`/residents/${(record as any).id}`, '_blank'),
-        },
-        {
-          key: 'copy-id',
-          label: '复制证件号',
-          onClick: () => {
-            const idCard = (record as any).idCardNo;
-            if (idCard) {
-              navigator.clipboard.writeText(idCard);
-            }
-          },
-        },
-        (record as any).phone && {
-          key: 'copy-phone',
-          label: '复制手机号',
-          onClick: () => navigator.clipboard.writeText((record as any).phone),
-        },
-      ]}
-      toolbar={
-        <Form
-          form={searchForm}
-          layout="inline"
-          onFinish={(v) => setFilters(v)}
-        >
-          <Form.Item name="keyword">
-            <Input
-              placeholder="姓名"
-              prefix={<SearchOutlined />}
-              style={{ width: 160 }}
-              allowClear
-            />
-          </Form.Item>
-          <Form.Item name="status">
-            <Select
-              placeholder="状态"
-              style={{ width: 130 }}
-              allowClear
-              options={enumOptions(ResidentStatus, EnumLabels.ResidentStatus)}
-            />
-          </Form.Item>
-          <Form.Item name="guaranteeType">
-            <Select
-              placeholder="保障类型"
-              style={{ width: 150 }}
-              allowClear
-              options={enumOptions(GuaranteeType, EnumLabels.GuaranteeType)}
-            />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-              查询
-            </Button>
-          </Form.Item>
-        </Form>
-      }
-      renderDetailHeader={(record) => (
-        <Space size={16} align="center">
-          <Avatar size={40} icon={<UserOutlined />} src={(record as any).facePhoto}>
-            {record.fullName?.[0]}
-          </Avatar>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>{record.fullName}</div>
-            <div style={{ color: '#8c8c8c', fontSize: 12 }}>
-              {maskIdCard((record as any).idCardNo)}
-            </div>
-          </div>
-          <Link to={`/residents/${record.id}`}>
-            <Button type="primary" size="small">
-              查看 360 视图 →
-            </Button>
-          </Link>
-        </Space>
-      )}
-      renderDetail={(record) => (
-        <Descriptions bordered column={2} size="middle">
-          <Descriptions.Item label="姓名">{record.fullName}</Descriptions.Item>
-          <Descriptions.Item label="性别">
-            {EnumLabels.Gender[record.gender as keyof typeof EnumLabels.Gender] ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="证件号">
-            {maskIdCard((record as any).idCardNo)}
-          </Descriptions.Item>
-          <Descriptions.Item label="出生日期">
-            {(record as any).birthDate ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="婚姻状况">
-            {EnumLabels.MaritalStatus[
-              record.maritalStatus as keyof typeof EnumLabels.MaritalStatus
-            ] ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="状态">
-            <Tag color={(StatusColors.ResidentStatus as any)[record.status]}>
-              {EnumLabels.ResidentStatus[
-                record.status as keyof typeof EnumLabels.ResidentStatus
-              ] ?? record.status}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="保障类型">
-            {EnumLabels.GuaranteeType[
-              record.guaranteeType as keyof typeof EnumLabels.GuaranteeType
-            ] ?? '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="联系电话">{(record as any).phone ?? '-'}</Descriptions.Item>
-          <Descriptions.Item label="邮箱" span={2}>
-            {(record as any).email ?? '-'}
-          </Descriptions.Item>
-        </Descriptions>
-      )}
-    />
+    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+      <OmnibarListPage<Resident>
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={setFilterValues}
+        onSearch={() => load(1, pageSize)}
+        data={data}
+        columns={columns}
+        loading={loading}
+        rowKey="id"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+        showCheckbox
+        showIndex
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={(p, s) => {
+          setPage(p);
+          setPageSize(s);
+          load(p, s);
+        }}
+      />
+    </div>
   );
 };
 

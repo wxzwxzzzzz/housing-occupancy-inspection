@@ -32,6 +32,12 @@ export default [
         hideInMenu: true,
       },
       {
+        path: '/residents/detail/:id',
+        name: '居民档案',
+        component: './Residents/ResidentDetail',
+        hideInMenu: true,
+      },
+      {
         name: '监测与处置',
         icon: 'monitor',
         path: '/monitor',
@@ -41,6 +47,12 @@ export default [
             name: '打卡核验',
             icon: 'check-circle',
             component: './Monitor/Attendance',
+          },
+          {
+            path: '/monitor/attendance/detail/:id',
+            name: '打卡详情',
+            component: './Monitor/AttendanceDetail',
+            hideInMenu: true,
           },
           {
             path: '/monitor/alert-list',
@@ -74,16 +86,34 @@ export default [
             component: './Approval/Material',
           },
           {
+            path: '/approval/material/detail/:id',
+            name: '材料审批详情',
+            component: './Approval/MaterialDetail',
+            hideInMenu: true,
+          },
+          {
             path: '/approval/leave',
             name: '请假管理',
             icon: 'calendar',
             component: './Approval/Leave',
           },
           {
+            path: '/approval/leave/detail/:id',
+            name: '请假详情',
+            component: './Approval/LeaveDetail',
+            hideInMenu: true,
+          },
+          {
             path: '/approval/filing',
             name: '备案管理',
             icon: 'environment',
             component: './Approval/Filing',
+          },
+          {
+            path: '/approval/filing/detail/:id',
+            name: '备案详情',
+            component: './Approval/FilingDetail',
+            hideInMenu: true,
           },
           {
             path: '/approval/workflow',
@@ -134,6 +164,12 @@ export default [
             name: '人员管理',
             icon: 'team',
             component: './System/Personnel',
+          },
+          {
+            path: '/system/personnel/detail/:id',
+            name: '人员详情',
+            component: './System/PersonnelDetail',
+            hideInMenu: true,
           },
           {
             path: '/system/role',
