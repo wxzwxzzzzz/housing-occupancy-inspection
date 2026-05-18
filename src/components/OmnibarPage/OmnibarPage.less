@@ -1,0 +1,801 @@
+// =============================================================
+// OmnibarPage 通用样式
+// 借鉴 OMS 工作台原型(2026-05-06_005_本体元数据系统工作台原型_改进版.html)
+// 命名空间:.omnibar-page-* 限定作用域,避免污染全局
+// =============================================================
+
+@primary: #1677ff;
+@text-body: rgba(0, 0, 0, 0.85);
+@text-secondary: rgba(0, 0, 0, 0.45);
+@text-muted: rgba(0, 0, 0, 0.6);
+@border-color: rgba(0, 0, 0, 0.06);
+@bg-tertiary: #f5f5f5;
+@bg-secondary: #fafafa;
+
+// ============ 公共布局 ============
+.omnibar-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+
+  .opp-vr {
+    display: inline-block;
+    width: 1px;
+    height: 18px;
+    background: @border-color;
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+
+  .opp-top-slot {
+    flex-shrink: 0;
+    padding: 0 0 12px;
+  }
+  .opp-bottom-slot {
+    flex-shrink: 0;
+    padding: 12px 0 0;
+  }
+}
+
+// ============ ① QueryPanel ============
+.opp-query-panel {
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  padding: 12px 20px;
+  margin-bottom: 2px;
+  position: relative;
+  transition: padding 0.2s ease;
+
+  &.collapsed .opp-query-filters {
+    max-height: 0 !important;
+    opacity: 0;
+    overflow: hidden;
+    margin-top: 0;
+    padding: 0;
+  }
+}
+
+// 第一行 omnibar 行容器
+.opp-query-omnibar-row {
+  display: flex;
+  align-items: center;
+}
+
+.opp-query-omnibar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-radius: 18px;
+  gap: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.18);
+  }
+  &:focus-within {
+    border-color: @primary;
+    box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12);
+  }
+}
+
+.opp-omnibar-scheme {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 28px;
+  border-radius: 14px;
+  background: @bg-tertiary;
+  color: @text-body;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 0;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: @border-color;
+  }
+  .scheme-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .anticon {
+    font-size: 10px;
+    color: @text-secondary;
+  }
+}
+
+.opp-omnibar-chips {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  .chip-empty {
+    color: @text-secondary;
+    font-size: 13px;
+  }
+}
+
+.opp-query-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 10px;
+  height: 22px;
+  font-size: 12px;
+  line-height: 18px;
+  border-radius: 10px;
+  background: rgba(22, 119, 255, 0.12);
+  color: @primary;
+  white-space: nowrap;
+
+  .chip-close {
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: @primary;
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: rgba(22, 119, 255, 0.18);
+    }
+    .anticon {
+      font-size: 8px;
+    }
+  }
+}
+
+// omnibar 内部清除按钮(omnibar 一键清空)
+.opp-omnibar-clear {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: none;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: @text-secondary;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  margin-right: 4px;
+
+  &:hover {
+    background: @bg-secondary;
+    color: @text-body;
+  }
+  &.has-conditions,
+  .opp-query-omnibar:hover &,
+  .opp-query-omnibar:focus-within & {
+    display: grid;
+  }
+}
+
+// omnibar 外部圆形操作按钮(搜索 + 折叠)
+.opp-omnibar-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+
+  .opp-oa-btn {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: @border-color;
+    color: @text-body;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: @bg-secondary;
+      color: @primary;
+    }
+    .anticon {
+      font-size: 14px;
+    }
+  }
+}
+
+// 第二行:filters 列表
+.opp-query-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 12px;
+  max-height: 400px;
+  overflow: visible;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.2s ease;
+}
+
+.opp-qf {
+  flex: 0 0 calc((100% - 64px) / 5);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.opp-qf-label {
+  color: @text-secondary;
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: 72px;
+  text-align: right;
+}
+
+.opp-qf-control {
+  flex: 1;
+  min-width: 0;
+}
+
+// quick 类型按钮组
+.opp-qf-quick {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
+
+  button {
+    height: 26px;
+    min-width: 36px;
+    padding: 0 10px;
+    border: 1px solid @border-color;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 12px;
+    color: @text-secondary;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+
+    &:hover {
+      border-color: @primary;
+      color: @primary;
+    }
+    &.active {
+      background: rgba(22, 119, 255, 0.06);
+      border-color: @primary;
+      color: @primary;
+    }
+  }
+}
+
+// ============ ② ListContainer ============
+.opp-list-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  padding: 14px 0 0;
+}
+
+// 工具栏
+.opp-list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 20px 10px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.opp-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.opp-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+// 视图切换 radio
+.opp-view-radio {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: @text-body;
+
+  input[type='radio'] {
+    accent-color: @primary;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+  }
+}
+
+// 表格区
+.opp-list-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-top: 1px solid @border-color;
+
+  // 表头:浅灰底 + 12px 500 + uppercase + 列竖线
+  .ant-table-thead > tr > th.ant-table-cell {
+    background: @bg-tertiary !important;
+    color: @text-secondary !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    line-height: 16px !important;
+    padding: 10px 12px !important;
+    white-space: nowrap !important;
+    border-right: 1px solid @border-color !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+
+    &::before {
+      display: none !important;
+    }
+    &:last-child {
+      border-right: 0 !important;
+    }
+  }
+
+  // 单元格
+  .ant-table-tbody > tr > td.ant-table-cell {
+    padding: 10px 12px !important;
+    color: @text-body;
+    font-size: 13px;
+    border-bottom: 1px solid @border-color !important;
+  }
+  .ant-table-tbody > tr:hover > td,
+  .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+  }
+  .ant-table-tbody > tr.ant-table-row-selected > td {
+    background: rgba(22, 119, 255, 0.05) !important;
+  }
+
+  // 链接列
+  .opp-link-cell {
+    color: @primary;
+    cursor: pointer;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // 行操作列
+  .opp-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    .opp-row-action {
+      color: @primary;
+      cursor: pointer;
+      font-size: 12px;
+      &:hover {
+        text-decoration: underline;
+      }
+      &.danger {
+        color: #cf1322;
+      }
+    }
+    .opp-row-action-more {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      color: @text-secondary;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 1px;
+      &:hover {
+        background: @bg-secondary;
+        color: @primary;
+      }
+    }
+  }
+}
+
+// 小计 / 合计
+.opp-list-summary {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  font-size: 13px;
+  font-weight: 600;
+  border-top: 1px solid transparent;
+
+  .opp-summary-label {
+    width: 96px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid @border-color;
+  }
+  .opp-summary-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+  }
+
+  &.subtotal {
+    background: rgba(22, 119, 255, 0.06);
+    color: @primary;
+    border-top-color: rgba(22, 119, 255, 0.15);
+
+    .opp-summary-label {
+      border-right-color: rgba(22, 119, 255, 0.15);
+    }
+  }
+  &.grandtotal {
+    background: rgba(22, 119, 255, 0.12);
+    color: @text-body;
+    font-weight: 700;
+    border-top-color: rgba(22, 119, 255, 0.2);
+
+    .opp-summary-label {
+      border-right-color: rgba(22, 119, 255, 0.2);
+    }
+  }
+}
+
+// ============ ③ ListFooter ============
+.opp-list-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: @text-secondary;
+  border-top: 1px solid @border-color;
+  background: #fff;
+
+  .opp-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .opp-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .opp-page-total {
+    color: @text-secondary;
+  }
+  .opp-only-selected {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+// ============ ④ DetailHeader ============
+.opp-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+}
+
+.opp-detail-header {
+  flex-shrink: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  .opp-detail-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .opp-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: @text-secondary;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: transparent;
+    border: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: @bg-secondary;
+      color: @text-body;
+    }
+  }
+  .opp-detail-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: @text-body;
+  }
+  .opp-detail-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+// 状态徽章(原型 .badge.bg-{color}-lt)
+.opp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  border: 0;
+
+  &.success {
+    color: #389e0d;
+    background: rgba(82, 196, 26, 0.12);
+  }
+  &.warning {
+    color: #d46b08;
+    background: rgba(250, 140, 22, 0.12);
+  }
+  &.danger {
+    color: #cf1322;
+    background: rgba(255, 77, 79, 0.12);
+  }
+  &.secondary {
+    color: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.06);
+  }
+  &.primary {
+    color: @primary;
+    background: rgba(22, 119, 255, 0.12);
+  }
+  &.info {
+    color: #08979c;
+    background: rgba(19, 194, 194, 0.12);
+  }
+}
+
+// ============ ⑤ DetailSections ============
+.opp-detail-sections {
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-top: 0;
+  padding: 12px 20px 8px;
+  margin-bottom: 2px;
+}
+
+.opp-detail-section + .opp-detail-section {
+  margin-top: 4px;
+}
+
+.opp-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  cursor: pointer;
+  user-select: none;
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: @primary;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  > span {
+    font-size: 14px;
+    font-weight: 600;
+    color: @text-body;
+    flex: 1;
+  }
+  .anticon {
+    font-size: 12px;
+    color: @text-secondary;
+    transition: transform 0.2s ease;
+  }
+  &.collapsed .anticon {
+    transform: rotate(-90deg);
+  }
+}
+
+.opp-section-body {
+  padding: 8px 0 4px 11px;
+  max-height: 400px;
+  overflow: hidden;
+  transition: max-height 0.2s ease, opacity 0.2s ease, padding 0.2s ease;
+}
+.opp-section-title.collapsed + .opp-section-body {
+  max-height: 0;
+  opacity: 0;
+  padding: 0 0 0 11px;
+}
+
+.opp-detail-fields {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px 16px;
+
+  .opp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .opp-field-label {
+    font-size: 12px;
+    color: @text-secondary;
+  }
+  .opp-field-value {
+    font-size: 13px;
+    color: @text-body;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  // 编辑态:控件占位
+  .opp-field-edit-control {
+    min-height: 28px;
+    .ant-input,
+    .ant-select,
+    .ant-picker,
+    .ant-input-number {
+      width: 100%;
+    }
+  }
+  // 编辑态网格略宽,让 input 不挤
+  &.editing {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px 20px;
+  }
+}
+
+// ============ ⑥ DetailTabs ============
+.opp-detail-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-top: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+
+  > .ant-tabs {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  > .ant-tabs > .ant-tabs-nav {
+    margin: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid @border-color;
+
+    &::before {
+      display: none;
+    }
+  }
+  > .ant-tabs > .ant-tabs-nav .ant-tabs-tab {
+    padding: 10px 16px;
+    margin: 0 !important;
+    font-size: 13px;
+    color: @text-secondary;
+
+    &:hover {
+      color: @text-body;
+    }
+  }
+  > .ant-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: @primary !important;
+    font-weight: 600 !important;
+  }
+  > .ant-tabs > .ant-tabs-nav .ant-tabs-ink-bar {
+    background: @primary;
+    height: 2px;
+  }
+  > .ant-tabs > .ant-tabs-content-holder {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+  > .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content,
+  > .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+    height: 100%;
+  }
+
+  .opp-detail-tab-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 20px 0 0;
+  }
+}
+
+// ============ ⑦ DetailFooter ============
+.opp-detail-footer {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px 16px;
+  padding: 12px 20px;
+  margin-top: 2px;
+  background: #fff;
+  border: 1px solid @border-color;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  .opp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .opp-field-label {
+    font-size: 12px;
+    color: @text-secondary;
+  }
+  .opp-field-value {
+    font-size: 13px;
+    color: @text-body;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
