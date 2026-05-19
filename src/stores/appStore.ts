@@ -15,8 +15,16 @@ export interface MenuItem {
   children?: MenuItem[];
 }
 
+export type ThemeMode = 'light' | 'dark';
+
+const PRIMARY_COLOR_KEY = 'prh:primaryColor';
+const THEME_MODE_KEY = 'prh:themeMode';
+const DEFAULT_PRIMARY = '#1677ff';
+const DEFAULT_MODE: ThemeMode = 'light';
+
 class AppStore {
-  primaryColor: string = '#1890ff';
+  primaryColor: string = DEFAULT_PRIMARY;
+  themeMode: ThemeMode = DEFAULT_MODE;
   loading: boolean = false;
   collapsed: boolean = false;
   apps: AppItem[] = [];
@@ -24,6 +32,16 @@ class AppStore {
 
   constructor() {
     makeAutoObservable(this);
+    this.loadFromStorage();
+  }
+
+  private loadFromStorage() {
+    try {
+      const v = localStorage.getItem(PRIMARY_COLOR_KEY);
+      if (v) this.primaryColor = v;
+      const m = localStorage.getItem(THEME_MODE_KEY);
+      if (m === 'light' || m === 'dark') this.themeMode = m;
+    } catch {}
   }
 
   setLoading(loading: boolean) {
@@ -40,6 +58,24 @@ class AppStore {
 
   setPrimaryColor(color: string) {
     this.primaryColor = color;
+    try {
+      localStorage.setItem(PRIMARY_COLOR_KEY, color);
+    } catch {}
+  }
+
+  setThemeMode(mode: ThemeMode) {
+    this.themeMode = mode;
+    try {
+      localStorage.setItem(THEME_MODE_KEY, mode);
+    } catch {}
+    // 同步到 html data 属性,便于全局 CSS 区分
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.theme = mode;
+    }
+  }
+
+  get isDark(): boolean {
+    return this.themeMode === 'dark';
   }
 
   setApps(apps: AppItem[]) {
@@ -52,8 +88,8 @@ class AppStore {
 
   buildMenusFromApps(): MenuItem[] {
     return this.apps
-      .filter(app => app.enabled)
-      .map(app => ({
+      .filter((app) => app.enabled)
+      .map((app) => ({
         path: app.route,
         name: app.name,
         icon: app.icon,
@@ -61,7 +97,7 @@ class AppStore {
   }
 
   disableApp(appId: string) {
-    const app = this.apps.find(a => a.id === appId);
+    const app = this.apps.find((a) => a.id === appId);
     if (app) {
       app.enabled = false;
       this.menus = this.buildMenusFromApps();
@@ -69,7 +105,7 @@ class AppStore {
   }
 
   enableApp(appId: string) {
-    const app = this.apps.find(a => a.id === appId);
+    const app = this.apps.find((a) => a.id === appId);
     if (app) {
       app.enabled = true;
       this.menus = this.buildMenusFromApps();

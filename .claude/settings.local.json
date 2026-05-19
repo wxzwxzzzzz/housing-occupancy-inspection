@@ -23,7 +23,12 @@
       "Bash(awk NR<=8 {print NR\": \"$0} *)",
       "Bash(awk NR>=140 *)",
       "Bash(awk NR>=140 && NR<=170 {print NR\": \"$0} *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(awk 'NR<=200 || \\(NR>=200 && NR<=400\\)' /Users/xz/work/housing-occupancy-inspection/src/pages/Dashboard/index.tsx)",
+      "Bash(awk NR>=200 && NR<=440 *)",
+      "Bash(awk NR>=440 && NR<=837 *)",
+      "Bash(npx @biomejs/biome check src/layouts/BasicLayout.tsx src/components/ThemeSettings.tsx src/pages/Dashboard/index.tsx)",
+      "Bash(npx @biomejs/biome check src/)"
     ],
     "deny": [],
     "ask": []

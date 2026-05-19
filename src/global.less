@@ -138,21 +138,21 @@ ol {
 /* 主从布局:列表行选中态高亮(替代 antd 默认浅蓝,与本项目主色更协调) */
 .master-list-row-selected,
 .master-list-row-selected > td {
-  background: #e6f4ff !important;
+  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
 }
 
 .master-list-row-selected:hover > td {
-  background: #bae0ff !important;
+  background: color-mix(in srgb, var(--ant-color-primary) 22%, transparent) !important;
 }
 
 /* 主从布局:分隔条 hover 高亮 */
 .md-splitter:hover .md-splitter-line {
-  background: #1677ff !important;
+  background: var(--ant-color-primary) !important;
 }
 
 .md-splitter:hover .md-splitter-handle {
-  border-color: #1677ff !important;
-  box-shadow: 0 2px 8px rgba(22, 119, 255, 0.25) !important;
+  border-color: var(--ant-color-primary) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ant-color-primary) 25%, transparent) !important;
 }
 
 /*
@@ -174,7 +174,7 @@ ol {
  * - X 按钮默认隐藏,hover/active 才显
  */
 .app-layout-tabbar {
-  border-bottom: 1px solid color-mix(in srgb, #1677ff 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ant-color-primary) 12%, transparent);
 }
 .app-layout-tabs.ant-tabs {
   /* 容器整体 */
@@ -200,21 +200,21 @@ ol {
     background: transparent !important;
     border-radius: 8px 8px 0 0 !important;
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.55) !important;
+    color: var(--ant-color-text-secondary) !important;
     transition: background 0.15s ease, color 0.15s ease;
     position: relative;
   }
   .ant-tabs-tab:hover {
-    background: rgba(0, 0, 0, 0.04) !important;
-    color: rgba(0, 0, 0, 0.88) !important;
+    background: var(--ant-color-fill-tertiary) !important;
+    color: var(--ant-color-text) !important;
   }
   .ant-tabs-tab-active {
-    background: color-mix(in srgb, #1677ff 10%, transparent) !important;
+    background: color-mix(in srgb, var(--ant-color-primary) 10%, transparent) !important;
     border-radius: 10px 10px 0 0 !important;
     overflow: visible !important;
   }
   .ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: #1677ff !important;
+    color: var(--ant-color-primary) !important;
     font-weight: 600 !important;
   }
   /* 鱼鳍切角:active tab 左右底部用 radial-gradient 做出弧形 */
@@ -232,7 +232,7 @@ ol {
     background: radial-gradient(
       circle at 0 0,
       transparent 10px,
-      color-mix(in srgb, #1677ff 10%, transparent) 10px
+      color-mix(in srgb, var(--ant-color-primary) 10%, transparent) 10px
     );
   }
   .ant-tabs-tab-active::after {
@@ -240,7 +240,7 @@ ol {
     background: radial-gradient(
       circle at 100% 0,
       transparent 10px,
-      color-mix(in srgb, #1677ff 10%, transparent) 10px
+      color-mix(in srgb, var(--ant-color-primary) 10%, transparent) 10px
     );
   }
 
@@ -262,7 +262,7 @@ ol {
     opacity: 1;
   }
   .ant-tabs-tab-remove:hover {
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--ant-color-fill-tertiary);
   }
 
   /* 隐藏底部 ink-bar(card 模式不需要) */
@@ -290,6 +290,15 @@ ol {
   top: 4px;
   bottom: 4px;
   width: 3px;
-  background: #1677ff;
+  background: var(--ant-color-primary);
   border-radius: 0 2px 2px 0;
+}
+
+/*
+ * 暗色模式兜底:html[data-theme=dark] 时 body 背景跟随 antd 暗色 layout token,
+ * 避免登录页等不在 BasicLayout 下的页面闪白。
+ */
+html[data-theme='dark'] body {
+  background: #141414;
+  color: rgba(255, 255, 255, 0.85);
 }

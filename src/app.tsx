@@ -4,6 +4,11 @@ import { errorConfig } from './requestErrorConfig';
 import { appStore, dashboardStore, userStore } from './stores';
 import type { CurrentUser } from './stores/userStore';
 
+// 应用启动时立刻同步主题模式到 html data-theme,避免页面加载闪白
+if (typeof document !== 'undefined') {
+  document.documentElement.dataset.theme = appStore.themeMode;
+}
+
 const loginPath = '/login';
 
 /**
