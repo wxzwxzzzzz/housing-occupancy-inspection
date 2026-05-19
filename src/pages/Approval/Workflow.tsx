@@ -1,10 +1,32 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, Space, Button, Select, message, Descriptions, Tag, Table, Modal } from 'antd';
-import { EyeOutlined, ReloadOutlined, FullscreenOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Button,
+  Card,
+  Descriptions,
+  message,
+  Modal,
+  Select,
+  Space,
+  Tag,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FullscreenOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
 import LogicFlow from '@logicflow/core';
 import '@logicflow/core/dist/index.css';
 import type { ColumnsType } from 'antd/es/table';
 import WorkflowEditor from './WorkflowEditor';
+import {
+  OmnibarListPage,
+  type FilterConfig,
+  type ToolbarAction,
+} from '@/components/OmnibarPage';
 
 interface WorkflowItem {
   key: string;
@@ -24,6 +46,10 @@ const ApprovalWorkflow: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'detail' | 'edit'>('list');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [currentEditItem, setCurrentEditItem] = useState<WorkflowItem | null>(null);
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
 
   // 模拟流程数据
   const workflowOptions = [
@@ -459,35 +485,38 @@ const ApprovalWorkflow: React.FC = () => {
     {
       title: '操作',
       key: 'action',
+      width: 220,
       fixed: 'right',
       render: (_: any, record: WorkflowItem) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => handleView(record.key)}
+        <span className="opp-row-actions">
+          <span
+            className="opp-row-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleView(record.key);
+            }}
           >
-            查看
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            <EyeOutlined /> 查看
+          </span>
+          <span
+            className="opp-row-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(record);
+            }}
           >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
+            <EditOutlined /> 编辑
+          </span>
+          <span
+            className="opp-row-action danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(record);
+            }}
           >
-            删除
-          </Button>
-        </Space>
+            <DeleteOutlined /> 删除
+          </span>
+        </span>
       ),
     },
   ];
@@ -656,37 +685,75 @@ const ApprovalWorkflow: React.FC = () => {
 
   const currentWorkflow = workflowDetails[selectedWorkflow];
 
-  // 列表视图
+  const filtered = useMemo(() => {
+    const v = filterValues;
+    return workflowList.filter((w) => {
+      if (v.keyword && !w.name.includes(v.keyword) && !w.description.includes(v.keyword))
+        return false;
+      if (v.status && w.status !== v.status) return false;
+      return true;
+    });
+  }, [workflowList, filterValues]);
+
+  const filters: FilterConfig[] = [
+    { key: 'keyword', label: '关键字', type: 'input', placeholder: '名称 / 说明' },
+    {
+      key: 'status',
+      label: '状态',
+      type: 'quick',
+      options: [
+        { value: '', label: '全部' },
+        { value: '已启用', label: '已启用' },
+        { value: '已停用', label: '已停用' },
+      ],
+    },
+  ];
+
+  const toolbarActions: ToolbarAction[] = [
+    {
+      key: 'create',
+      type: 'primary',
+      label: '新建流程',
+      icon: <PlusOutlined />,
+      onClick: () => message.info('新建流程功能开发中'),
+    },
+    { divider: true },
+    {
+      key: 'refresh',
+      type: 'icon',
+      icon: <ReloadOutlined />,
+      title: '刷新',
+      onClick: handleRefresh,
+    },
+  ];
+
+  // 列表视图(OmnibarPage 三段式)
   const renderListView = () => (
-    <Card
-      title={
-        <Space>
-          <EyeOutlined />
-          <span>审批流程管理</span>
-        </Space>
-      }
-      extra={
-        <Space>
-          <Button type="primary" icon={<PlusOutlined />}>
-            新建流程
-          </Button>
-          <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
-            刷新
-          </Button>
-        </Space>
-      }
-    >
-      <Table
+    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+      <OmnibarListPage<WorkflowItem>
+        filters={filters}
+        filterValues={filterValues}
+        onFilterChange={setFilterValues}
+        onSearch={() => setPage(1)}
+        toolbarActions={toolbarActions}
+        data={filtered.slice((page - 1) * pageSize, page * pageSize)}
         columns={columns}
-        dataSource={workflowList}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `共 ${total} 条`,
+        loading={loading}
+        rowKey="key"
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+        showCheckbox
+        showIndex
+        onRowClick={(r) => handleView(r.key)}
+        total={filtered.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={(p, s) => {
+          setPage(p);
+          setPageSize(s);
         }}
-        scroll={{ x: 1200 }}
       />
-    </Card>
+    </div>
   );
 
   // 详情视图
@@ -831,9 +898,9 @@ const ApprovalWorkflow: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: '24px' }}>
+    <>
       {viewMode === 'list' && renderListView()}
-      {viewMode === 'detail' && renderDetailView()}
+      {viewMode === 'detail' && <div style={{ padding: '24px' }}>{renderDetailView()}</div>}
       {viewMode === 'edit' && currentEditItem && (
         <WorkflowEditor
           workflowKey={currentEditItem.key}
@@ -858,9 +925,9 @@ const ApprovalWorkflow: React.FC = () => {
         cancelText="取消"
         okButtonProps={{ danger: true }}
       >
-        <p>确定要删除流程 "{currentEditItem?.name}" 吗？此操作不可恢复。</p>
+        <p>确定要删除流程 "{currentEditItem?.name}" 吗?此操作不可恢复。</p>
       </Modal>
-    </div>
+    </>
   );
 };
 
