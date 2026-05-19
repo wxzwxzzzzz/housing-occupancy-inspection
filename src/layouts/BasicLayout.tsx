@@ -30,6 +30,7 @@ import {
   Badge,
   Button,
   ConfigProvider,
+  Drawer,
   Dropdown,
   Layout,
   List,
@@ -122,6 +123,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
     const location = useLocation();
     const navigate = useNavigate();
     const [notificationOpen, setNotificationOpen] = useState(false);
+    const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
     const [activeQuickMenu, setActiveQuickMenu] = useState<string | null>(null);
 
     // 左侧主菜单 rail 展开/收起 — 收起时 56px 只显图标(rail 模式)
@@ -673,14 +675,22 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
           <Layout style={{ height: '100%' }}>
             <Header
               style={{
-                background: 'var(--ant-color-bg-container)',
-                padding: '0 24px',
+                height: 48,
+                padding: '0 16px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid var(--ant-color-border-secondary)',
-                height: 64,
+                background:
+                  'color-mix(in srgb, var(--ant-color-bg-container) 72%, transparent)',
+                backdropFilter: 'blur(22px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+                boxShadow: '0 1px 0 var(--ant-color-border-secondary)',
+                fontSize: 13,
+                lineHeight: 1,
+                userSelect: 'none',
                 flexShrink: 0,
+                position: 'relative',
+                zIndex: 20,
               }}
             >
               <Tooltip
@@ -692,25 +702,24 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   className="layout-brand"
                   onClick={() => setLeftExpanded((v) => !v)}
                   style={{
-                    height: 64,
+                    height: 48,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    gap: 10,
-                    paddingRight: 16,
-                    fontSize: 18,
-                    fontWeight: 600,
+                    gap: 8,
+                    paddingRight: 12,
+                    fontSize: 15,
+                    fontWeight: 700,
                     color: appStore.primaryColor,
                     cursor: 'pointer',
                     userSelect: 'none',
                     transition: 'opacity .15s ease',
                   }}
                 >
-                  <DashboardOutlined style={{ fontSize: 22 }} />
+                  <DashboardOutlined style={{ fontSize: 20 }} />
                   {collapsed ? '公租房' : '公租房监测系统'}
                 </div>
               </Tooltip>
-              <Space size={24}>
+              <Space size={18}>
                 {/* 通知消息 */}
                 <Popover
                   content={notificationContent}
@@ -722,7 +731,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   <Badge count={unreadCount} offset={[-5, 5]}>
                     <BellOutlined
                       style={{
-                        fontSize: 18,
+                        fontSize: 16,
                         cursor: 'pointer',
                         color: 'var(--ant-color-text-secondary)',
                       }}
@@ -731,35 +740,41 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 </Popover>
 
                 {/* 主题设置 */}
-                <Popover
-                  content={<ThemeSettings />}
-                  trigger="click"
-                  placement="bottomRight"
-                  arrow={false}
-                >
-                  <Tooltip title="主题设置" mouseEnterDelay={0.3}>
+                <Tooltip title="主题设置" mouseEnterDelay={0.3}>
+                  <span
+                    style={{
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                    }}
+                    onClick={() => setThemeDrawerOpen(true)}
+                  >
                     <BgColorsOutlined
                       style={{
-                        fontSize: 18,
-                        cursor: 'pointer',
+                        fontSize: 16,
                         color: 'var(--ant-color-text-secondary)',
                       }}
                     />
-                  </Tooltip>
-                </Popover>
+                  </span>
+                </Tooltip>
 
                 {/* 用户头像 */}
                 <Dropdown
                   menu={{ items: userMenuItems }}
                   placement="bottomRight"
                 >
-                  <Space style={{ cursor: 'pointer' }}>
-                    <Avatar icon={<UserOutlined />}>
+                  <Space size={8} style={{ cursor: 'pointer' }}>
+                    <Avatar size={26} icon={<UserOutlined />}>
                       {(userStore.user as any)?.fullName?.[0] ||
                         (userStore.user as any)?.account?.[0] ||
                         'U'}
                     </Avatar>
-                    <span style={{ color: 'var(--ant-color-text-secondary)' }}>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        color: 'var(--ant-color-text-secondary)',
+                      }}
+                    >
                       {(userStore.user as any)?.fullName ||
                         (userStore.user as any)?.account ||
                         '用户'}
@@ -773,9 +788,12 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
             <div
               className="app-layout-tabbar"
               style={{
-                background: 'var(--ant-color-fill-quaternary)',
-                padding: '0',
+                height: 36,
+                background: 'var(--ant-color-bg-elevated)',
+                padding: '0 8px',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'flex-end',
               }}
             >
               <Tabs
@@ -825,14 +843,14 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 }}
                 style={{
                   margin: 0,
-                  padding: '6px 12px 0',
+                  flex: 1,
                 }}
               />
             </div>
 
             <Layout
               style={{
-                height: 'calc(100vh - 64px - 36px)',
+                height: 'calc(100vh - 48px - 36px)',
                 position: 'relative',
               }}
             >
@@ -947,7 +965,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   {/* 菜单列表 — 紧凑 */}
                   <div
                     style={{
-                      height: 'calc(100vh - 64px - 36px - 48px)',
+                      height: 'calc(100vh - 48px - 36px - 48px)',
                       overflowY: 'auto',
                       padding: '8px 8px',
                     }}
@@ -1101,6 +1119,18 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
             </Layout>
           </Layout>
         </Layout>
+
+        {/* 主题设置抽屉(右侧) — 参考原型 #offcanvas-settings */}
+        <Drawer
+          title="主题设置"
+          placement="right"
+          width={320}
+          open={themeDrawerOpen}
+          onClose={() => setThemeDrawerOpen(false)}
+          styles={{ body: { padding: 16 } }}
+        >
+          <ThemeSettings />
+        </Drawer>
       </ConfigProvider>
     );
   },

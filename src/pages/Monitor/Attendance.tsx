@@ -1,25 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Card, Col, message, Row, Statistic, Tag } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from '@umijs/max';
+import { Card, Col, message, Row, Statistic, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  type FilterConfig,
+  OmnibarListPage,
+  type ToolbarAction,
+} from '@/components/OmnibarPage';
+import ResidentLink from '@/components/ResidentLink';
 import { attendanceService } from '@/services/domains/attendance';
-import { qb } from '@/services/ontology/query';
-import { OT } from '@/services/ontology/object-types';
 import { invokeQuery } from '@/services/ontology/client';
+import { OT } from '@/services/ontology/object-types';
+import { qb } from '@/services/ontology/query';
+import type { Attendance } from '@/types/ontology/prh/entities/attendance';
 import {
   AttendanceMode,
   AttendanceStatus,
   AttendanceType,
 } from '@/types/ontology/prh/enums';
-import type { Attendance } from '@/types/ontology/prh/entities/attendance';
-import { EnumLabels, StatusColors, enumOptions } from '@/utils/enum-options';
-import ResidentLink from '@/components/ResidentLink';
-import {
-  OmnibarListPage,
-  type FilterConfig,
-  type ToolbarAction,
-} from '@/components/OmnibarPage';
+import { EnumLabels, enumOptions, StatusColors } from '@/utils/enum-options';
 
 const MonitorAttendance: React.FC = () => {
   const navigate = useNavigate();
@@ -30,12 +30,20 @@ const MonitorAttendance: React.FC = () => {
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
-  const [stats, setStats] = useState({ valid: 0, invalid: 0, missed: 0, pending: 0 });
+  const [stats, setStats] = useState({
+    valid: 0,
+    invalid: 0,
+    missed: 0,
+    pending: 0,
+  });
 
   const loadStats = async () => {
     const counts = await Promise.all(
       ['VALID', 'INVALID', 'MISSED', 'PENDING'].map((s) =>
-        invokeQuery(OT.Attendance, qb(OT.Attendance).eq('status', s).page(1, 1).build()),
+        invokeQuery(
+          OT.Attendance,
+          qb(OT.Attendance).eq('status', s).page(1, 1).build(),
+        ),
       ),
     );
     setStats({
@@ -57,7 +65,11 @@ const MonitorAttendance: React.FC = () => {
         if (v.mode) builder.eq('mode', v.mode);
         if (v.resident) builder.like('resident', v.resident);
         if (v.range?.[0] && v.range?.[1]) {
-          builder.between('checkIn', v.range[0].toISOString(), v.range[1].toISOString());
+          builder.between(
+            'checkIn',
+            v.range[0].toISOString(),
+            v.range[1].toISOString(),
+          );
         }
         const env = await attendanceService.list(builder.build() as any);
         setData(env.data);
@@ -80,11 +92,8 @@ const MonitorAttendance: React.FC = () => {
     {
       key: 'status',
       label: '状态',
-      type: 'quick',
-      options: [
-        { value: '', label: '全部' },
-        ...enumOptions(AttendanceStatus, EnumLabels.AttendanceStatus),
-      ],
+      type: 'select',
+      options: enumOptions(AttendanceStatus, EnumLabels.AttendanceStatus),
     },
     {
       key: 'attendanceType',
@@ -119,14 +128,17 @@ const MonitorAttendance: React.FC = () => {
       title: '居民',
       dataIndex: 'resident',
       width: 140,
-      render: (id: any) => (id ? <ResidentLink id={String(id)}>{String(id)}</ResidentLink> : '-'),
+      render: (id: any) =>
+        id ? <ResidentLink id={String(id)}>{String(id)}</ResidentLink> : '-',
     },
     {
       title: '类型',
       dataIndex: 'attendanceType',
       width: 100,
       render: (v: any) =>
-        EnumLabels.AttendanceType[v as keyof typeof EnumLabels.AttendanceType] ?? v,
+        EnumLabels.AttendanceType[
+          v as keyof typeof EnumLabels.AttendanceType
+        ] ?? v,
     },
     {
       title: '状态',
@@ -134,7 +146,9 @@ const MonitorAttendance: React.FC = () => {
       width: 100,
       render: (v: any) => (
         <Tag color={(StatusColors.AttendanceStatus as any)[v]}>
-          {EnumLabels.AttendanceStatus[v as keyof typeof EnumLabels.AttendanceStatus] ?? v}
+          {EnumLabels.AttendanceStatus[
+            v as keyof typeof EnumLabels.AttendanceStatus
+          ] ?? v}
         </Tag>
       ),
     },
@@ -164,7 +178,10 @@ const MonitorAttendance: React.FC = () => {
               className="opp-row-action"
               onClick={async (e) => {
                 e.stopPropagation();
-                await attendanceService.modify({ ...record, status: 'EXEMPTED' } as any);
+                await attendanceService.modify({
+                  ...record,
+                  status: 'EXEMPTED',
+                } as any);
                 message.success('已标记豁免');
                 load();
                 loadStats();
@@ -182,17 +199,29 @@ const MonitorAttendance: React.FC = () => {
     <Row gutter={12}>
       <Col xs={12} sm={6}>
         <Card size="small">
-          <Statistic title="有效打卡" value={stats.valid} valueStyle={{ color: '#52c41a' }} />
+          <Statistic
+            title="有效打卡"
+            value={stats.valid}
+            valueStyle={{ color: '#52c41a' }}
+          />
         </Card>
       </Col>
       <Col xs={12} sm={6}>
         <Card size="small">
-          <Statistic title="无效打卡" value={stats.invalid} valueStyle={{ color: '#ff4d4f' }} />
+          <Statistic
+            title="无效打卡"
+            value={stats.invalid}
+            valueStyle={{ color: '#ff4d4f' }}
+          />
         </Card>
       </Col>
       <Col xs={12} sm={6}>
         <Card size="small">
-          <Statistic title="缺勤" value={stats.missed} valueStyle={{ color: '#faad14' }} />
+          <Statistic
+            title="缺勤"
+            value={stats.missed}
+            valueStyle={{ color: '#faad14' }}
+          />
         </Card>
       </Col>
       <Col xs={12} sm={6}>
@@ -220,7 +249,9 @@ const MonitorAttendance: React.FC = () => {
         onSelectionChange={setSelectedKeys}
         showCheckbox
         showIndex
-        onRowClick={(record) => navigate(`/monitor/attendance/detail/${(record as any).id}`)}
+        onRowClick={(record) =>
+          navigate(`/monitor/attendance/detail/${(record as any).id}`)
+        }
         total={total}
         page={page}
         pageSize={pageSize}

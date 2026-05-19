@@ -1,14 +1,16 @@
 /**
- * 主题设置面板
+ * 主题设置面板(右侧抽屉内容)
  *
- * - 外观模式:亮色 / 暗色(antd 5 darkAlgorithm)
- * - 主题色:12 个预设
+ * 参考原型 #offcanvas-settings 结构:
+ *  - 颜色模式(浅色 / 深色)
+ *  - 主题色(12 个预设色块)
+ *  - 底部"重置为默认"
  *
  * 都通过 appStore 持久化,BasicLayout 顶层 ConfigProvider 监听并应用。
  */
 
 import { CheckOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
-import { Segmented } from 'antd';
+import { Button } from 'antd';
 import { createStyles } from 'antd-style';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
@@ -29,37 +31,72 @@ export const PRESET_COLORS = [
   '#161616', // 中性黑
 ];
 
+const DEFAULT_PRIMARY = '#1677ff';
+const DEFAULT_MODE: ThemeMode = 'light';
+
 const useStyles = createStyles(({ token, css }) => ({
   wrap: css`
-    padding: 14px;
-    min-width: 240px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  `,
+  body: css`
+    flex: 1;
+    overflow-y: auto;
   `,
   section: css`
-    & + & { margin-top: 14px; }
+    margin-bottom: 28px;
   `,
-  title: css`
+  label: css`
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: ${token.colorText};
+    margin-bottom: 4px;
+  `,
+  hint: css`
     font-size: 12px;
-    color: ${token.colorTextSecondary};
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    color: ${token.colorTextTertiary};
+    margin: 0 0 12px;
   `,
-  segmented: css`
+  modeGroup: css`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  `,
+  modeItem: css`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadius}px;
+    cursor: pointer;
+    background: ${token.colorBgContainer};
+    color: ${token.colorText};
+    transition: border-color 0.15s ease, background 0.15s ease;
+    text-align: left;
     width: 100%;
-    .ant-segmented-item-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+    &:hover {
+      border-color: ${token.colorPrimary};
     }
+  `,
+  modeItemActive: css`
+    border-color: ${token.colorPrimary};
+    background: ${token.colorPrimaryBg};
+    color: ${token.colorPrimary};
+  `,
+  modeIcon: css`
+    font-size: 16px;
   `,
   grid: css`
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
+    gap: 10px;
   `,
   swatch: css`
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     border: 0;
     border-radius: 6px;
@@ -71,7 +108,7 @@ const useStyles = createStyles(({ token, css }) => ({
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
     @supports (corner-shape: squircle) {
       corner-shape: squircle;
-      border-radius: 8px;
+      border-radius: 9px;
     }
     &:hover {
       transform: scale(1.1);
@@ -83,49 +120,89 @@ const useStyles = createStyles(({ token, css }) => ({
       0 0 0 2px ${token.colorBgContainer},
       0 0 0 4px currentColor;
   `,
+  footer: css`
+    padding-top: 16px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+    margin-top: 16px;
+  `,
 }));
+
+const MODE_OPTIONS: Array<{
+  value: ThemeMode;
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  { value: 'light', label: '浅色', icon: <SunOutlined /> },
+  { value: 'dark', label: '深色', icon: <MoonOutlined /> },
+];
 
 const ThemeSettings: React.FC = observer(() => {
   const { styles, cx } = useStyles();
   const current = appStore.primaryColor;
+  const mode = appStore.themeMode;
+
+  const handleReset = () => {
+    appStore.setThemeMode(DEFAULT_MODE);
+    appStore.setPrimaryColor(DEFAULT_PRIMARY);
+  };
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.section}>
-        <div className={styles.title}>外观</div>
-        <Segmented
-          className={styles.segmented}
-          value={appStore.themeMode}
-          onChange={(v) => appStore.setThemeMode(v as ThemeMode)}
-          options={[
-            { label: '亮色', value: 'light', icon: <SunOutlined /> },
-            { label: '暗色', value: 'dark', icon: <MoonOutlined /> },
-          ]}
-        />
+      <div className={styles.body}>
+        <div className={styles.section}>
+          <div className={styles.label}>颜色模式</div>
+          <p className={styles.hint}>选择应用的颜色模式。</p>
+          <div className={styles.modeGroup}>
+            {MODE_OPTIONS.map((opt) => {
+              const active = mode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={cx(
+                    styles.modeItem,
+                    active && styles.modeItemActive,
+                  )}
+                  onClick={() => appStore.setThemeMode(opt.value)}
+                >
+                  <span className={styles.modeIcon}>{opt.icon}</span>
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <div className={styles.label}>主题色</div>
+          <p className={styles.hint}>选择应用的主色调。</p>
+          <div className={styles.grid}>
+            {PRESET_COLORS.map((color) => {
+              const active = color.toLowerCase() === current.toLowerCase();
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  aria-label={`切换到 ${color}`}
+                  title={color}
+                  className={cx(styles.swatch, active && styles.swatchActive)}
+                  style={{ background: color, color }}
+                  onClick={() => appStore.setPrimaryColor(color)}
+                >
+                  {active && (
+                    <CheckOutlined style={{ fontSize: 12, color: '#fff' }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className={styles.section}>
-        <div className={styles.title}>主题色</div>
-        <div className={styles.grid}>
-          {PRESET_COLORS.map((color) => {
-            const active = color.toLowerCase() === current.toLowerCase();
-            return (
-              <button
-                key={color}
-                type="button"
-                aria-label={`切换到 ${color}`}
-                title={color}
-                className={cx(styles.swatch, active && styles.swatchActive)}
-                style={{ background: color, color }}
-                onClick={() => appStore.setPrimaryColor(color)}
-              >
-                {active && (
-                  <CheckOutlined style={{ fontSize: 12, color: '#fff' }} />
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div className={styles.footer}>
+        <Button block onClick={handleReset}>
+          重置为默认
+        </Button>
       </div>
     </div>
   );
