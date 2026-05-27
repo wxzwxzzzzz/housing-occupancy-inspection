@@ -124,7 +124,7 @@ const MonitorAlert: React.FC = observer(() => {
   ];
 
   return (
-    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+    <div style={{ height: '100%' }}>
       <OmnibarListPage<any>
         filters={filterConfigs}
         filterValues={filterValues}

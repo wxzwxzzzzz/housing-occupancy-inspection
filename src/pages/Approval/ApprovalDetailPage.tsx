@@ -198,7 +198,7 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
   ];
 
   return (
-    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+    <div style={{ height: '100%' }}>
       <OmnibarDetailPage
         title={`${titlePrefix} #${String(data.id).slice(-6)}`}
         statusBadge={getStatusBadge(data.status)}

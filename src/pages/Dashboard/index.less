@@ -1,11 +1,11 @@
 // Dashboard 容器
 // 不设 min-height,让内容自然高度(BasicLayout 的 Content 已带 overflow: auto)
-// 底部多 24px padding,避免最后一行被裁切
 // max-width 1320px 居中(对齐 OMS 原型 .container-xl,大屏不会拉满)
+// 内 padding 由 BasicLayout 统一管理(10px),这里不再设
 .dashboard-container {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 24px 24px 48px;
+  padding: 0;
   background: transparent;
 }
 

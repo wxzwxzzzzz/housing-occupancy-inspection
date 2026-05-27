@@ -729,7 +729,7 @@ const ApprovalWorkflow: React.FC = () => {
 
   // 列表视图(OmnibarPage 三段式)
   const renderListView = () => (
-    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+    <div style={{ height: '100%' }}>
       <OmnibarListPage<WorkflowItem>
         filters={filters}
         filterValues={filterValues}

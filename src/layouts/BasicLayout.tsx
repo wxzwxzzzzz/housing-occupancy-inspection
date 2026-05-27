@@ -671,12 +671,12 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
             : antdTheme.defaultAlgorithm,
         }}
       >
-        <Layout style={{ height: '100vh', overflow: 'hidden' }}>
-          <Layout style={{ height: '100%' }}>
+        <Layout style={{ height: '100vh', overflow: 'hidden', background: 'var(--ant-color-bg-layout)' }}>
+          <Layout style={{ flex: 1, minHeight: 0 }}>
             <Header
               style={{
-                height: 48,
-                padding: '0 16px',
+                height: 26,
+                padding: '0 12px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -685,7 +685,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 backdropFilter: 'blur(22px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(22px) saturate(180%)',
                 boxShadow: '0 1px 0 var(--ant-color-border-secondary)',
-                fontSize: 13,
+                fontSize: 12,
                 lineHeight: 1,
                 userSelect: 'none',
                 flexShrink: 0,
@@ -702,12 +702,12 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   className="layout-brand"
                   onClick={() => setLeftExpanded((v) => !v)}
                   style={{
-                    height: 48,
+                    height: 26,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    paddingRight: 12,
-                    fontSize: 15,
+                    gap: 6,
+                    paddingRight: 10,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: appStore.primaryColor,
                     cursor: 'pointer',
@@ -715,11 +715,11 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                     transition: 'opacity .15s ease',
                   }}
                 >
-                  <DashboardOutlined style={{ fontSize: 20 }} />
+                  <DashboardOutlined style={{ fontSize: 16 }} />
                   {collapsed ? '公租房' : '公租房监测系统'}
                 </div>
               </Tooltip>
-              <Space size={18}>
+              <Space size={14}>
                 {/* 通知消息 */}
                 <Popover
                   content={notificationContent}
@@ -728,10 +728,10 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   onOpenChange={setNotificationOpen}
                   placement="bottomRight"
                 >
-                  <Badge count={unreadCount} offset={[-5, 5]}>
+                  <Badge count={unreadCount} size="small" offset={[-3, 3]}>
                     <BellOutlined
                       style={{
-                        fontSize: 16,
+                        fontSize: 14,
                         cursor: 'pointer',
                         color: 'var(--ant-color-text-secondary)',
                       }}
@@ -751,7 +751,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   >
                     <BgColorsOutlined
                       style={{
-                        fontSize: 16,
+                        fontSize: 14,
                         color: 'var(--ant-color-text-secondary)',
                       }}
                     />
@@ -763,15 +763,15 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   menu={{ items: userMenuItems }}
                   placement="bottomRight"
                 >
-                  <Space size={8} style={{ cursor: 'pointer' }}>
-                    <Avatar size={26} icon={<UserOutlined />}>
+                  <Space size={6} style={{ cursor: 'pointer' }}>
+                    <Avatar size={20} icon={<UserOutlined />}>
                       {(userStore.user as any)?.fullName?.[0] ||
                         (userStore.user as any)?.account?.[0] ||
                         'U'}
                     </Avatar>
                     <span
                       style={{
-                        fontSize: 13,
+                        fontSize: 12,
                         color: 'var(--ant-color-text-secondary)',
                       }}
                     >
@@ -850,18 +850,20 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
 
             <Layout
               style={{
-                height: 'calc(100vh - 48px - 36px)',
+                flex: 1,
+                minHeight: 0,
                 position: 'relative',
+                padding: '10px 10px 10px 10px',
+                background: 'var(--ant-color-bg-layout)',
               }}
             >
               <Sider
                 collapsed={collapsed}
-                collapsedWidth={56}
+                collapsedWidth={44}
                 width={220}
                 theme={appStore.isDark ? 'dark' : 'light'}
                 trigger={null}
                 style={{
-                  height: '100%',
                   overflow: 'auto',
                   transition: 'width .2s cubic-bezier(.2,.8,.2,1)',
                 }}
@@ -885,7 +887,9 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  height: '100%',
+                  flex: 1,
+                  minHeight: 0,
+                  background: 'transparent',
                 }}
               >
                 <Content
@@ -899,8 +903,8 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 </Content>
               </Layout>
 
-              {/* 右侧快捷菜单子面板 — 点击 rail 图标弹出 */}
-              {activeQuickMenu && (
+              {/* 右侧快捷菜单子面板 — 点击 rail 图标弹出(首页不显示) */}
+              {location.pathname !== '/dashboard' && activeQuickMenu && (
                 <Sider
                   width={280}
                   theme={appStore.isDark ? 'dark' : 'light'}
@@ -965,7 +969,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   {/* 菜单列表 — 紧凑 */}
                   <div
                     style={{
-                      height: 'calc(100vh - 48px - 36px - 48px)',
+                      height: 'calc(100vh - 26px - 36px - 48px)',
                       overflowY: 'auto',
                       padding: '8px 8px',
                     }}
@@ -1045,77 +1049,79 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 </Sider>
               )}
 
-              {/* 右侧 rail — 固定 44px,点图标弹/收子菜单 */}
-              <Sider
-                width={44}
-                theme={appStore.isDark ? 'dark' : 'light'}
-                style={{
-                  background: 'var(--ant-color-bg-container)',
-                  borderLeft: '1px solid var(--ant-color-border-secondary)',
-                  flex: '0 0 auto',
-                }}
-              >
-                <div
+              {/* 右侧 rail — 固定 44px,点图标弹/收子菜单(首页不显示) */}
+              {location.pathname !== '/dashboard' && (
+                <Sider
+                  width={44}
+                  theme={appStore.isDark ? 'dark' : 'light'}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: '12px 0',
-                    gap: 8,
+                    background: 'var(--ant-color-bg-container)',
+                    borderLeft: '1px solid var(--ant-color-border-secondary)',
+                    flex: '0 0 auto',
                   }}
                 >
-                  {quickMenuGroups.map((group) => {
-                    const isActive = activeQuickMenu === group.key;
-                    return (
-                      <Tooltip
-                        key={group.key}
-                        placement="left"
-                        title={group.label}
-                        mouseEnterDelay={0.3}
-                      >
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 8,
-                            background: isActive
-                              ? `${group.color}15`
-                              : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            color: isActive
-                              ? group.color
-                              : 'var(--ant-color-text-tertiary)',
-                          }}
-                          onClick={() => handleQuickMenuToggle(group.key)}
-                          onMouseEnter={(e) => {
-                            if (!isActive) {
-                              e.currentTarget.style.background =
-                                'var(--ant-color-fill-tertiary)';
-                              e.currentTarget.style.color =
-                                appStore.primaryColor;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isActive) {
-                              e.currentTarget.style.background = 'transparent';
-                              e.currentTarget.style.color =
-                                'var(--ant-color-text-tertiary)';
-                            }
-                          }}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      padding: '12px 0',
+                      gap: 8,
+                    }}
+                  >
+                    {quickMenuGroups.map((group) => {
+                      const isActive = activeQuickMenu === group.key;
+                      return (
+                        <Tooltip
+                          key={group.key}
+                          placement="left"
+                          title={group.label}
+                          mouseEnterDelay={0.3}
                         >
-                          <span style={{ fontSize: 18, lineHeight: 1 }}>
-                            {group.icon}
-                          </span>
-                        </div>
-                      </Tooltip>
-                    );
-                  })}
-                </div>
-              </Sider>
+                          <div
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: 8,
+                              background: isActive
+                                ? `${group.color}15`
+                                : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              color: isActive
+                                ? group.color
+                                : 'var(--ant-color-text-tertiary)',
+                            }}
+                            onClick={() => handleQuickMenuToggle(group.key)}
+                            onMouseEnter={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.background =
+                                  'var(--ant-color-fill-tertiary)';
+                                e.currentTarget.style.color =
+                                  appStore.primaryColor;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.color =
+                                  'var(--ant-color-text-tertiary)';
+                              }
+                            }}
+                          >
+                            <span style={{ fontSize: 18, lineHeight: 1 }}>
+                              {group.icon}
+                            </span>
+                          </div>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </Sider>
+              )}
             </Layout>
           </Layout>
         </Layout>

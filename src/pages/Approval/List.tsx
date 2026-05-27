@@ -180,7 +180,7 @@ const ApprovalList: React.FC = () => {
   const paged = data.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+    <div style={{ height: '100%' }}>
       <OmnibarListPage<ApprovalRow>
         filters={filters}
         filterValues={filterValues}

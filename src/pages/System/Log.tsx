@@ -98,7 +98,7 @@ const SystemLog: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+    <div style={{ height: '100%' }}>
       <OmnibarListPage<LogRow>
         filters={filters}
         filterValues={filterValues}

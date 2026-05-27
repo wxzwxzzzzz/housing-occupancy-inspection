@@ -167,7 +167,7 @@ const AlertDetail: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 16, height: 'calc(100vh - 64px - 45px)' }}>
+    <div style={{ height: '100%' }}>
       <OmnibarDetailPage
         title={`预警 #${String(id).slice(-6)}`}
         statusBadge={getStatusBadge(r.status)}
