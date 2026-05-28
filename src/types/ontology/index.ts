@@ -1,7 +1,7 @@
 /**
  * 本体类型统一导出
  *
- * 来源:模型/model/typescript/(由本体 XML 自动生成)
+ * 来源:/model/typescript/(由本体 XML 自动生成)
  * 复制到 src/types/ontology/ 后由前端业务直接 import 使用。
  */
 

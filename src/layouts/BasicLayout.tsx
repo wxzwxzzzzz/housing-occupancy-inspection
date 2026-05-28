@@ -1287,6 +1287,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   flex: 1,
                   minHeight: 0,
                   background: 'transparent',
+                  padding: '0 10px',
                 }}
               >
                 <Content
