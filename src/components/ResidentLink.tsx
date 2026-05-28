@@ -2,18 +2,18 @@
  * 居民引用组件
  *
  * - 显示居民姓名(从 cache / 接口拉),hover 显示富信息卡
- * - 点击跳转到 /residents/:id 360 视图(在新 Tab 中打开)
+ * - 点击跳转到 /profile/residents/detail/:id 居民详情
  *
  * 特性:
  *  - useRequest 缓存 detail 调用,同一个 id 在同一会话只查一次
  *  - 当父组件直接传 record(已知所有字段)时不再发请求
  */
 
-import React from 'react';
-import { Avatar, Popover, Skeleton, Space, Tag } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Link } from '@umijs/max';
 import { useRequest } from 'ahooks';
+import { Avatar, Popover, Skeleton, Space, Tag } from 'antd';
+import React from 'react';
 import { residentService } from '@/services/domains/resident';
 import type { Resident } from '@/types/ontology/prh/entities/resident';
 import { EnumLabels, StatusColors } from '@/utils/enum-options';
@@ -61,7 +61,10 @@ function maskPhone(phone?: string): string {
   return `${phone.slice(0, 3)}****${phone.slice(-4)}`;
 }
 
-const HoverCard: React.FC<{ id: string; record?: Partial<Resident> }> = ({ id, record }) => {
+const HoverCard: React.FC<{ id: string; record?: Partial<Resident> }> = ({
+  id,
+  record,
+}) => {
   const { data, loading } = useRequest(
     () => (record ? Promise.resolve(record as Resident) : getResident(id)),
     { refreshDeps: [id, record] },
@@ -82,25 +85,36 @@ const HoverCard: React.FC<{ id: string; record?: Partial<Resident> }> = ({ id, r
           {data.fullName?.[0]}
         </Avatar>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 600 }}>{data.fullName ?? '-'}</div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>
+            {data.fullName ?? '-'}
+          </div>
           <div style={{ color: '#8c8c8c', fontSize: 12, marginTop: 2 }}>
             {maskIdCard((data as any).idCardNo)}
           </div>
         </div>
       </Space>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '64px 1fr', rowGap: 6, fontSize: 13 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '64px 1fr',
+          rowGap: 6,
+          fontSize: 13,
+        }}
+      >
         <span style={{ color: '#8c8c8c' }}>状态</span>
         <span>
           <Tag color={(StatusColors.ResidentStatus as any)[data.status as any]}>
-            {EnumLabels.ResidentStatus[data.status as keyof typeof EnumLabels.ResidentStatus] ??
-              data.status}
+            {EnumLabels.ResidentStatus[
+              data.status as keyof typeof EnumLabels.ResidentStatus
+            ] ?? data.status}
           </Tag>
         </span>
 
         <span style={{ color: '#8c8c8c' }}>性别</span>
         <span>
-          {EnumLabels.Gender[data.gender as keyof typeof EnumLabels.Gender] ?? '-'}
+          {EnumLabels.Gender[data.gender as keyof typeof EnumLabels.Gender] ??
+            '-'}
         </span>
 
         <span style={{ color: '#8c8c8c' }}>电话</span>
@@ -122,8 +136,8 @@ const HoverCard: React.FC<{ id: string; record?: Partial<Resident> }> = ({ id, r
           textAlign: 'right',
         }}
       >
-        <Link to={`/residents/${id}`} target="_blank">
-          查看 360 视图 →
+        <Link to={`/profile/residents/detail/${id}`} target="_blank">
+          查看居民详情 →
         </Link>
       </div>
     </div>
@@ -140,7 +154,7 @@ const ResidentLink: React.FC<ResidentLinkProps> = ({
   const label = children ?? (record?.fullName as React.ReactNode) ?? id;
 
   const inner = clickable ? (
-    <Link to={`/residents/${id}`} style={{ color: '#1677ff' }}>
+    <Link to={`/profile/residents/detail/${id}`} style={{ color: '#1677ff' }}>
       {label}
     </Link>
   ) : (

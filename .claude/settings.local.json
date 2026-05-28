@@ -29,7 +29,8 @@
       "Bash(awk NR>=440 && NR<=837 *)",
       "Bash(npx @biomejs/biome check src/layouts/BasicLayout.tsx src/components/ThemeSettings.tsx src/pages/Dashboard/index.tsx)",
       "Bash(npx @biomejs/biome check src/)",
-      "Bash(npx @biomejs/biome check src/components/ThemeSettings.tsx src/layouts/BasicLayout.tsx)"
+      "Bash(npx @biomejs/biome check src/components/ThemeSettings.tsx src/layouts/BasicLayout.tsx)",
+      "Bash(npm run *)"
     ],
     "deny": [],
     "ask": []

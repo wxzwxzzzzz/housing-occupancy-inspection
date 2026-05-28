@@ -173,14 +173,17 @@ function seedResidences() {
   for (let i = 0; i < 30; i++) {
     insert(OT.Residence, {
       resident: `resident-${i + 1}`,
-      residenceType: ['SUBSIDIZED_HOUSING', 'MARKET_RENTAL', 'SELF_OWNED'][i % 3],
+      addressType: ['SUBSIDIZED_HOUSING', 'MARKET_RENTAL', 'SELF_OWNED'][i % 3],
       address: {
         region: REGION_CODES[i % REGION_CODES.length],
         detail: `广州市${['天河区', '越秀区', '海珠区', '白云区'][i % 4]}保障花园${i + 1}号楼${(i % 6) + 1}单元${(i % 9) + 1}0${(i % 8) + 2}`,
         geoPoint: { longitude: 113.27 + (i % 10) * 0.01, latitude: 23.13 + (i % 10) * 0.005 },
       },
-      effectiveFrom: '2025-01-01',
-      recordStatus: 'RECORD_ACTIVE',
+      // 给第 1 条居住记录绑上现成的圆形围栏(供 ResidentFencePanel 演示)
+      fence: i === 0 ? 'fence-circle-1' : undefined,
+      isMonitoringTarget: i % 3 === 0,
+      effectiveDate: '2025-01-01',
+      status: 'RECORD_ACTIVE',
     });
   }
 }

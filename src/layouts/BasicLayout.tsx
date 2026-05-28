@@ -8,18 +8,33 @@ import {
   CloseOutlined,
   ControlOutlined,
   DashboardOutlined,
+  DotChartOutlined,
   DownloadOutlined,
   EnvironmentOutlined,
   FileImageOutlined,
   FileSearchOutlined,
   FileTextOutlined,
   FilterOutlined,
+  FundOutlined,
+  HomeOutlined,
   LineChartOutlined,
   LogoutOutlined,
   MenuOutlined,
   MonitorOutlined,
+  PartitionOutlined,
+  PayCircleOutlined,
+  PieChartOutlined,
+  ReloadOutlined,
+  RocketOutlined,
+  SafetyOutlined,
+  ScheduleOutlined,
   SettingOutlined,
+  ShopOutlined,
+  StopOutlined,
+  SwapOutlined,
+  TagOutlined,
   TeamOutlined,
+  UsergroupAddOutlined,
   UserOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
@@ -78,19 +93,64 @@ const iconMap: Record<string, React.ReactNode> = {
   control: <ControlOutlined />,
   'file-search': <FileSearchOutlined />,
   filter: <FilterOutlined />,
+  home: <HomeOutlined />,
+  safety: <SafetyOutlined />,
+  'pay-circle': <PayCircleOutlined />,
+  shop: <ShopOutlined />,
+  stop: <StopOutlined />,
+  reload: <ReloadOutlined />,
+  rocket: <RocketOutlined />,
+  'usergroup-add': <UsergroupAddOutlined />,
+  schedule: <ScheduleOutlined />,
+  partition: <PartitionOutlined />,
+  tag: <TagOutlined />,
+  'pie-chart': <PieChartOutlined />,
+  fund: <FundOutlined />,
+  swap: <SwapOutlined />,
+  'dot-chart': <DotChartOutlined />,
 };
 
-// 路由标题映射
+// 路由标题映射(用于 Tab 标题)
 const routeTitleMap: Record<string, string> = {
   '/dashboard': '工作台',
-  '/residents': '居民档案',
-  '/monitor/attendance': '打卡核验',
+  '/profile/residents': '保障居民',
+  '/profile/households': '保障家庭',
+  '/eligibility/applications': '资质申请',
+  '/eligibility/allocations': '实物配租',
+  '/eligibility/subsidies': '租赁补贴',
+  '/eligibility/terminations': '资格终止',
+  '/monitor/attendance': '考勤打卡',
+  '/monitor/leaves': '请假申请',
+  '/monitor/makeups': '补卡申请',
+  '/monitor/migrant-works': '外出务工',
+  '/monitor/residence-changes': '居住地址变更',
+  '/monitor/employment-changes': '工作地址变更',
+  '/monitor/member-changes': '家庭成员变更',
   '/monitor/alert': '预警处置',
-  '/approval/material': '材料审批',
-  '/approval/leave': '请假管理',
-  '/approval/filing': '备案管理',
-  '/approval/workflow': '流程配置',
-  '/report/statistics': '数据统计',
+  '/monitor/alert-list': '预警列表',
+  '/attendance-config/solutions': '考勤方案',
+  '/attendance-config/rules': '考勤规则',
+  '/attendance-config/leave-types': '请假类型',
+  '/attendance-config/calendars': '资源日历',
+  '/attendance-config/workflow': '审批流程',
+  '/report/resident-snapshot': '居民快照',
+  '/report/household-snapshot': '家庭快照',
+  '/report/household-member-snapshot': '家庭成员快照',
+  '/report/residence-snapshot': '居住信息快照',
+  '/report/employment-snapshot': '工作信息快照',
+  '/report/personal-income': '个人收入',
+  '/report/attendance': '考勤打卡',
+  '/report/leave': '请假',
+  '/report/attendance-makeup': '补卡申请',
+  '/report/eligibility-application': '资质申请',
+  '/report/housing-allocation': '实物配租',
+  '/report/rental-subsidy': '租赁补贴',
+  '/report/eligibility-termination': '资格终止',
+  '/report/migrant-work': '外出务工',
+  '/report/household-member-change': '家庭成员变更',
+  '/report/residence-change': '居住地址变更',
+  '/report/employment-change': '工作地址变更',
+  '/report/statistics': '综合统计',
   '/report/export': '报表导出',
   '/system/message': '消息中心',
   '/system/personnel': '人员管理',
@@ -104,12 +164,33 @@ const routeTitleMap: Record<string, string> = {
   '/settings': '账户设置',
 };
 
-/** 动态路径生成 Tab 标题:目前只支持 /residents/:id */
+/** 动态路径生成 Tab 标题:支持居民/家庭/各类申请单详情 */
 function dynamicTabTitle(pathname: string): string | null {
-  const matchResident = pathname.match(/^\/residents\/([^/]+)$/);
+  const matchResident = pathname.match(
+    /^\/profile\/residents\/detail\/([^/]+)$/,
+  );
   if (matchResident) {
     const id = matchResident[1];
     return `居民 ${id.length > 8 ? id.slice(-6) : id}`;
+  }
+  const matchHousehold = pathname.match(
+    /^\/profile\/households\/detail\/([^/]+)$/,
+  );
+  if (matchHousehold) {
+    const id = matchHousehold[1];
+    return `家庭 ${id.length > 8 ? id.slice(-6) : id}`;
+  }
+  const matchEligibility = pathname.match(
+    /^\/eligibility\/[^/]+\/detail\/([^/]+)$/,
+  );
+  if (matchEligibility) {
+    const id = matchEligibility[1];
+    return `单据 ${id.length > 8 ? id.slice(-6) : id}`;
+  }
+  const matchMonitor = pathname.match(/^\/monitor\/[^/]+\/detail\/([^/]+)$/);
+  if (matchMonitor) {
+    const id = matchMonitor[1];
+    return `单据 ${id.length > 8 ? id.slice(-6) : id}`;
   }
   return null;
 }
@@ -257,22 +338,60 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
 
     // 给每个菜单标记可见角色;ADMIN 默认看全部。
     const menuAcl: Record<string, string[]> = {
-      '/dashboard': [], // 所有人可见
-      '/residents': [ROLE.APPROVER, ROLE.STAFF],
+      '/dashboard': [],
+      // 居民档案
+      '/profile': [ROLE.APPROVER, ROLE.STAFF],
+      '/profile/residents': [ROLE.APPROVER, ROLE.STAFF],
+      '/profile/households': [ROLE.APPROVER, ROLE.STAFF],
+      // 保障业务
+      '/eligibility': [ROLE.APPROVER, ROLE.STAFF],
+      '/eligibility/applications': [ROLE.APPROVER, ROLE.STAFF],
+      '/eligibility/allocations': [ROLE.APPROVER, ROLE.STAFF],
+      '/eligibility/subsidies': [ROLE.APPROVER, ROLE.STAFF],
+      '/eligibility/terminations': [ROLE.APPROVER, ROLE.STAFF],
+      // 监测与处置
       '/monitor': [ROLE.APPROVER, ROLE.STAFF],
       '/monitor/attendance': [ROLE.APPROVER, ROLE.STAFF],
+      '/monitor/leaves': [ROLE.APPROVER, ROLE.STAFF],
+      '/monitor/makeups': [ROLE.APPROVER, ROLE.STAFF],
+      '/monitor/migrant-works': [ROLE.APPROVER, ROLE.STAFF],
+      '/monitor/residence-changes': [ROLE.APPROVER, ROLE.STAFF],
+      '/monitor/employment-changes': [ROLE.APPROVER, ROLE.STAFF],
+      '/monitor/member-changes': [ROLE.APPROVER, ROLE.STAFF],
       '/monitor/alert': [ROLE.APPROVER, ROLE.STAFF],
-      '/approval': [ROLE.APPROVER, ROLE.STAFF],
-      '/approval/material': [ROLE.APPROVER, ROLE.STAFF],
-      '/approval/leave': [ROLE.APPROVER, ROLE.STAFF],
-      '/approval/filing': [ROLE.APPROVER, ROLE.STAFF],
-      '/approval/workflow': [ROLE.APPROVER], // 工作人员看不到流程配置
+      '/monitor/alert-list': [ROLE.APPROVER, ROLE.STAFF],
+      // 考勤配置
+      '/attendance-config': [ROLE.APPROVER],
+      '/attendance-config/solutions': [ROLE.APPROVER],
+      '/attendance-config/rules': [ROLE.APPROVER],
+      '/attendance-config/leave-types': [ROLE.APPROVER],
+      '/attendance-config/calendars': [ROLE.APPROVER],
+      '/attendance-config/workflow': [ROLE.APPROVER],
+      // 报表
       '/report': [ROLE.APPROVER],
+      '/report/resident-snapshot': [ROLE.APPROVER],
+      '/report/household-snapshot': [ROLE.APPROVER],
+      '/report/household-member-snapshot': [ROLE.APPROVER],
+      '/report/residence-snapshot': [ROLE.APPROVER],
+      '/report/employment-snapshot': [ROLE.APPROVER],
+      '/report/personal-income': [ROLE.APPROVER],
+      '/report/attendance': [ROLE.APPROVER],
+      '/report/leave': [ROLE.APPROVER],
+      '/report/attendance-makeup': [ROLE.APPROVER],
+      '/report/eligibility-application': [ROLE.APPROVER],
+      '/report/housing-allocation': [ROLE.APPROVER],
+      '/report/rental-subsidy': [ROLE.APPROVER],
+      '/report/eligibility-termination': [ROLE.APPROVER],
+      '/report/migrant-work': [ROLE.APPROVER],
+      '/report/household-member-change': [ROLE.APPROVER],
+      '/report/residence-change': [ROLE.APPROVER],
+      '/report/employment-change': [ROLE.APPROVER],
       '/report/statistics': [ROLE.APPROVER],
       '/report/export': [ROLE.APPROVER],
-      '/system': [], // 系统组保留给 ADMIN(其他人通过子项控制)
+      // 系统
+      '/system': [],
       '/system/message': [ROLE.APPROVER, ROLE.STAFF, ROLE.RESIDENT],
-      '/system/personnel': [], // 仅 ADMIN
+      '/system/personnel': [],
       '/system/role': [],
       '/system/menu': [],
       '/system/config': [],
@@ -299,9 +418,78 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
           label: <Link to="/dashboard">工作台</Link>,
         },
         {
-          key: '/residents',
+          key: '/profile',
           icon: iconMap['team'],
-          label: <Link to="/residents">居民档案</Link>,
+          label: '居民档案',
+          children: [
+            {
+              key: '/profile/residents',
+              icon: iconMap['user'],
+              label: <Link to="/profile/residents">保障居民</Link>,
+            },
+            {
+              key: '/profile/households',
+              icon: iconMap['home'],
+              label: <Link to="/profile/households">保障家庭</Link>,
+            },
+          ],
+        },
+        {
+          key: '/applications',
+          icon: iconMap['file-text'],
+          label: '申请管理',
+          children: [
+            {
+              key: '/eligibility/applications',
+              icon: iconMap['safety'],
+              label: <Link to="/eligibility/applications">资质申请</Link>,
+            },
+            {
+              key: '/eligibility/allocations',
+              icon: iconMap['home'],
+              label: <Link to="/eligibility/allocations">实物配租</Link>,
+            },
+            {
+              key: '/eligibility/subsidies',
+              icon: iconMap['pay-circle'],
+              label: <Link to="/eligibility/subsidies">租赁补贴</Link>,
+            },
+            {
+              key: '/eligibility/terminations',
+              icon: iconMap['stop'],
+              label: <Link to="/eligibility/terminations">资格终止</Link>,
+            },
+            {
+              key: '/monitor/leaves',
+              icon: iconMap['calendar'],
+              label: <Link to="/monitor/leaves">请假申请</Link>,
+            },
+            {
+              key: '/monitor/makeups',
+              icon: iconMap['reload'],
+              label: <Link to="/monitor/makeups">补卡申请</Link>,
+            },
+            {
+              key: '/monitor/migrant-works',
+              icon: iconMap['rocket'],
+              label: <Link to="/monitor/migrant-works">外出务工</Link>,
+            },
+            {
+              key: '/monitor/residence-changes',
+              icon: iconMap['environment'],
+              label: <Link to="/monitor/residence-changes">居住地址变更</Link>,
+            },
+            {
+              key: '/monitor/employment-changes',
+              icon: iconMap['shop'],
+              label: <Link to="/monitor/employment-changes">工作地址变更</Link>,
+            },
+            {
+              key: '/monitor/member-changes',
+              icon: iconMap['usergroup-add'],
+              label: <Link to="/monitor/member-changes">家庭成员变更</Link>,
+            },
+          ],
         },
         {
           key: '/monitor',
@@ -311,7 +499,12 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
             {
               key: '/monitor/attendance',
               icon: iconMap['check-circle'],
-              label: <Link to="/monitor/attendance">打卡核验</Link>,
+              label: <Link to="/monitor/attendance">考勤打卡</Link>,
+            },
+            {
+              key: '/monitor/alert-list',
+              icon: iconMap['warning'],
+              label: <Link to="/monitor/alert-list">预警列表</Link>,
             },
             {
               key: '/monitor/alert',
@@ -321,29 +514,34 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
           ],
         },
         {
-          key: '/approval',
-          icon: iconMap['file-text'],
-          label: '申请与审批',
+          key: '/attendance-config',
+          icon: iconMap['schedule'],
+          label: '考勤配置',
           children: [
             {
-              key: '/approval/material',
-              icon: iconMap['file-image'],
-              label: <Link to="/approval/material">材料审批</Link>,
-            },
-            {
-              key: '/approval/leave',
-              icon: iconMap['calendar'],
-              label: <Link to="/approval/leave">请假管理</Link>,
-            },
-            {
-              key: '/approval/filing',
-              icon: iconMap['environment'],
-              label: <Link to="/approval/filing">备案管理</Link>,
-            },
-            {
-              key: '/approval/workflow',
+              key: '/attendance-config/solutions',
               icon: iconMap['apartment'],
-              label: <Link to="/approval/workflow">流程配置</Link>,
+              label: <Link to="/attendance-config/solutions">考勤方案</Link>,
+            },
+            {
+              key: '/attendance-config/rules',
+              icon: iconMap['control'],
+              label: <Link to="/attendance-config/rules">考勤规则</Link>,
+            },
+            {
+              key: '/attendance-config/leave-types',
+              icon: iconMap['tag'],
+              label: <Link to="/attendance-config/leave-types">请假类型</Link>,
+            },
+            {
+              key: '/attendance-config/calendars',
+              icon: iconMap['calendar'],
+              label: <Link to="/attendance-config/calendars">资源日历</Link>,
+            },
+            {
+              key: '/attendance-config/workflow',
+              icon: iconMap['partition'],
+              label: <Link to="/attendance-config/workflow">审批流程</Link>,
             },
           ],
         },
@@ -353,9 +551,135 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
           label: '分析与报表',
           children: [
             {
+              key: 'report-group-snapshot',
+              label: '档案快照',
+              type: 'group' as const,
+              children: [
+                {
+                  key: '/report/resident-snapshot',
+                  icon: iconMap['pie-chart'],
+                  label: <Link to="/report/resident-snapshot">居民快照</Link>,
+                },
+                {
+                  key: '/report/household-snapshot',
+                  icon: iconMap['pie-chart'],
+                  label: <Link to="/report/household-snapshot">家庭快照</Link>,
+                },
+                {
+                  key: '/report/household-member-snapshot',
+                  icon: iconMap['pie-chart'],
+                  label: (
+                    <Link to="/report/household-member-snapshot">
+                      家庭成员快照
+                    </Link>
+                  ),
+                },
+                {
+                  key: '/report/residence-snapshot',
+                  icon: iconMap['pie-chart'],
+                  label: (
+                    <Link to="/report/residence-snapshot">居住信息快照</Link>
+                  ),
+                },
+                {
+                  key: '/report/employment-snapshot',
+                  icon: iconMap['pie-chart'],
+                  label: (
+                    <Link to="/report/employment-snapshot">工作信息快照</Link>
+                  ),
+                },
+              ],
+            },
+            {
+              key: 'report-group-income',
+              label: '收入与考勤',
+              type: 'group' as const,
+              children: [
+                {
+                  key: '/report/personal-income',
+                  icon: iconMap['line-chart'],
+                  label: <Link to="/report/personal-income">个人收入</Link>,
+                },
+                {
+                  key: '/report/attendance',
+                  icon: iconMap['line-chart'],
+                  label: <Link to="/report/attendance">考勤打卡</Link>,
+                },
+                {
+                  key: '/report/leave',
+                  icon: iconMap['line-chart'],
+                  label: <Link to="/report/leave">请假</Link>,
+                },
+                {
+                  key: '/report/attendance-makeup',
+                  icon: iconMap['line-chart'],
+                  label: <Link to="/report/attendance-makeup">补卡申请</Link>,
+                },
+              ],
+            },
+            {
+              key: 'report-group-business',
+              label: '业务与变更',
+              type: 'group' as const,
+              children: [
+                {
+                  key: '/report/eligibility-application',
+                  icon: iconMap['fund'],
+                  label: (
+                    <Link to="/report/eligibility-application">资质申请</Link>
+                  ),
+                },
+                {
+                  key: '/report/housing-allocation',
+                  icon: iconMap['fund'],
+                  label: <Link to="/report/housing-allocation">实物配租</Link>,
+                },
+                {
+                  key: '/report/rental-subsidy',
+                  icon: iconMap['fund'],
+                  label: <Link to="/report/rental-subsidy">租赁补贴</Link>,
+                },
+                {
+                  key: '/report/eligibility-termination',
+                  icon: iconMap['fund'],
+                  label: (
+                    <Link to="/report/eligibility-termination">资格终止</Link>
+                  ),
+                },
+                {
+                  key: '/report/migrant-work',
+                  icon: iconMap['swap'],
+                  label: <Link to="/report/migrant-work">外出务工</Link>,
+                },
+                {
+                  key: '/report/household-member-change',
+                  icon: iconMap['swap'],
+                  label: (
+                    <Link to="/report/household-member-change">
+                      家庭成员变更
+                    </Link>
+                  ),
+                },
+                {
+                  key: '/report/residence-change',
+                  icon: iconMap['swap'],
+                  label: (
+                    <Link to="/report/residence-change">居住地址变更</Link>
+                  ),
+                },
+                {
+                  key: '/report/employment-change',
+                  icon: iconMap['swap'],
+                  label: (
+                    <Link to="/report/employment-change">工作地址变更</Link>
+                  ),
+                },
+              ],
+            },
+            {
               key: '/report/statistics',
-              icon: iconMap['line-chart'],
-              label: <Link to="/report/statistics">数据统计</Link>,
+              icon: iconMap['dot-chart'],
+              label: <Link to="/report/statistics">综合统计</Link>,
             },
             {
               key: '/report/export',
@@ -431,8 +755,58 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentRole, isAdmin]);
 
-    // 快捷菜单分组数据 - 使用更柔和的色彩方案(按角色过滤)
+    // 快捷菜单分组数据(rail 上的弹出小面板)
     const allQuickMenuGroups = [
+      {
+        key: 'profile',
+        icon: <TeamOutlined />,
+        label: '档案',
+        color: '#13c2c2',
+        lightColor: '#e6fffb',
+        hoverColor: '#b5f5ec',
+        children: [
+          {
+            label: '保障居民',
+            path: '/profile/residents',
+            icon: <UserOutlined />,
+          },
+          {
+            label: '保障家庭',
+            path: '/profile/households',
+            icon: <HomeOutlined />,
+          },
+        ],
+      },
+      {
+        key: 'eligibility',
+        icon: <SafetyOutlined />,
+        label: '业务',
+        color: '#1890ff',
+        lightColor: '#e6f7ff',
+        hoverColor: '#bae7ff',
+        children: [
+          {
+            label: '资质申请',
+            path: '/eligibility/applications',
+            icon: <FileTextOutlined />,
+          },
+          {
+            label: '实物配租',
+            path: '/eligibility/allocations',
+            icon: <HomeOutlined />,
+          },
+          {
+            label: '租赁补贴',
+            path: '/eligibility/subsidies',
+            icon: <PayCircleOutlined />,
+          },
+          {
+            label: '资格终止',
+            path: '/eligibility/terminations',
+            icon: <StopOutlined />,
+          },
+        ],
+      },
       {
         key: 'monitor',
         icon: <MonitorOutlined />,
@@ -442,39 +816,29 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
         hoverColor: '#d9f7be',
         children: [
           {
-            label: '打卡核验',
+            label: '考勤打卡',
             path: '/monitor/attendance',
             icon: <CheckCircleOutlined />,
+          },
+          {
+            label: '请假申请',
+            path: '/monitor/leaves',
+            icon: <CalendarOutlined />,
+          },
+          {
+            label: '补卡申请',
+            path: '/monitor/makeups',
+            icon: <ReloadOutlined />,
+          },
+          {
+            label: '外出务工',
+            path: '/monitor/migrant-works',
+            icon: <RocketOutlined />,
           },
           {
             label: '预警处置',
             path: '/monitor/alert',
             icon: <WarningOutlined />,
-          },
-        ],
-      },
-      {
-        key: 'approval',
-        icon: <FileTextOutlined />,
-        label: '审批',
-        color: '#1890ff',
-        lightColor: '#e6f7ff',
-        hoverColor: '#bae7ff',
-        children: [
-          {
-            label: '材料审批',
-            path: '/approval/material',
-            icon: <FileImageOutlined />,
-          },
-          {
-            label: '请假管理',
-            path: '/approval/leave',
-            icon: <CalendarOutlined />,
-          },
-          {
-            label: '备案管理',
-            path: '/approval/filing',
-            icon: <EnvironmentOutlined />,
           },
         ],
       },
@@ -487,14 +851,24 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
         hoverColor: '#fff1b8',
         children: [
           {
-            label: '数据统计',
-            path: '/report/statistics',
+            label: '居民/家庭画像',
+            path: '/report/snapshots',
+            icon: <PieChartOutlined />,
+          },
+          {
+            label: '考勤分析',
+            path: '/report/attendance',
             icon: <LineChartOutlined />,
           },
           {
-            label: '报表导出',
-            path: '/report/export',
-            icon: <DownloadOutlined />,
+            label: '业务流转',
+            path: '/report/eligibility',
+            icon: <FundOutlined />,
+          },
+          {
+            label: '变更分析',
+            path: '/report/changes',
+            icon: <SwapOutlined />,
           },
         ],
       },
@@ -671,7 +1045,13 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
             : antdTheme.defaultAlgorithm,
         }}
       >
-        <Layout style={{ height: '100vh', overflow: 'hidden', background: 'var(--ant-color-bg-layout)' }}>
+        <Layout
+          style={{
+            height: '100vh',
+            overflow: 'hidden',
+            background: 'var(--ant-color-bg-layout)',
+          }}
+        >
           <Layout style={{ flex: 1, minHeight: 0 }}>
             <Header
               style={{
@@ -872,9 +1252,26 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   mode="inline"
                   selectedKeys={[location.pathname]}
                   defaultOpenKeys={[
-                    location.pathname.startsWith('/monitor') ? '/monitor' : '',
-                    location.pathname.startsWith('/approval')
-                      ? '/approval'
+                    location.pathname.startsWith('/profile') ? '/profile' : '',
+                    location.pathname.startsWith('/eligibility') ||
+                    location.pathname.startsWith('/monitor/leaves') ||
+                    location.pathname.startsWith('/monitor/makeups') ||
+                    location.pathname.startsWith('/monitor/migrant-works') ||
+                    location.pathname.startsWith(
+                      '/monitor/residence-changes',
+                    ) ||
+                    location.pathname.startsWith(
+                      '/monitor/employment-changes',
+                    ) ||
+                    location.pathname.startsWith('/monitor/member-changes')
+                      ? '/applications'
+                      : '',
+                    location.pathname.startsWith('/monitor/attendance') ||
+                    location.pathname.startsWith('/monitor/alert')
+                      ? '/monitor'
+                      : '',
+                    location.pathname.startsWith('/attendance-config')
+                      ? '/attendance-config'
                       : '',
                     location.pathname.startsWith('/report') ? '/report' : '',
                     location.pathname.startsWith('/system') ? '/system' : '',
@@ -1106,7 +1503,8 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                             }}
                             onMouseLeave={(e) => {
                               if (!isActive) {
-                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.background =
+                                  'transparent';
                                 e.currentTarget.style.color =
                                   'var(--ant-color-text-tertiary)';
                               }

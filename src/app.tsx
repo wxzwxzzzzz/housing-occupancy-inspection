@@ -1,7 +1,7 @@
 import '@ant-design/v5-patch-for-react-19';
 import { history } from '@umijs/max';
 import { errorConfig } from './requestErrorConfig';
-import { appStore, dashboardStore, userStore } from './stores';
+import { appStore, dashboardStore, dictStore, userStore } from './stores';
 import type { CurrentUser } from './stores/userStore';
 
 // 应用启动时立刻同步主题模式到 html data-theme,避免页面加载闪白
@@ -43,6 +43,8 @@ export async function getInitialState(): Promise<{
 
   // 仪表盘数据失败不阻塞应用启动
   void dashboardStore.fetchStats().catch(() => undefined);
+  // 字典中心:登录后尝试拉一次运行时字典覆盖。失败也不阻塞,前端会用 EnumLabels 默认值。
+  void dictStore.refresh().catch(() => undefined);
 
   return {
     currentUser: userStore.user,
