@@ -46,6 +46,7 @@ import {
 import { approvalService } from '@/services/domains/approval';
 import { invokeAction } from '@/services/ontology/client';
 import type { EntityApi } from '@/services/ontology/crud';
+import { approvalPanelStore } from '@/stores';
 import { dictLabel } from '@/stores/dictStore';
 import { StatusColors } from '@/utils/enum-options';
 
@@ -115,6 +116,19 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
   } = useRequest(fetcher, {
     refreshDeps: [id],
   });
+
+  // 注入审批面板上下文 → 右侧 rail 显示「审批」入口并默认展开
+  React.useEffect(() => {
+    if (record?.id) {
+      approvalPanelStore.setContext(
+        objectType,
+        record.id,
+        record.status,
+        reload,
+      );
+    }
+    return () => approvalPanelStore.clear();
+  }, [objectType, record?.id, record?.status, reload]);
 
   const [opinionModal, setOpinionModal] = React.useState<
     'approve' | 'reject' | null

@@ -215,6 +215,9 @@ function runApprovalPostEffect(
     bizRef: row.id,
   });
 
+  // 审批记录时间线:把当前待审批(PENDING)步标记为本次结果,推进下一步为待审批
+  advanceApprovalRecords(objectType, String(row.id), result, row.approvalOpinion);
+
   if (result !== 'APPROVED') return;
 
   // 资质申请通过 → 家庭进入候选(才能配租/补贴),对应本体准入流转
@@ -251,6 +254,36 @@ function simpleNameOf(objectType: string): string {
     [OT.HouseholdMemberChange]: '家庭成员变更',
   };
   return map[objectType] ?? '申请';
+}
+
+/**
+ * 推进审批记录时间线:当前待审批步 → 本次结果;通过则下一步置待审批,
+ * 驳回则不再推进。用于详情页右侧多级审批面板的真实流转。
+ */
+function advanceApprovalRecords(
+  objectType: string,
+  bizRef: string,
+  result: 'APPROVED' | 'REJECTED',
+  opinion?: string,
+) {
+  const records = findAll(OT.ApprovalRecord)
+    .filter((r) => r.bizRef === bizRef && r.bizType === objectType)
+    .sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0));
+  const pendingIdx = records.findIndex((r) => r.result === 'PENDING');
+  if (pendingIdx < 0) return;
+  const cur = records[pendingIdx];
+  update(OT.ApprovalRecord, cur.id, {
+    result: result === 'APPROVED' ? 'PASS' : 'REJECT',
+    approvalTime: new Date().toISOString(),
+    opinion: opinion || (result === 'APPROVED' ? '通过' : '驳回'),
+  });
+  // 通过 → 把下一条 NOT_CREATED 置为 PENDING(若有且非"结束"终点)
+  if (result === 'APPROVED') {
+    const next = records[pendingIdx + 1];
+    if (next && next.result === 'NOT_CREATED' && next.stepName !== '结束') {
+      update(OT.ApprovalRecord, next.id, { result: 'PENDING' });
+    }
+  }
 }
 
 const approvalHandlers: Record<string, Handler> = {

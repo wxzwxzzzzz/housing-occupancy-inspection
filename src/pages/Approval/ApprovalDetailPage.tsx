@@ -4,22 +4,27 @@
  * Material/Leave/Filing 的 Detail 都用它包装,只传 sections + 业务字段。
  */
 
-import React, { useState } from 'react';
-import { Button, Form, Input, message, Modal, Tooltip, Skeleton } from 'antd';
-import { CheckOutlined, CloseOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useKeyPress } from 'ahooks';
-import { useNavigate, useParams } from '@umijs/max';
-import { approvalService } from '@/services/domains/approval';
-import type { EntityApi } from '@/services/ontology/crud';
-import { EnumLabels, StatusColors } from '@/utils/enum-options';
 import {
-  OmnibarDetailPage,
-  useDetail,
+  ArrowLeftOutlined,
+  CheckOutlined,
+  CloseOutlined,
+} from '@ant-design/icons';
+import { useNavigate, useParams } from '@umijs/max';
+import { useKeyPress } from 'ahooks';
+import { Button, Form, Input, Modal, message, Skeleton, Tooltip } from 'antd';
+import React, { useEffect, useState } from 'react';
+import {
   type DetailSection,
   type DetailTabItem,
+  OmnibarDetailPage,
   type StatusBadge,
   type ToolbarAction,
+  useDetail,
 } from '@/components/OmnibarPage';
+import { approvalService } from '@/services/domains/approval';
+import type { EntityApi } from '@/services/ontology/crud';
+import { approvalPanelStore } from '@/stores';
+import { EnumLabels, StatusColors } from '@/utils/enum-options';
 
 interface ApprovalDetailPageProps<T extends { id: string; status?: string }> {
   /** 业务对象类型,如 OT.Leave */
@@ -47,7 +52,9 @@ function getStatusBadge(status: string | undefined): StatusBadge {
   };
   return {
     text:
-      EnumLabels.ApplicationStatus[status as keyof typeof EnumLabels.ApplicationStatus] ??
+      EnumLabels.ApplicationStatus[
+        status as keyof typeof EnumLabels.ApplicationStatus
+      ] ??
       status ??
       '-',
     color: colorMap[status ?? ''] ?? 'secondary',
@@ -78,6 +85,14 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
     [service],
   );
   const { data, loading, reload } = useDetail<T>(id, fetcher);
+
+  // 把当前单据注入审批面板上下文 → 右侧 rail 显示「审批」入口并默认展开
+  useEffect(() => {
+    if (data?.id) {
+      approvalPanelStore.setContext(objectType, data.id, data.status, reload);
+    }
+    return () => approvalPanelStore.clear();
+  }, [objectType, data?.id, data?.status, reload]);
 
   const [approving, setApproving] = useState<'approve' | 'reject' | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -176,7 +191,8 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
           {(data as any).submittedAt && (
             <p>
               提交时间:{new Date((data as any).submittedAt).toLocaleString()}
-              {(data as any).submittedBy && ` / 提交人:${(data as any).submittedBy}`}
+              {(data as any).submittedBy &&
+                ` / 提交人:${(data as any).submittedBy}`}
             </p>
           )}
           {(data as any).approver && (

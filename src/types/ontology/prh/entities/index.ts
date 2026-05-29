@@ -3,6 +3,7 @@
  */
 
 export type * from './approval_flow';
+export type * from './approval_record';
 export type * from './attendance';
 export type * from './attendance_makeup';
 export type * from './attendance_makeup_attachment';

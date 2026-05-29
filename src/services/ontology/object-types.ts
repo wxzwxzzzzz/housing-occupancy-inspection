@@ -67,6 +67,8 @@ export const OT = {
   SavedFilter: `${NS_PRH}.SavedFilter`,
   // prh — 审批流程定义（B 轨临时）
   ApprovalFlow: `${NS_PRH}.ApprovalFlow`,
+  // prh — 审批记录(多级流程节点,B 轨临时)
+  ApprovalRecord: `${NS_PRH}.ApprovalRecord`,
 
   // prh — 事实
   AttendanceFact: `${NS_PRH}.AttendanceFact`,

@@ -59,7 +59,8 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import ThemeSettings from '@/components/ThemeSettings';
-import { appStore, userStore } from '../stores';
+import ApprovalPanel from '../components/ApprovalPanel';
+import { approvalPanelStore, appStore, userStore } from '../stores';
 
 const { Header, Sider, Content } = Layout;
 
@@ -197,6 +198,8 @@ function dynamicTabTitle(pathname: string): string | null {
 // 本地存储键名
 const TABS_STORAGE_KEY = 'app_tabs';
 const LEFT_RAIL_KEY = 'layout_left_rail_expanded';
+/** 右侧 rail 的「审批」特殊菜单 key */
+const APPROVAL_MENU_KEY = '__approval__';
 
 const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
   ({ children }) => {
@@ -205,6 +208,20 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
     const [notificationOpen, setNotificationOpen] = useState(false);
     const [themeDrawerOpen, setThemeDrawerOpen] = useState(false);
     const [activeQuickMenu, setActiveQuickMenu] = useState<string | null>(null);
+
+    // 审批面板自动展开:进入含待审批数据的详情页时,默认打开右侧审批面板
+    const apActive = approvalPanelStore.active;
+    const apPending = approvalPanelStore.pending;
+    const apBizRef = approvalPanelStore.bizRef;
+    useEffect(() => {
+      if (apActive && apPending) {
+        setActiveQuickMenu(APPROVAL_MENU_KEY);
+      } else if (!apActive) {
+        // 离开详情页时,如果当前开着审批面板则收起
+        setActiveQuickMenu((cur) => (cur === APPROVAL_MENU_KEY ? null : cur));
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [apActive, apPending, apBizRef]);
 
     // 左侧主菜单 rail 展开/收起 — 收起时 56px 只显图标(rail 模式)
     const [leftExpanded, setLeftExpanded] = useState<boolean>(() => {
@@ -1306,7 +1323,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
               {/* 右侧快捷菜单子面板 — 点击 rail 图标弹出(首页不显示) */}
               {location.pathname !== '/dashboard' && activeQuickMenu && (
                 <Sider
-                  width={280}
+                  width={activeQuickMenu === APPROVAL_MENU_KEY ? 360 : 280}
                   theme={appStore.isDark ? 'dark' : 'light'}
                   style={{
                     background: 'var(--ant-color-bg-container)',
@@ -1334,10 +1351,10 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                         color: 'var(--ant-color-text)',
                       }}
                     >
-                      {
-                        quickMenuGroups.find((g) => g.key === activeQuickMenu)
-                          ?.label
-                      }
+                      {activeQuickMenu === APPROVAL_MENU_KEY
+                        ? '审批'
+                        : quickMenuGroups.find((g) => g.key === activeQuickMenu)
+                            ?.label}
                     </span>
                     <div
                       onClick={() => setActiveQuickMenu(null)}
@@ -1371,80 +1388,95 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                     style={{
                       height: 'calc(100vh - 26px - 36px - 48px)',
                       overflowY: 'auto',
-                      padding: '8px 8px',
+                      padding:
+                        activeQuickMenu === APPROVAL_MENU_KEY ? 0 : '8px 8px',
                     }}
                   >
-                    {quickMenuGroups
-                      .find((g) => g.key === activeQuickMenu)
-                      ?.children.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        const groupColor =
-                          quickMenuGroups.find((g) => g.key === activeQuickMenu)
-                            ?.color || appStore.primaryColor;
+                    {activeQuickMenu === APPROVAL_MENU_KEY &&
+                    approvalPanelStore.active ? (
+                      <ApprovalPanel
+                        key={`${approvalPanelStore.bizRef}-${approvalPanelStore.version}`}
+                        objectType={approvalPanelStore.objectType as string}
+                        bizRef={approvalPanelStore.bizRef as string}
+                        status={approvalPanelStore.status}
+                        onApproved={() => approvalPanelStore.onApproved?.()}
+                      />
+                    ) : (
+                      quickMenuGroups
+                        .find((g) => g.key === activeQuickMenu)
+                        ?.children.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          const groupColor =
+                            quickMenuGroups.find(
+                              (g) => g.key === activeQuickMenu,
+                            )?.color || appStore.primaryColor;
 
-                        return (
-                          <div
-                            key={item.path}
-                            style={{
-                              margin: '2px 0',
-                              padding: '10px 12px',
-                              paddingLeft: isActive ? 9 : 12,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 10,
-                              transition:
-                                'background .15s ease, color .15s ease',
-                              background: isActive
-                                ? `${groupColor}14`
-                                : 'transparent',
-                              borderRadius: 6,
-                              borderLeft: isActive
-                                ? `3px solid ${groupColor}`
-                                : '3px solid transparent',
-                            }}
-                            onClick={() => handleQuickMenuItemClick(item.path)}
-                            onMouseEnter={(e) => {
-                              if (!isActive) {
-                                e.currentTarget.style.background =
-                                  'var(--ant-color-fill-tertiary)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isActive) {
-                                e.currentTarget.style.background =
-                                  'transparent';
-                              }
-                            }}
-                          >
-                            <span
+                          return (
+                            <div
+                              key={item.path}
                               style={{
-                                fontSize: 16,
-                                color: isActive
-                                  ? groupColor
-                                  : 'var(--ant-color-text-tertiary)',
-                                lineHeight: 1,
+                                margin: '2px 0',
+                                padding: '10px 12px',
+                                paddingLeft: isActive ? 9 : 12,
+                                cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
+                                gap: 10,
+                                transition:
+                                  'background .15s ease, color .15s ease',
+                                background: isActive
+                                  ? `${groupColor}14`
+                                  : 'transparent',
+                                borderRadius: 6,
+                                borderLeft: isActive
+                                  ? `3px solid ${groupColor}`
+                                  : '3px solid transparent',
+                              }}
+                              onClick={() =>
+                                handleQuickMenuItemClick(item.path)
+                              }
+                              onMouseEnter={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.background =
+                                    'var(--ant-color-fill-tertiary)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.background =
+                                    'transparent';
+                                }
                               }}
                             >
-                              {item.icon}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: 13,
-                                color: isActive
-                                  ? groupColor
-                                  : 'var(--ant-color-text)',
-                                fontWeight: isActive ? 600 : 400,
-                                lineHeight: 1,
-                              }}
-                            >
-                              {item.label}
-                            </span>
-                          </div>
-                        );
-                      })}
+                              <span
+                                style={{
+                                  fontSize: 16,
+                                  color: isActive
+                                    ? groupColor
+                                    : 'var(--ant-color-text-tertiary)',
+                                  lineHeight: 1,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                {item.icon}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 13,
+                                  color: isActive
+                                    ? groupColor
+                                    : 'var(--ant-color-text)',
+                                  fontWeight: isActive ? 600 : 400,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                          );
+                        })
+                    )}
                   </div>
                 </Sider>
               )}
@@ -1469,6 +1501,49 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                       gap: 8,
                     }}
                   >
+                    {/* 审批入口 — 仅当前详情页有审批上下文时显示,默认高亮 */}
+                    {approvalPanelStore.active && (
+                      <Tooltip
+                        placement="left"
+                        title="审批"
+                        mouseEnterDelay={0.3}
+                      >
+                        <div
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 8,
+                            background:
+                              activeQuickMenu === APPROVAL_MENU_KEY
+                                ? `${appStore.primaryColor}15`
+                                : approvalPanelStore.pending
+                                  ? '#faad1422'
+                                  : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            color:
+                              activeQuickMenu === APPROVAL_MENU_KEY
+                                ? appStore.primaryColor
+                                : approvalPanelStore.pending
+                                  ? '#faad14'
+                                  : 'var(--ant-color-text-tertiary)',
+                            marginBottom: 4,
+                          }}
+                          onClick={() =>
+                            setActiveQuickMenu(
+                              activeQuickMenu === APPROVAL_MENU_KEY
+                                ? null
+                                : APPROVAL_MENU_KEY,
+                            )
+                          }
+                        >
+                          <SafetyOutlined style={{ fontSize: 18 }} />
+                        </div>
+                      </Tooltip>
+                    )}
                     {quickMenuGroups.map((group) => {
                       const isActive = activeQuickMenu === group.key;
                       return (

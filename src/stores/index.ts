@@ -1,4 +1,5 @@
 import AlertStore from './alertStore';
+import ApprovalPanelStore from './approvalPanelStore';
 import AppStore from './appStore';
 import ConfigStore from './configStore';
 import DashboardStore from './dashboardStore';
@@ -11,6 +12,7 @@ export const appStore = new AppStore();
 export const alertStore = new AlertStore();
 export const configStore = new ConfigStore();
 export const dashboardStore = new DashboardStore();
+export const approvalPanelStore = new ApprovalPanelStore();
 
 export type { ThemeMode } from './appStore';
 export {
@@ -20,6 +22,7 @@ export {
 // 导出类型
 export {
   AlertStore,
+  ApprovalPanelStore,
   AppStore,
   ConfigStore,
   DashboardStore,
@@ -34,5 +37,6 @@ export const useStores = () => ({
   alertStore,
   configStore,
   dashboardStore,
+  approvalPanelStore,
   dictStore,
 });

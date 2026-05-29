@@ -42,6 +42,7 @@ export function ensureSeeded() {
   seedSysConfig();
   seedSavedFilters();
   seedApprovalFlows();
+  seedApprovalRecords();
   seedSystem();
   seedFences();
 }
@@ -723,6 +724,109 @@ function seedApprovalFlows() {
     { flowKey: 'filing', name: '备案审批流程', version: 'v1.1', status: '已启用', creatorName: '管理员', createTime: '2024-02-01', description: '保障户外出备案审批流程,包括备案申请、审核、批准等环节' },
   ];
   flows.forEach((f, i) => insert(OT.ApprovalFlow, f, { id: `flow-${i + 1}` }));
+}
+
+// -------------------- 审批记录(B 轨:多级审批流程时间线) --------------------
+function seedApprovalRecords() {
+  // 各审批单据的多级步骤模板(还原截图那种逐级链条)
+  const stepTemplates: Record<string, Array<[string, string]>> = {
+    // [stepName, approverName]
+    [OT.EligibilityApplication]: [
+      ['发起人(提交)', '田鹏'],
+      ['逐级领导审批', '刘振伟'],
+      ['资格初审', '裴晨宇'],
+      ['资格复核', '刘倡利'],
+      ['主管审批', '赵艳'],
+      ['结束', ''],
+    ],
+    [OT.Leave]: [
+      ['发起人(提交)', '田鹏'],
+      ['直属主管审批', '刘振伟'],
+      ['人事审核', '裴晨宇'],
+      ['结束', ''],
+    ],
+    [OT.MigrantWork]: [
+      ['发起人(提交)', '田鹏'],
+      ['社区初审', '刘振伟'],
+      ['街道复核', '赵艳'],
+      ['结束', ''],
+    ],
+    [OT.AttendanceMakeup]: [
+      ['发起人(提交)', '田鹏'],
+      ['考勤主管审批', '刘振伟'],
+      ['结束', ''],
+    ],
+    [OT.EligibilityTermination]: [
+      ['发起人(提交)', '田鹏'],
+      ['资格审核', '裴晨宇'],
+      ['主管审批', '赵艳'],
+      ['结束', ''],
+    ],
+    [OT.HouseholdMemberChange]: [
+      ['发起人(提交)', '田鹏'],
+      ['社区审核', '刘振伟'],
+      ['结束', ''],
+    ],
+    [OT.ResidenceChange]: [
+      ['发起人(提交)', '田鹏'],
+      ['社区审核', '刘振伟'],
+      ['结束', ''],
+    ],
+    [OT.EmploymentChange]: [
+      ['发起人(提交)', '田鹏'],
+      ['社区审核', '刘振伟'],
+      ['结束', ''],
+    ],
+  };
+
+  let seq = 0;
+  const baseTime = Date.now() - 3 * 86400000;
+
+  for (const [objectType, steps] of Object.entries(stepTemplates)) {
+    for (const doc of findAll(objectType)) {
+      // 已完成→全通过;审批中→前几步通过+当前待审+后续未创建;草稿/取消→不生成
+      const status = doc.status;
+      if (status !== 'COMPLETED' && status !== 'UNDER_APPROVAL') continue;
+      // 审批中的:通过到中间某步;完成的:全部通过(最后"结束"步也通过)
+      const passUntil =
+        status === 'COMPLETED' ? steps.length : Math.max(2, Math.floor(steps.length / 2));
+
+      steps.forEach(([stepName, approverName], idx) => {
+        let result: string;
+        let approvalTime: string | undefined;
+        let opinion: string | undefined;
+        if (idx === 0) {
+          // 发起人步永远是"提交"
+          result = 'PASS';
+          approvalTime = new Date(baseTime).toISOString();
+          opinion = `${approverName}发起申请`;
+        } else if (idx < passUntil) {
+          result = 'PASS';
+          approvalTime = new Date(baseTime + idx * 3600000).toISOString();
+          opinion = '通过';
+        } else if (idx === passUntil && status === 'UNDER_APPROVAL') {
+          result = 'PENDING';
+        } else {
+          result = 'NOT_CREATED';
+        }
+        seq += 1;
+        insert(
+          OT.ApprovalRecord,
+          {
+            bizType: objectType,
+            bizRef: doc.id,
+            ordinal: idx + 1,
+            stepName,
+            approverName: approverName || undefined,
+            approvalTime,
+            opinion,
+            result,
+          },
+          { id: `apprec-${seq}` },
+        );
+      });
+    }
+  }
 }
 
 // -------------------- 系统配置(给 System 模块用) --------------------
