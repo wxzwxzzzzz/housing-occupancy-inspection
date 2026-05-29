@@ -9,7 +9,7 @@
  */
 
 import { OT } from '../ontology/object-types';
-import { insert, table, findAll, applyQuery } from './store';
+import { insert, table, findAll, findById, applyQuery } from './store';
 
 let seedDone = false;
 
@@ -38,6 +38,10 @@ export function ensureSeeded() {
   seedAttendanceMakeups();
   seedChanges();
   seedFacts();
+  seedNotifications();
+  seedSysConfig();
+  seedSavedFilters();
+  seedApprovalFlows();
   seedSystem();
   seedFences();
 }
@@ -480,31 +484,245 @@ function seedFacts() {
     });
   }
 
-  // 其他 Fact 直接镜像对应实体(满足报表 list 调用即可)
-  copyAsFact(OT.Leave, OT.LeaveFact);
-  copyAsFact(OT.MigrantWork, OT.MigrantWorkFact);
-  copyAsFact(OT.EligibilityApplication, OT.EligibilityApplicationFact);
-  copyAsFact(OT.EligibilityTermination, OT.EligibilityTerminationFact);
-  copyAsFact(OT.HouseholdMemberChange, OT.HouseholdMemberChangeFact);
-  copyAsFact(OT.ResidenceChange, OT.ResidenceChangeFact);
-  copyAsFact(OT.EmploymentChange, OT.EmploymentChangeFact);
-  copyAsFact(OT.HousingAllocation, OT.HousingAllocationFact);
-  copyAsFact(OT.RentalSubsidy, OT.RentalSubsidyFact);
-  copyAsFact(OT.PersonalIncome, OT.PersonalIncomeFact);
-  copyAsFact(OT.AttendanceMakeup, OT.AttendanceMakeupFact);
+  // 其他 Fact:按报表维度别名投影(让 mock 下按维度搜索也能命中)
+  // 真实后端由 SEMANTIC_MODEL 的 expression/field 计算,这里手工对齐报表用到的维度。
+  const reg = (addr: any) => (addr && typeof addr === 'object' ? addr.region : undefined);
 
-  // Snapshot Fact:取一份当前实体
-  copyAsFact(OT.Resident, OT.ResidentSnapshotFact);
-  copyAsFact(OT.Household, OT.HouseholdSnapshotFact);
-  copyAsFact(OT.HouseholdMember, OT.HouseholdMemberSnapshotFact);
-  copyAsFact(OT.Residence, OT.ResidenceSnapshotFact);
-  copyAsFact(OT.Employment, OT.EmploymentSnapshotFact);
+  projectFact(OT.Leave, OT.LeaveFact, (r) => ({
+    leave: r.id,
+    leaveStatus: r.status,
+  }));
+  projectFact(OT.MigrantWork, OT.MigrantWorkFact, (r) => ({
+    migrantWork: r.id,
+    migrantWorkStatus: r.status,
+    residentAddressRegion: reg(r.residentAddress ?? r.destAddress),
+    companyAddressRegion: reg(r.companyAddress),
+  }));
+  projectFact(OT.EligibilityApplication, OT.EligibilityApplicationFact, (r) => ({
+    application: r.id,
+    applicationStatus: r.status,
+  }));
+  projectFact(OT.EligibilityTermination, OT.EligibilityTerminationFact, (r) => ({
+    termination: r.id,
+    terminationStatus: r.status,
+    terminationType: r.terminationType ?? r.reason,
+  }));
+  projectFact(OT.HouseholdMemberChange, OT.HouseholdMemberChangeFact, (r) => {
+    const m = r.member ? findById(OT.HouseholdMember, String(r.member)) : undefined;
+    return {
+      memberChange: r.id,
+      changeStatus: r.status,
+      memberRelationship: m?.relationship,
+      memberIncluded: m?.isIncluded,
+    };
+  });
+  projectFact(OT.ResidenceChange, OT.ResidenceChangeFact, (r) => ({
+    residenceChange: r.id,
+    changeStatus: r.status,
+    residenceRegion: reg(r.address),
+  }));
+  projectFact(OT.EmploymentChange, OT.EmploymentChangeFact, (r) => ({
+    employmentChange: r.id,
+    changeStatus: r.status,
+    employmentRegion: reg(r.companyAddress),
+  }));
+  projectFact(OT.HousingAllocation, OT.HousingAllocationFact, (r) => ({
+    allocation: r.id,
+    allocationStatus: r.status,
+  }));
+  projectFact(OT.RentalSubsidy, OT.RentalSubsidyFact, (r) => ({
+    subsidy: r.id,
+    subsidyStatus: r.status,
+  }));
+  projectFact(OT.PersonalIncome, OT.PersonalIncomeFact, (r) => ({
+    income: r.id,
+    recordStatus: r.status ?? 'RECORD_ACTIVE',
+    period: r.period ?? r.reportPeriod,
+  }));
+  projectFact(OT.AttendanceMakeup, OT.AttendanceMakeupFact, (r) => {
+    const ta = r.targetAttendance ? findById(OT.Attendance, String(r.targetAttendance)) : undefined;
+    return {
+      makeup: r.id,
+      makeupStatus: r.status,
+      targetAttendanceType: ta?.attendanceType,
+      targetAttendanceStatus: ta?.status,
+    };
+  });
+
+  // Snapshot Fact:按维度别名投影
+  projectFact(OT.Resident, OT.ResidentSnapshotFact, (r) => ({
+    resident: r.id,
+    residentStatus: r.status,
+    ageGroup: ageGroupOf(r.birthDate),
+  }));
+  seedHouseholdSnapshotFact();
+  projectFact(OT.HouseholdMember, OT.HouseholdMemberSnapshotFact, (r) => {
+    const h = r.household ? findById(OT.Household, String(r.household)) : undefined;
+    const res = r.resident ? findById(OT.Resident, String(r.resident)) : undefined;
+    return {
+      member: r.id,
+      relationship: r.relation ?? r.relationship,
+      included: r.isIncluded ?? true,
+      householdGuaranteeType: h?.guaranteeType,
+      householdStatus: h?.status,
+      residentStatus: res?.status,
+    };
+  });
+  projectFact(OT.Residence, OT.ResidenceSnapshotFact, (r) => ({
+    residence: r.id,
+    residenceType: r.addressType,
+    residenceRegion: reg(r.address),
+    monitoringTarget: r.isMonitoringTarget,
+    recordStatus: r.status,
+  }));
+  projectFact(OT.Employment, OT.EmploymentSnapshotFact, (r) => ({
+    employment: r.id,
+    employmentAddressType: r.addressType,
+    employmentRegion: reg(r.workAddress),
+    monitoringTarget: r.isMonitoringTarget,
+    recordStatus: r.recordStatus ?? r.status,
+  }));
 }
 
-function copyAsFact(srcType: string, factType: string) {
+/** 年龄分层(与 XML expression 对齐) */
+function ageGroupOf(birthDate?: string): string {
+  if (!birthDate) return 'UNKNOWN';
+  const age = new Date().getFullYear() - new Date(birthDate).getFullYear();
+  if (age < 30) return 'UNDER_30';
+  if (age < 45) return 'AGE_30_44';
+  if (age < 60) return 'AGE_45_59';
+  return 'AGE_60_PLUS';
+}
+
+/** 裸镜像源实体 + 叠加报表维度别名 */
+function projectFact(
+  srcType: string,
+  factType: string,
+  aliasFn: (row: Record<string, any>) => Record<string, any>,
+) {
   for (const row of findAll(srcType)) {
-    insert(factType, { ...row, sourceId: row.id });
+    insert(factType, { ...row, sourceId: row.id, ...aliasFn(row) });
   }
+}
+
+/**
+ * 家庭快照事实:投影出报表维度别名(householdStatus / applicantGender 等),
+ * 使 mock 下按这些维度搜索也能命中。
+ * 真实后端由 SEMANTIC_MODEL 的 expression/field 计算,这里手工对齐。
+ */
+function seedHouseholdSnapshotFact() {
+  const sizeBand = (n: number) =>
+    n <= 1 ? 'SINGLE_PERSON' : n === 2 ? 'TWO_PERSON' : n === 3 ? 'THREE_PERSON' : 'FOUR_PLUS_PERSON';
+  for (const h of findAll(OT.Household)) {
+    const applicant = h.applicant ? findById(OT.Resident, String(h.applicant)) : undefined;
+    insert(OT.HouseholdSnapshotFact, {
+      ...h,
+      sourceId: h.id,
+      household: h.id,
+      householdStatus: h.status, // XML: field="status"
+      householdSizeBand: sizeBand(Number(h.householdSize) || 0),
+      applicantGender: applicant?.gender,
+      applicantMaritalStatus: applicant?.maritalStatus,
+      applicantResidentStatus: applicant?.status,
+      createdAt: h.createAt,
+    });
+  }
+}
+
+// -------------------- 通知消息(B 轨:真实 Notification 实体) --------------------
+function seedNotifications() {
+  const TYPES = [
+    'CHECKIN_REMINDER',
+    'MAKEUP_REMINDER',
+    'ALERT',
+    'APPROVAL_RESULT',
+    'EXPIRY_REMINDER',
+  ];
+  const TITLES = ['打卡提醒', '补卡提醒', '预警通知', '审批结果通知', '到期提醒'];
+  for (let i = 0; i < 15; i++) {
+    const t = i % 5;
+    const isAlert = t === 2;
+    insert(
+      OT.Notification,
+      {
+        recipientUser: 'user-approver',
+        notificationType: TYPES[t],
+        channel: 'IN_APP',
+        title: TITLES[t],
+        content: `第 ${i + 1} 条系统通知 — ${TITLES[t]}`,
+        status: i > 5 ? 'READ' : 'UNREAD',
+        readAt: i > 5 ? new Date(Date.now() - i * 1700000).toISOString() : undefined,
+        sentAt: new Date(Date.now() - i * 1800000).toISOString(),
+        // 预警类通知:轻量处置标记直接挂在通知上(预警不单独建实体)
+        handled: isAlert ? i % 4 === 0 : undefined,
+        handledAt: isAlert && i % 4 === 0 ? new Date().toISOString() : undefined,
+        handledBy: isAlert && i % 4 === 0 ? 'user-approver' : undefined,
+        // 预警来源指向 AttendanceFact 派生(无独立 Alert 实体)
+        bizType: isAlert ? OT.AttendanceFact : undefined,
+      },
+      { id: `notification-${i + 1}` },
+    );
+  }
+}
+
+// -------------------- 系统配置(B 轨:SysConfig KV) --------------------
+function seedSysConfig() {
+  // key 与 System/Config.tsx 表单字段一一对应;值统一存字符串
+  const defaults: Array<[string, string, string, string]> = [
+    // [configKey, configValue, valueType, category]
+    ['attendanceMissThreshold', '3', 'NUMBER', 'attendance'],
+    ['geoDistanceWarn', '100', 'NUMBER', 'geo'],
+    ['geoDistanceAlert', '300', 'NUMBER', 'geo'],
+    ['geoAccuracyThreshold', '50', 'NUMBER', 'geo'],
+    ['faceScoreThreshold', '0.85', 'NUMBER', 'face'],
+    ['faceMatchRetry', '3', 'NUMBER', 'face'],
+    ['smsEnabled', 'true', 'BOOLEAN', 'notify'],
+    ['inappEnabled', 'true', 'BOOLEAN', 'notify'],
+    ['emailEnabled', 'false', 'BOOLEAN', 'notify'],
+    ['leaveDurationMin', '1', 'NUMBER', 'leave'],
+    ['leaveDurationMax', '14', 'NUMBER', 'leave'],
+    ['leaveMonthMax', '5', 'NUMBER', 'leave'],
+    ['leaveApplyLeadtime', '24', 'NUMBER', 'leave'],
+    ['filingGeofenceRadius', '200', 'NUMBER', 'filing'],
+    ['filingLocationAccuracy', '50', 'NUMBER', 'filing'],
+    ['filingDurationMin', '1', 'NUMBER', 'filing'],
+    ['filingDurationMax', '180', 'NUMBER', 'filing'],
+    ['filingApplyLeadtime', '48', 'NUMBER', 'filing'],
+    ['systemName', '公租房监测系统', 'STRING', 'system'],
+    ['systemSubtitle', '审批端管理平台', 'STRING', 'system'],
+    ['maxUploadSize', '10', 'NUMBER', 'system'],
+    ['dataRetentionDays', '1095', 'NUMBER', 'system'],
+    ['attendanceWindowStart', '06:00', 'STRING', 'attendance'],
+    ['attendanceWindowEnd', '22:00', 'STRING', 'attendance'],
+  ];
+  defaults.forEach(([configKey, configValue, valueType, category], i) =>
+    insert(
+      OT.SysConfig,
+      { configKey, configValue, valueType, category },
+      { id: `sysconfig-${i + 1}` },
+    ),
+  );
+}
+
+// -------------------- 保存的筛选器(B 轨:SavedFilter) --------------------
+function seedSavedFilters() {
+  const list: Array<Partial<Record<string, any>>> = [
+    { name: '高风险房屋筛选', description: '筛选面积大于100平米且入住时间超过5年的房屋', fieldCount: 3, status: 'active', createdAt: '2024-01-15 10:30:00', updatedAt: '2024-01-20 14:20:00', jsonLogic: null },
+    { name: '待审核申请筛选', description: '筛选状态为待审核且提交时间在30天内的申请', fieldCount: 2, status: 'active', createdAt: '2024-01-10 09:00:00', updatedAt: '2024-01-18 16:45:00', jsonLogic: null },
+    { name: '异常数据筛选', description: '筛选入住人数异常或面积数据异常的记录', fieldCount: 4, status: 'inactive', createdAt: '2024-01-05 11:20:00', updatedAt: '2024-01-12 10:30:00', jsonLogic: null },
+  ];
+  list.forEach((f, i) => insert(OT.SavedFilter, f, { id: `filter-${i + 1}` }));
+}
+
+// -------------------- 审批流程定义(B 轨:ApprovalFlow) --------------------
+function seedApprovalFlows() {
+  // 流程元数据;graph(LogicFlow 图)由页面的默认模板提供,后端补实体后随流程存储
+  const flows: Array<Partial<Record<string, any>>> = [
+    { flowKey: 'material', name: '材料审批流程', version: 'v1.2', status: '已启用', creatorName: '管理员', createTime: '2024-01-15', description: '保障户材料提交审批流程,包括材料提交、初审、复审、终审等环节' },
+    { flowKey: 'leave', name: '请假审批流程', version: 'v1.0', status: '已启用', creatorName: '管理员', createTime: '2024-01-20', description: '保障户请假申请审批流程,包括申请提交、主管审批、备案等环节' },
+    { flowKey: 'filing', name: '备案审批流程', version: 'v1.1', status: '已启用', creatorName: '管理员', createTime: '2024-02-01', description: '保障户外出备案审批流程,包括备案申请、审核、批准等环节' },
+  ];
+  flows.forEach((f, i) => insert(OT.ApprovalFlow, f, { id: `flow-${i + 1}` }));
 }
 
 // -------------------- 系统配置(给 System 模块用) --------------------
@@ -549,16 +767,31 @@ function seedSystem() {
     });
   }
 
-  // 角色 / 菜单(本体未覆盖,前端自管)
-  ['超级管理员', '审批员', '工作人员', '保障户'].forEach((name, i) =>
-    insert('cn.byteawake.prh.Role', {
-      name,
-      code: ['ADMIN', 'APPROVER', 'STAFF', 'RESIDENT'][i],
-      description: `${name}角色`,
-      permissions: [],
-      enable: true,
-    }, { id: `role-${i + 1}` }),
-  );
+  // 角色(B 轨 OT.Role,字段对齐 System/Role 页面)
+  const roles: Array<Partial<Record<string, any>>> = [
+    { name: '系统管理员', code: 'admin', description: '系统最高权限,可管理所有功能', userCount: 3, permissions: ['dashboard', 'monitor', 'approval', 'report', 'system'], status: 'active', createTime: '2025-01-01 00:00:00' },
+    { name: '审批员', code: 'approver', description: '负责审批材料、请假、备案等申请', userCount: 15, permissions: ['dashboard', 'approval', 'report'], status: 'active', createTime: '2025-01-01 00:00:00' },
+    { name: '监测员', code: 'monitor', description: '负责打卡核验、预警处置', userCount: 8, permissions: ['dashboard', 'monitor', 'report'], status: 'active', createTime: '2025-01-01 00:00:00' },
+    { name: '只读用户', code: 'viewer', description: '只能查看数据,无操作权限', userCount: 5, permissions: ['dashboard', 'report'], status: 'active', createTime: '2025-02-15 10:00:00' },
+  ];
+  roles.forEach((r, i) => insert(OT.Role, r, { id: `role-${i + 1}` }));
+
+  // 菜单(B 轨 OT.Menu,字段对齐 System/Menu 页面)
+  const menus: Array<Partial<Record<string, any>>> = [
+    { name: '工作台', path: '/dashboard', icon: 'dashboard', sort: 1, type: 'menu', visible: true, status: 'active' },
+    { name: '监测与处置', path: '/monitor', icon: 'monitor', sort: 2, type: 'menu', visible: true, status: 'active' },
+    { name: '打卡核验', path: '/monitor/attendance', icon: 'check-circle', parentId: 'menu-2', sort: 1, type: 'menu', permission: 'monitor:attendance', visible: true, status: 'active' },
+    { name: '预警处置', path: '/monitor/alert', icon: 'warning', parentId: 'menu-2', sort: 2, type: 'menu', permission: 'monitor:alert', visible: true, status: 'active' },
+    { name: '申请与审批', path: '/approval', icon: 'file-text', sort: 3, type: 'menu', visible: true, status: 'active' },
+    { name: '材料审批', path: '/approval/material', icon: 'file-image', parentId: 'menu-5', sort: 1, type: 'menu', permission: 'approval:material', visible: true, status: 'active' },
+    { name: '请假管理', path: '/monitor/leaves', icon: 'calendar', parentId: 'menu-5', sort: 2, type: 'menu', permission: 'approval:leave', visible: true, status: 'active' },
+    { name: '备案管理', path: '/monitor/migrant-works', icon: 'environment', parentId: 'menu-5', sort: 3, type: 'menu', permission: 'approval:filing', visible: true, status: 'active' },
+    { name: '分析与报表', path: '/report', icon: 'bar-chart', sort: 4, type: 'menu', visible: true, status: 'active' },
+    { name: '系统与运维', path: '/system', icon: 'setting', sort: 5, type: 'menu', visible: true, status: 'active' },
+    { name: '人员管理', path: '/system/personnel', icon: 'team', parentId: 'menu-10', sort: 1, type: 'menu', permission: 'system:personnel', visible: true, status: 'active' },
+    { name: '角色管理', path: '/system/role', icon: 'user', parentId: 'menu-10', sort: 2, type: 'menu', permission: 'system:role', visible: true, status: 'active' },
+  ];
+  menus.forEach((m, i) => insert(OT.Menu, m, { id: `menu-${i + 1}` }));
 }
 
 // -------------------- 工具(供 handler 用) --------------------

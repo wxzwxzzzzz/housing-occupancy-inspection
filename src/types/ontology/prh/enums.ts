@@ -42,7 +42,8 @@ export const ResidentStatus = {
   ACTIVATED: 'ACTIVATED',
   ARCHIVED: 'ARCHIVED',
 } as const;
-export type ResidentStatus = (typeof ResidentStatus)[keyof typeof ResidentStatus];
+export type ResidentStatus =
+  (typeof ResidentStatus)[keyof typeof ResidentStatus];
 
 /** 保障家庭状态 */
 export const HouseholdStatus = {
@@ -51,7 +52,8 @@ export const HouseholdStatus = {
   CANDIDATE: 'CANDIDATE',
   ARCHIVED: 'ARCHIVED',
 } as const;
-export type HouseholdStatus = (typeof HouseholdStatus)[keyof typeof HouseholdStatus];
+export type HouseholdStatus =
+  (typeof HouseholdStatus)[keyof typeof HouseholdStatus];
 
 /** 记录状态 */
 export const RecordStatus = {
@@ -67,7 +69,8 @@ export const ApplicationStatus = {
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
 } as const;
-export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
+export type ApplicationStatus =
+  (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
 /** 申请类型 */
 export const ApplicationType = {
@@ -75,14 +78,16 @@ export const ApplicationType = {
   REACTIVATION: 'REACTIVATION',
   ANNUAL_REVIEW: 'ANNUAL_REVIEW',
 } as const;
-export type ApplicationType = (typeof ApplicationType)[keyof typeof ApplicationType];
+export type ApplicationType =
+  (typeof ApplicationType)[keyof typeof ApplicationType];
 
 /** 出勤类型 */
 export const AttendanceType = {
   RESIDENCE: 'RESIDENCE',
   EMPLOYMENT: 'EMPLOYMENT',
 } as const;
-export type AttendanceType = (typeof AttendanceType)[keyof typeof AttendanceType];
+export type AttendanceType =
+  (typeof AttendanceType)[keyof typeof AttendanceType];
 
 /** 考勤状态 */
 export const AttendanceStatus = {
@@ -92,7 +97,8 @@ export const AttendanceStatus = {
   MISSED: 'MISSED',
   EXEMPTED: 'EXEMPTED',
 } as const;
-export type AttendanceStatus = (typeof AttendanceStatus)[keyof typeof AttendanceStatus];
+export type AttendanceStatus =
+  (typeof AttendanceStatus)[keyof typeof AttendanceStatus];
 
 /** 考勤打卡方式 */
 export const AttendanceMode = {
@@ -101,7 +107,8 @@ export const AttendanceMode = {
   MANUAL: 'MANUAL',
   MAKEUP: 'MAKEUP',
 } as const;
-export type AttendanceMode = (typeof AttendanceMode)[keyof typeof AttendanceMode];
+export type AttendanceMode =
+  (typeof AttendanceMode)[keyof typeof AttendanceMode];
 
 /** 考核周期 */
 export const AttendancePeriod = {
@@ -109,7 +116,8 @@ export const AttendancePeriod = {
   BIWEEKLY: 'BIWEEKLY',
   MONTHLY: 'MONTHLY',
 } as const;
-export type AttendancePeriod = (typeof AttendancePeriod)[keyof typeof AttendancePeriod];
+export type AttendancePeriod =
+  (typeof AttendancePeriod)[keyof typeof AttendancePeriod];
 
 /** 收入类型 */
 export const IncomeType = {
@@ -127,7 +135,8 @@ export const AllocationStatus = {
   ALLOC_TERMINATED: 'ALLOC_TERMINATED',
   ALLOC_EXPIRED: 'ALLOC_EXPIRED',
 } as const;
-export type AllocationStatus = (typeof AllocationStatus)[keyof typeof AllocationStatus];
+export type AllocationStatus =
+  (typeof AllocationStatus)[keyof typeof AllocationStatus];
 
 /** 补贴状态 */
 export const SubsidyStatus = {
@@ -149,14 +158,16 @@ export const TerminationReason = {
   RENT_ARREARS: 'RENT_ARREARS',
   OTHER: 'OTHER',
 } as const;
-export type TerminationReason = (typeof TerminationReason)[keyof typeof TerminationReason];
+export type TerminationReason =
+  (typeof TerminationReason)[keyof typeof TerminationReason];
 
 /** 成员变更类型 */
 export const MemberChangeType = {
   ADD_MEMBER: 'ADD_MEMBER',
   REMOVE_MEMBER: 'REMOVE_MEMBER',
 } as const;
-export type MemberChangeType = (typeof MemberChangeType)[keyof typeof MemberChangeType];
+export type MemberChangeType =
+  (typeof MemberChangeType)[keyof typeof MemberChangeType];
 
 /** 预警等级 */
 export const AlertLevel = {
@@ -183,7 +194,8 @@ export const EmploymentAddressType = {
   MIGRANT_WORK: 'MIGRANT_WORK',
   OTHER: 'OTHER',
 } as const;
-export type EmploymentAddressType = (typeof EmploymentAddressType)[keyof typeof EmploymentAddressType];
+export type EmploymentAddressType =
+  (typeof EmploymentAddressType)[keyof typeof EmploymentAddressType];
 
 /** 年龄分层 */
 export const AgeGroup = {
@@ -203,7 +215,8 @@ export const HouseholdSizeBand = {
   FOUR_PLUS_PERSON: 'FOUR_PLUS_PERSON',
   UNKNOWN: 'UNKNOWN',
 } as const;
-export type HouseholdSizeBand = (typeof HouseholdSizeBand)[keyof typeof HouseholdSizeBand];
+export type HouseholdSizeBand =
+  (typeof HouseholdSizeBand)[keyof typeof HouseholdSizeBand];
 
 /** 考勤准时性 */
 export const AttendanceTimeliness = {
@@ -214,4 +227,49 @@ export const AttendanceTimeliness = {
   PENDING: 'PENDING',
   UNKNOWN: 'UNKNOWN',
 } as const;
-export type AttendanceTimeliness = (typeof AttendanceTimeliness)[keyof typeof AttendanceTimeliness];
+export type AttendanceTimeliness =
+  (typeof AttendanceTimeliness)[keyof typeof AttendanceTimeliness];
+
+// ============================================================================
+// 通知消息（B 轨临时类型，待后端本体生成后替换）
+// 详见 本体改动集-交接本体团队.md 改动 6
+// ============================================================================
+
+/** 通知类型 */
+export const NotificationType = {
+  CHECKIN_REMINDER: 'CHECKIN_REMINDER',
+  MAKEUP_REMINDER: 'MAKEUP_REMINDER',
+  ALERT: 'ALERT',
+  APPROVAL_RESULT: 'APPROVAL_RESULT',
+  EXPIRY_REMINDER: 'EXPIRY_REMINDER',
+  OTHER: 'OTHER',
+} as const;
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];
+
+/** 通知渠道 */
+export const NotificationChannel = {
+  IN_APP: 'IN_APP',
+  SMS: 'SMS',
+  PUSH: 'PUSH',
+} as const;
+export type NotificationChannel =
+  (typeof NotificationChannel)[keyof typeof NotificationChannel];
+
+/** 通知状态 */
+export const NotificationStatus = {
+  UNREAD: 'UNREAD',
+  READ: 'READ',
+} as const;
+export type NotificationStatus =
+  (typeof NotificationStatus)[keyof typeof NotificationStatus];
+
+/** 系统配置值类型（B 轨临时，见 本体改动集 改动 5） */
+export const ConfigValueType = {
+  STRING: 'STRING',
+  NUMBER: 'NUMBER',
+  BOOLEAN: 'BOOLEAN',
+  JSON: 'JSON',
+} as const;
+export type ConfigValueType =
+  (typeof ConfigValueType)[keyof typeof ConfigValueType];

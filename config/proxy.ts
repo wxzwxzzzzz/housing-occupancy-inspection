@@ -10,17 +10,18 @@
  * @doc https://umijs.org/docs/guides/proxy
  */
 export default {
-  // 如果需要自定义本地开发服务器  请取消注释按需调整
-  // dev: {
-  //   // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-  //   '/api/': {
-  //     // 要代理的地址
-  //     target: 'https://preview.pro.ant.design',
-  //     // 配置了这个可以从 http 代理到 https
-  //     // 依赖 origin 的功能可能需要这个，比如 cookie
-  //     changeOrigin: true,
-  //   },
-  // },
+  /**
+   * 本地开发直连后端:把 target 改成真实后端地址,然后用 `npm run start:no-mock`
+   * (MOCK=none)启动即直连后端;默认 `npm run dev` 走前端 mock 网关。
+   * 所有业务请求都是相对路径 `/api/v1/ontology/*`,无写死域名,换 URL 只需改这里。
+   */
+  dev: {
+    '/api/': {
+      // TODO: 替换为真实后端地址(等后端提供)
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+  },
   /**
    * @name 详细的代理配置
    * @doc https://github.com/chimurai/http-proxy-middleware

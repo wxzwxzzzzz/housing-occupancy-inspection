@@ -1,8 +1,17 @@
 import { makeAutoObservable, runInAction } from 'mobx';
+import { reportCards } from '@/pages/Dashboard/reportCards';
 import { factService } from '@/services/domains/facts';
-import { qb } from '@/services/ontology/query';
-import { OT } from '@/services/ontology/object-types';
 import { invokeQuery } from '@/services/ontology/client';
+import { OT } from '@/services/ontology/object-types';
+import { qb } from '@/services/ontology/query';
+
+export interface ReportCardSummary {
+  key: string;
+  value: number;
+  sub?: string;
+  gauge?: number;
+  sparkData: number[];
+}
 
 export interface DashboardStats {
   /** 全部居民数 */
@@ -27,11 +36,31 @@ export interface ChartPoint {
   type?: string;
 }
 
+/** 打卡率趋势点 */
+export interface RateTrendPoint {
+  date: string;
+  rate: number;
+}
+
+/** 预警按类型趋势点 */
+export interface AlertTrendPoint {
+  date: string;
+  invalid: number;
+  missed: number;
+}
+
 class DashboardStore {
   stats: DashboardStats | null = null;
   alertTrend: ChartPoint[] = [];
+  /** 打卡率趋势(近7天每日出勤率%) */
+  attendanceRateTrend: RateTrendPoint[] = [];
+  /** 预警趋势(近7天每日 异常/缺勤 计数) */
+  alertTypeTrend: AlertTrendPoint[] = [];
   buildingStatus: ChartPoint[] = [];
   loading = false;
+  /** 18 报表卡墙的汇总数据,key → summary */
+  reportSummaries: Record<string, ReportCardSummary> = {};
+  reportLoading = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -65,16 +94,27 @@ class DashboardStore {
         OT.Household,
         qb(OT.Household).eq('status', 'ACTIVE').page(1, 1).build(),
       );
-      const allFact = await factService.attendance.list({ page: { pageNo: 1, pageSize: 1000 } });
+      const allFact = await factService.attendance.list({
+        page: { pageNo: 1, pageSize: 1000 },
+      });
       const eligibility = await invokeQuery(
         OT.EligibilityApplication,
-        qb(OT.EligibilityApplication).eq('status', 'UNDER_APPROVAL').page(1, 1).build(),
+        qb(OT.EligibilityApplication)
+          .eq('status', 'UNDER_APPROVAL')
+          .page(1, 1)
+          .build(),
       );
 
       const factTotal = allFact.page?.total ?? allFact.data.length;
-      const validCount = allFact.data.filter((f: any) => f.attendanceStatus === 'VALID').length;
-      const invalidCount = allFact.data.filter((f: any) => f.attendanceStatus === 'INVALID').length;
-      const missedCount = allFact.data.filter((f: any) => f.attendanceStatus === 'MISSED').length;
+      const validCount = allFact.data.filter(
+        (f: any) => f.attendanceStatus === 'VALID',
+      ).length;
+      const invalidCount = allFact.data.filter(
+        (f: any) => f.attendanceStatus === 'INVALID',
+      ).length;
+      const missedCount = allFact.data.filter(
+        (f: any) => f.attendanceStatus === 'MISSED',
+      ).length;
       const alertCount = invalidCount + missedCount;
 
       runInAction(() => {
@@ -82,7 +122,9 @@ class DashboardStore {
           totalResidents: residentList.page?.total ?? 0,
           activeHouseholds: householdList.page?.total ?? 0,
           attendanceRate:
-            factTotal > 0 ? `${Math.round((validCount / factTotal) * 100)}%` : '0%',
+            factTotal > 0
+              ? `${Math.round((validCount / factTotal) * 100)}%`
+              : '0%',
           totalAlerts: alertCount,
           activeAlerts: missedCount,
           resolvedAlerts: invalidCount,
@@ -94,6 +136,8 @@ class DashboardStore {
       const trend = aggregateByDay(allFact.data, 7);
       runInAction(() => {
         this.alertTrend = trend;
+        this.attendanceRateTrend = aggregateRateByDay(allFact.data, 7);
+        this.alertTypeTrend = aggregateAlertByDay(allFact.data, 7);
       });
     } catch (err) {
       console.error('fetchStats failed', err);
@@ -105,7 +149,53 @@ class DashboardStore {
   }
 
   async fetchDashboardData() {
-    await this.fetchStats();
+    await Promise.all([this.fetchStats(), this.fetchReportSummaries()]);
+  }
+
+  /**
+   * 拉取 18 个报表的明细行,前端聚合出每张卡的头号指标 + sparkline。
+   * (mock 网关不算 metrics,故拉明细在前端聚合;真实后端亦兼容。)
+   */
+  async fetchReportSummaries() {
+    runInAction(() => {
+      this.reportLoading = true;
+    });
+    try {
+      const results = await Promise.all(
+        reportCards.map(async (card) => {
+          try {
+            const env = await card.service.list({
+              page: { pageNo: 1, pageSize: 1000 },
+            });
+            const rows = (env.data as Record<string, any>[]) ?? [];
+            const { value, sub, gauge } = card.summarize(rows);
+            const sparkData = card.sparkData ? card.sparkData(rows) : [];
+            return {
+              key: card.key,
+              value,
+              sub,
+              gauge,
+              sparkData,
+            } as ReportCardSummary;
+          } catch {
+            return {
+              key: card.key,
+              value: 0,
+              sparkData: [],
+            } as ReportCardSummary;
+          }
+        }),
+      );
+      runInAction(() => {
+        const map: Record<string, ReportCardSummary> = {};
+        for (const r of results) map[r.key] = r;
+        this.reportSummaries = map;
+      });
+    } finally {
+      runInAction(() => {
+        this.reportLoading = false;
+      });
+    }
   }
 }
 
@@ -121,7 +211,11 @@ function aggregateByDay(facts: any[], days: number): ChartPoint[] {
     const b = buckets.get(d);
     if (!b) continue;
     if (f.attendanceStatus === 'VALID') b.valid++;
-    else if (f.attendanceStatus === 'INVALID' || f.attendanceStatus === 'MISSED') b.alert++;
+    else if (
+      f.attendanceStatus === 'INVALID' ||
+      f.attendanceStatus === 'MISSED'
+    )
+      b.alert++;
   }
   const out: ChartPoint[] = [];
   buckets.forEach((v, date) => {
@@ -129,6 +223,53 @@ function aggregateByDay(facts: any[], days: number): ChartPoint[] {
     out.push({ date, value: v.alert, type: '异常' });
   });
   return out;
+}
+
+/** 按日出勤率%(VALID / 非EXEMPTED 总数) */
+function aggregateRateByDay(facts: any[], days: number): RateTrendPoint[] {
+  const buckets = new Map<string, { valid: number; required: number }>();
+  const now = Date.now();
+  for (let i = days - 1; i >= 0; i--) {
+    buckets.set(new Date(now - i * 86400000).toISOString().slice(0, 10), {
+      valid: 0,
+      required: 0,
+    });
+  }
+  for (const f of facts) {
+    const d = String(f.checkIn ?? f.deadline ?? '').slice(0, 10);
+    const b = buckets.get(d);
+    if (!b) continue;
+    if (f.attendanceStatus !== 'EXEMPTED') b.required++;
+    if (f.attendanceStatus === 'VALID') b.valid++;
+  }
+  return Array.from(buckets.entries()).map(([date, v]) => ({
+    date: date.slice(5),
+    rate: v.required > 0 ? Math.round((v.valid / v.required) * 1000) / 10 : 0,
+  }));
+}
+
+/** 按日预警计数(异常 INVALID / 缺勤 MISSED) */
+function aggregateAlertByDay(facts: any[], days: number): AlertTrendPoint[] {
+  const buckets = new Map<string, { invalid: number; missed: number }>();
+  const now = Date.now();
+  for (let i = days - 1; i >= 0; i--) {
+    buckets.set(new Date(now - i * 86400000).toISOString().slice(0, 10), {
+      invalid: 0,
+      missed: 0,
+    });
+  }
+  for (const f of facts) {
+    const d = String(f.checkIn ?? f.deadline ?? '').slice(0, 10);
+    const b = buckets.get(d);
+    if (!b) continue;
+    if (f.attendanceStatus === 'INVALID') b.invalid++;
+    else if (f.attendanceStatus === 'MISSED') b.missed++;
+  }
+  return Array.from(buckets.entries()).map(([date, v]) => ({
+    date: date.slice(5),
+    invalid: v.invalid,
+    missed: v.missed,
+  }));
 }
 
 export default DashboardStore;

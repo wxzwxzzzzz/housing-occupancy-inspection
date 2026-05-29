@@ -6,8 +6,10 @@
  */
 
 import type { FactDimension, FactMetric } from '@/components/FactPage';
+import type { FilterConfig } from '@/components/OmnibarPage';
 import { factService } from '@/services/domains/facts';
 import type { EntityApi } from '@/services/ontology/crud';
+import type { qb } from '@/services/ontology/query';
 import { dictLabel } from '@/stores/dictStore';
 import type { EnumLabels } from '@/utils/enum-options';
 
@@ -16,10 +18,19 @@ export interface ReportConfig {
   path: string;
   title: string;
   /** 父分组:用于菜单/面包屑 */
-  group: '档案快照' | '收入与考勤' | '业务与变更';
+  group: '档案快照' | '收入与考勤' | '业务与变更' | '监测预警';
   factService: EntityApi<any>;
   dimensions: FactDimension[];
   metrics: FactMetric[];
+  /** 可选:页面筛选项(如时间窗口/状态) */
+  filters?: FilterConfig[];
+  /** 可选:把筛选值翻译成 QueryBuilder 条件;也可在此设默认过滤(如只看预警状态) */
+  buildExtraQuery?: (
+    builder: ReturnType<typeof qb>,
+    values: Record<string, any>,
+  ) => void;
+  /** 可选:默认筛选值 */
+  defaultFilterValues?: Record<string, any>;
 }
 
 const dictDim = (
@@ -30,7 +41,12 @@ const dictDim = (
   key,
   label,
   render: (v) => dictLabel(dictName, v as string),
+  // 枚举维度默认即可作下拉搜索项(报表维度本就是 XML 声明的可查询字段)
+  search: { type: 'enum', dictName: dictName as string },
 });
+
+/** 兼容别名:与 dictDim 行为一致(均带枚举下拉搜索) */
+const dictDimSearch = dictDim;
 
 // ============================================================================
 // 档案快照
@@ -43,13 +59,13 @@ const residentSnapshot: ReportConfig = {
   group: '档案快照',
   factService: factService.residentSnapshot as any,
   dimensions: [
-    dictDim('gender', '性别', 'Gender'),
-    dictDim('ageGroup', '年龄段', 'AgeGroup'),
-    dictDim('maritalStatus', '婚姻状况', 'MaritalStatus'),
-    dictDim('guaranteeType', '保障类型', 'GuaranteeType'),
-    dictDim('residentStatus', '居民状态', 'ResidentStatus'),
-    dictDim('archiveReason', '归档原因', 'TerminationReason'),
-    { key: 'archiveDate', label: '归档日期' },
+    dictDimSearch('gender', '性别', 'Gender'),
+    dictDimSearch('ageGroup', '年龄段', 'AgeGroup'),
+    dictDimSearch('maritalStatus', '婚姻状况', 'MaritalStatus'),
+    dictDimSearch('guaranteeType', '保障类型', 'GuaranteeType'),
+    dictDimSearch('residentStatus', '居民状态', 'ResidentStatus'),
+    dictDimSearch('archiveReason', '归档原因', 'TerminationReason'),
+    { key: 'archiveDate', label: '归档日期', search: { type: 'date' } },
   ],
   metrics: [
     { key: 'residentCount', label: '居民总数', format: 'integer' },
@@ -68,18 +84,18 @@ const householdSnapshot: ReportConfig = {
   group: '档案快照',
   factService: factService.householdSnapshot as any,
   dimensions: [
-    dictDim('guaranteeType', '保障类型', 'GuaranteeType'),
-    dictDim('householdStatus', '家庭状态', 'HouseholdStatus'),
-    { key: 'householdSize', label: '家庭人口数' },
-    dictDim('householdSizeBand', '人口规模分层', 'HouseholdSizeBand'),
-    { key: 'waitlistNo', label: '轮候序号' },
-    dictDim('applicantGender', '主申请人性别', 'Gender'),
-    dictDim('applicantAgeGroup', '主申请人年龄段', 'AgeGroup'),
-    dictDim('applicantMaritalStatus', '主申请人婚姻', 'MaritalStatus'),
-    dictDim('applicantResidentStatus', '主申请人状态', 'ResidentStatus'),
+    dictDimSearch('guaranteeType', '保障类型', 'GuaranteeType'),
+    dictDimSearch('householdStatus', '家庭状态', 'HouseholdStatus'),
+    { key: 'householdSize', label: '家庭人口数', search: { type: 'input' } },
+    dictDimSearch('householdSizeBand', '人口规模分层', 'HouseholdSizeBand'),
+    { key: 'waitlistNo', label: '轮候序号', search: { type: 'input' } },
+    dictDimSearch('applicantGender', '主申请人性别', 'Gender'),
+    dictDimSearch('applicantAgeGroup', '主申请人年龄段', 'AgeGroup'),
+    dictDimSearch('applicantMaritalStatus', '主申请人婚姻', 'MaritalStatus'),
+    dictDimSearch('applicantResidentStatus', '主申请人状态', 'ResidentStatus'),
     dictDim('archiveReason', '归档原因', 'TerminationReason'),
-    { key: 'archiveDate', label: '归档日期' },
-    { key: 'createdAt', label: '建档时间' },
+    { key: 'archiveDate', label: '归档日期', search: { type: 'date' } },
+    { key: 'createdAt', label: '建档时间', search: { type: 'date' } },
   ],
   metrics: [
     { key: 'householdCount', label: '家庭总数', format: 'integer' },
@@ -486,6 +502,62 @@ const employmentChange: ReportConfig = {
   ],
 };
 
+// ============================================================================
+// 监测预警（复用 AttendanceFact，筛 INVALID/MISSED 的预警视角）
+// 预警不单独建实体/事实，统计直接走考勤事实表。
+// ============================================================================
+
+const attendanceAlert: ReportConfig = {
+  key: 'attendanceAlert',
+  path: '/report/attendance-alert',
+  title: '监测预警事实表',
+  group: '监测预警',
+  factService: factService.attendance as any,
+  dimensions: [
+    dictDim('attendanceStatus', '考勤状态', 'AttendanceStatus'),
+    dictDim('attendanceType', '出勤类型', 'AttendanceType'),
+    dictDim('attendanceMode', '打卡方式', 'AttendanceMode'),
+    dictDim('attendanceTimeliness', '准时性', 'AttendanceTimeliness'),
+    { key: 'checkIn', label: '打卡时间' },
+  ],
+  metrics: [
+    { key: 'invalidAttendanceCount', label: '异常(无效)', format: 'integer' },
+    { key: 'missedAttendanceCount', label: '缺勤', format: 'integer' },
+    { key: 'requiredAttendanceCount', label: '应打卡', format: 'integer' },
+    { key: 'validAttendanceCount', label: '有效', format: 'integer' },
+  ],
+  // 默认只看异常/缺勤这两类预警来源
+  filters: [
+    {
+      key: 'alertStatus',
+      label: '预警类型',
+      type: 'quick',
+      options: [
+        { value: 'ALL', label: '全部预警' },
+        { value: 'INVALID', label: '打卡异常' },
+        { value: 'MISSED', label: '缺勤' },
+      ],
+    },
+    { key: 'dateRange', label: '打卡时间', type: 'dateRange' },
+  ],
+  defaultFilterValues: { alertStatus: 'ALL' },
+  buildExtraQuery: (builder, v) => {
+    if (v.alertStatus === 'INVALID' || v.alertStatus === 'MISSED') {
+      builder.eq('attendanceStatus', v.alertStatus);
+    } else {
+      // 默认只统计预警来源:无效 + 缺勤
+      builder.in('attendanceStatus', ['INVALID', 'MISSED']);
+    }
+    if (v.dateRange?.[0] && v.dateRange?.[1]) {
+      builder.between(
+        'checkIn',
+        v.dateRange[0].toISOString(),
+        v.dateRange[1].toISOString(),
+      );
+    }
+  },
+};
+
 export const reportConfigs: Record<string, ReportConfig> = {
   residentSnapshot,
   householdSnapshot,
@@ -504,6 +576,7 @@ export const reportConfigs: Record<string, ReportConfig> = {
   householdMemberChange,
   residenceChange,
   employmentChange,
+  attendanceAlert,
 };
 
 export const reportList: ReportConfig[] = Object.values(reportConfigs);

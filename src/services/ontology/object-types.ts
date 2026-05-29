@@ -56,6 +56,18 @@ export const OT = {
   RentalSubsidy: `${NS_PRH}.RentalSubsidy`,
   MigrantWork: `${NS_PRH}.MigrantWork`,
 
+  // prh — 通知消息（B 轨临时，待后端本体生成后保持同名即可，见 本体改动集-交接本体团队.md 改动6）
+  Notification: `${NS_PRH}.Notification`,
+  // prh — 系统配置（B 轨临时，见 本体改动集-交接本体团队.md 改动5）
+  SysConfig: `${NS_PRH}.SysConfig`,
+  // prh — 角色/菜单（B 轨临时，权限/导航属平台层，待对接后端）
+  Role: `${NS_PRH}.Role`,
+  Menu: `${NS_PRH}.Menu`,
+  // prh — 保存的筛选器（B 轨临时）
+  SavedFilter: `${NS_PRH}.SavedFilter`,
+  // prh — 审批流程定义（B 轨临时）
+  ApprovalFlow: `${NS_PRH}.ApprovalFlow`,
+
   // prh — 事实
   AttendanceFact: `${NS_PRH}.AttendanceFact`,
   AttendanceMakeupFact: `${NS_PRH}.AttendanceMakeupFact`,

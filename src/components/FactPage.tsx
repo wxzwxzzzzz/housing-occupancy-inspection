@@ -31,6 +31,7 @@ import {
 } from '@/components/OmnibarPage';
 import type { EntityApi } from '@/services/ontology/crud';
 import { qb } from '@/services/ontology/query';
+import { dictStore } from '@/stores/dictStore';
 
 export interface FactDimension {
   /** 维度字段名(对应 Fact class 上 isDimension="true" 的 attribute name) */
@@ -40,6 +41,20 @@ export interface FactDimension {
   /** 行内值的格式化(默认直接 toString) */
   render?: (v: any, row: Record<string, any>) => React.ReactNode;
   width?: number;
+  /**
+   * 把该维度暴露为搜索项(维度本就是 XML 声明的可查询字段)。
+   * 不填则该维度只用于分组展示,不进搜索栏。
+   *  - 'enum'   下拉,需配 dictName 取选项
+   *  - 'input'  关键字输入(LIKE)
+   *  - 'date'   日期范围(BETWEEN,适合 timeGrain 维度)
+   */
+  search?: {
+    type: 'enum' | 'input' | 'date';
+    /** type='enum' 时,枚举名(对应 dictStore / EnumLabels 的 key) */
+    dictName?: string;
+    /** 比较算子,默认 enum→EQ / input→LIKE / date→BETWEEN */
+    op?: 'EQ' | 'LIKE';
+  };
 }
 
 export interface FactMetric {
@@ -105,6 +120,66 @@ const FactPage: React.FC<FactPageProps> = ({
 
   const objectType = factService.objectType;
 
+  /** 由带 search 标注的维度自动生成的搜索项 */
+  const autoFilters = useMemo<FilterConfig[]>(
+    () =>
+      dimensions
+        .filter((d) => d.search)
+        .map<FilterConfig>((d) => {
+          const s = d.search ?? { type: 'input' as const };
+          if (s.type === 'enum') {
+            return {
+              key: d.key,
+              label: d.label,
+              type: 'select',
+              options: s.dictName ? dictStore.options(s.dictName) : [],
+              placeholder: `全部${d.label}`,
+            };
+          }
+          if (s.type === 'date') {
+            return { key: d.key, label: d.label, type: 'dateRange' };
+          }
+          return {
+            key: d.key,
+            label: d.label,
+            type: 'input',
+            placeholder: d.label,
+          };
+        }),
+    [dimensions],
+  );
+
+  /** 自动搜索项 + 业务侧额外筛选项 */
+  const mergedFilters = useMemo<FilterConfig[]>(
+    () => [...autoFilters, ...(extraFilters ?? [])],
+    [autoFilters, extraFilters],
+  );
+
+  /** 把维度搜索值拼进 OQL filter */
+  const applyDimensionFilters = useCallback(
+    (builder: ReturnType<typeof qb>, values: Record<string, any>) => {
+      for (const d of dimensions) {
+        if (!d.search) continue;
+        const v = values[d.key];
+        if (v === undefined || v === null || v === '') continue;
+        if (d.search.type === 'enum') {
+          builder.eq(d.key, v);
+        } else if (d.search.type === 'input') {
+          builder.like(d.key, String(v));
+        } else if (d.search.type === 'date') {
+          if (Array.isArray(v) && v[0] && v[1]) {
+            const toIso = (x: any) =>
+              typeof x?.toISOString === 'function'
+                ? x.toISOString()
+                : String(x);
+            builder.between(d.key, toIso(v[0]), toIso(v[1]));
+          }
+        }
+      }
+    },
+    [dimensions],
+  );
+
   const load = useCallback(
     async (p = page, s = pageSize) => {
       setLoading(true);
@@ -113,6 +188,7 @@ const FactPage: React.FC<FactPageProps> = ({
           .dimensions(dimensions.map((d) => d.key).join(','))
           .metrics(metrics.map((m) => m.key).join(','))
           .page(p, s);
+        applyDimensionFilters(builder, filterValues);
         buildExtraQuery?.(builder, filterValues);
         const env = await factService.list(builder.build() as any);
         const rows = (env.data as Record<string, any>[]).map((row, idx) => ({
@@ -126,6 +202,7 @@ const FactPage: React.FC<FactPageProps> = ({
       }
     },
     [
+      applyDimensionFilters,
       buildExtraQuery,
       dimensions,
       factService,
@@ -177,7 +254,7 @@ const FactPage: React.FC<FactPageProps> = ({
   return (
     <div style={{ height: '100%' }} data-fact-page={title}>
       <OmnibarListPage<Record<string, any>>
-        filters={extraFilters}
+        filters={mergedFilters}
         filterValues={filterValues}
         onFilterChange={setFilterValues}
         onSearch={() => load(1, pageSize)}

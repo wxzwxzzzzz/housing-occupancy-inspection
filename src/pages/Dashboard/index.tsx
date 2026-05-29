@@ -1,25 +1,34 @@
-import React, { useEffect } from 'react';
-import { observer } from 'mobx-react-lite';
-import { Card, Row, Col, Table, Tag, Badge, Button, Space, List, Avatar, Dropdown } from 'antd';
 import {
   AlertOutlined,
-  ClockCircleOutlined,
-  WarningOutlined,
-  RiseOutlined,
-  FallOutlined,
-  MinusOutlined,
-  LineChartOutlined,
-  BarChartOutlined,
-  DownOutlined,
-  CheckCircleOutlined,
-  FileImageOutlined,
-  TeamOutlined,
   ArrowRightOutlined,
+  BarChartOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  DownOutlined,
+  FallOutlined,
+  LineChartOutlined,
+  MinusOutlined,
+  RiseOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
-import Chart from 'react-apexcharts';
-import type { ApexOptions } from 'apexcharts';
 import { useNavigate } from '@umijs/max';
-import { dashboardStore, alertStore, userStore } from '@/stores';
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  Dropdown,
+  Row,
+  Space,
+  Table,
+  Tag,
+} from 'antd';
+import type { ApexOptions } from 'apexcharts';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
+import Chart from 'react-apexcharts';
+import { alertStore, dashboardStore, userStore } from '@/stores';
+import { wallCards } from './reportCards';
 import './index.less';
 
 // =================== ApexCharts 公用配置 ===================
@@ -81,8 +90,8 @@ const KpiCard: React.FC<KpiCardProps> = ({
     trendType === 'flat'
       ? 'trend-flat'
       : (trendType === 'up') === trendIsGood
-      ? 'trend-up'
-      : 'trend-down';
+        ? 'trend-up'
+        : 'trend-down';
   const trendIcon =
     trendType === 'up' ? (
       <RiseOutlined />
@@ -156,7 +165,10 @@ const KpiCard: React.FC<KpiCardProps> = ({
   }
 
   return (
-    <Card className={`kpi-card${sparkType === 'gauge' ? ' kpi-card-gauge' : ''}`} bordered={false}>
+    <Card
+      className={`kpi-card${sparkType === 'gauge' ? ' kpi-card-gauge' : ''}`}
+      bordered={false}
+    >
       <div className="kpi-body">
         <div className="kpi-head">
           <span className="kpi-label">{label}</span>
@@ -174,7 +186,13 @@ const KpiCard: React.FC<KpiCardProps> = ({
         <Chart
           options={options}
           series={series}
-          type={sparkType === 'gauge' ? 'radialBar' : sparkType === 'column' ? 'bar' : sparkType}
+          type={
+            sparkType === 'gauge'
+              ? 'radialBar'
+              : sparkType === 'column'
+                ? 'bar'
+                : sparkType
+          }
           height={height}
         />
       </div>
@@ -191,8 +209,17 @@ const timeRangeMenuItems = [
 ];
 
 const TimeRangeDropdown: React.FC = () => (
-  <Dropdown menu={{ items: timeRangeMenuItems, defaultSelectedKeys: ['7d'], selectable: true }}>
-    <a onClick={(e) => e.preventDefault()} style={{ color: '#8c8c8c', fontSize: 12 }}>
+  <Dropdown
+    menu={{
+      items: timeRangeMenuItems,
+      defaultSelectedKeys: ['7d'],
+      selectable: true,
+    }}
+  >
+    <a
+      onClick={(e) => e.preventDefault()}
+      style={{ color: '#8c8c8c', fontSize: 12 }}
+    >
       近 7 天 <DownOutlined style={{ fontSize: 10 }} />
     </a>
   </Dropdown>
@@ -213,235 +240,121 @@ const Dashboard: React.FC = observer(() => {
   const liveStats = dashboardStore.stats;
   const liveAlertCount = alertStore.total;
   const liveCritical = alertStore.criticalAlerts.length;
+  const summaries = dashboardStore.reportSummaries;
 
-  // 模拟数据
-  const mockData = {
-    attendance: { rate: 95.6, total: 1250, checkedIn: 1195, absent: 55, trend: 2.3 },
-    alerts: { total: 28, critical: 5, warning: 12, info: 11, trend: -15.2 },
-    approvals: { pending: 18, material: 8, leave: 6, filing: 4, trend: 8.5 },
-    households: { total: 1250, active: 1195, trend: 0 },
-    expiring: [
-      { id: '1', name: '张三', type: 'leave', expireDate: '2025-11-20', days: 2 },
-      { id: '2', name: '李四', type: 'filing', expireDate: '2025-11-22', days: 4 },
-      { id: '3', name: '王五', type: 'leave', expireDate: '2025-11-19', days: 1 },
-      { id: '4', name: '赵六', type: 'filing', expireDate: '2025-11-23', days: 5 },
-      { id: '5', name: '钱七', type: 'leave', expireDate: '2025-11-21', days: 3 },
-      { id: '6', name: '孙八', type: 'filing', expireDate: '2025-11-25', days: 7 },
-      { id: '7', name: '周九', type: 'leave', expireDate: '2025-11-19', days: 1 },
-      { id: '8', name: '吴十', type: 'filing', expireDate: '2025-11-26', days: 8 },
-      { id: '9', name: '郑十一', type: 'leave', expireDate: '2025-11-22', days: 4 },
-      { id: '10', name: '王十二', type: 'filing', expireDate: '2025-11-28', days: 10 },
-      { id: '11', name: '冯十三', type: 'leave', expireDate: '2025-11-20', days: 2 },
-      { id: '12', name: '陈十四', type: 'filing', expireDate: '2025-12-01', days: 13 },
-    ],
-    recentAlerts: [
-      { id: '1', user: '赵六', type: '位置偏离', level: 'critical', time: '10分钟前' },
-      { id: '2', user: '孙七', type: '人脸不匹配', level: 'warning', time: '25分钟前' },
-      { id: '3', user: '周八', type: '连续缺卡', level: 'critical', time: '1小时前' },
-      { id: '4', user: '吴九', type: '位置偏离', level: 'info', time: '2小时前' },
-      { id: '5', user: '郑十', type: '请假超时', level: 'warning', time: '3小时前' },
-      { id: '6', user: '王二', type: '人脸不匹配', level: 'critical', time: '4小时前' },
-      { id: '7', user: '李五', type: '位置偏离', level: 'warning', time: '5小时前' },
-      { id: '8', user: '张三', type: '连续缺卡', level: 'info', time: '6小时前' },
-      { id: '9', user: '陈一', type: '备案过期', level: 'warning', time: '8小时前' },
-      { id: '10', user: '刘四', type: '异常打卡', level: 'critical', time: '昨天' },
-      { id: '11', user: '黄二', type: '位置偏离', level: 'info', time: '昨天' },
-      { id: '12', user: '林六', type: '人脸不匹配', level: 'warning', time: '昨天' },
-    ],
+  // 真实趋势(来自 store,基于 AttendanceFact 按日聚合)
+  const attendanceRateTrend = dashboardStore.attendanceRateTrend;
+  const alertTypeTrend = dashboardStore.alertTypeTrend;
+
+  // 顶部仪表盘/监测预警的 sparkline 回退(store 未就绪时用)
+  const sparkAttendance = attendanceRateTrend.map((d) => d.rate);
+  const sparkAlerts = alertTypeTrend.map((d) => d.invalid + d.missed);
+
+  // 预警列表级别/状态展示配置(对齐 AlertItem: level=ALERT_*, status=pending/processing/resolved)
+  const levelTag: Record<string, { text: string; color: string }> = {
+    ALERT_RED: { text: '红色预警', color: 'red' },
+    ALERT_WARNING: { text: '预警', color: 'orange' },
+    ALERT_INFO: { text: '提示', color: 'blue' },
   };
-
-  // 4 张 KPI 卡的 sparkline mock(7 个数据点)
-  const sparkAttendance = [93.2, 94.1, 92.8, 95.3, 93.5, 96.1, 95.6];
-  const sparkAlerts = [22, 35, 28, 42, 30, 31, 28];
-  const sparkApprovals = [12, 14, 16, 13, 17, 19, 18];
-  const sparkHouseholds = [1180, 1185, 1190, 1188, 1192, 1198, 1195];
-
-  // 详细预警列表数据(底部 Table)
-  const alertListData = [
-    { id: '1', userName: '赵六', phone: '138****5678', alertType: '位置偏离', level: 'critical', location: '西城区德胜街道', time: '2025-11-19 14:20', status: 'pending', description: '打卡位置与备案地址相差超过500米' },
-    { id: '2', userName: '孙七', phone: '139****1234', alertType: '人脸不匹配', level: 'warning', location: '朝阳区建外街道', time: '2025-11-19 13:45', status: 'pending', description: '人脸识别相似度低于阈值' },
-    { id: '3', userName: '周八', phone: '136****9876', alertType: '连续缺卡', level: 'critical', location: '海淀区中关村街道', time: '2025-11-19 12:00', status: 'processing', description: '连续3天未打卡' },
-    { id: '4', userName: '吴九', phone: '137****5432', alertType: '位置偏离', level: 'info', location: '东城区东华门街道', time: '2025-11-19 11:30', status: 'resolved', description: '打卡位置与备案地址相差300米' },
-    { id: '5', userName: '郑十', phone: '135****8765', alertType: '请假超时', level: 'warning', location: '丰台区右安门街道', time: '2025-11-19 10:15', status: 'pending', description: '请假到期后未及时销假' },
-    { id: '6', userName: '王二', phone: '133****4321', alertType: '人脸不匹配', level: 'critical', location: '石景山区八宝山街道', time: '2025-11-19 09:50', status: 'processing', description: '打卡人脸与系统照片严重不符' },
-    { id: '7', userName: '李五', phone: '132****6543', alertType: '位置偏离', level: 'warning', location: '西城区月坛街道', time: '2025-11-19 09:20', status: 'pending', description: '打卡位置与备案地址相差400米' },
-    { id: '8', userName: '张三', phone: '131****2109', alertType: '连续缺卡', level: 'info', location: '朝阳区三里屯街道', time: '2025-11-19 08:45', status: 'resolved', description: '连续2天未打卡，已补卡' },
-  ];
-
-  // 打卡率趋势(中部 Line)
-  const attendanceTrendData = [
-    { date: '11-13', rate: 93.2 },
-    { date: '11-14', rate: 94.1 },
-    { date: '11-15', rate: 92.8 },
-    { date: '11-16', rate: 95.3 },
-    { date: '11-17', rate: 93.5 },
-    { date: '11-18', rate: 96.1 },
-    { date: '11-19', rate: 95.6 },
-  ];
-
-  // 预警趋势叠加柱(7 天 × 3 类预警)
-  const alertStackData = [
-    { date: '11-13', type: '位置偏离', value: 5 },
-    { date: '11-13', type: '人脸不匹配', value: 3 },
-    { date: '11-13', type: '连续缺卡', value: 2 },
-    { date: '11-14', type: '位置偏离', value: 7 },
-    { date: '11-14', type: '人脸不匹配', value: 4 },
-    { date: '11-14', type: '连续缺卡', value: 1 },
-    { date: '11-15', type: '位置偏离', value: 4 },
-    { date: '11-15', type: '人脸不匹配', value: 5 },
-    { date: '11-15', type: '连续缺卡', value: 3 },
-    { date: '11-16', type: '位置偏离', value: 8 },
-    { date: '11-16', type: '人脸不匹配', value: 4 },
-    { date: '11-16', type: '连续缺卡', value: 2 },
-    { date: '11-17', type: '位置偏离', value: 6 },
-    { date: '11-17', type: '人脸不匹配', value: 6 },
-    { date: '11-17', type: '连续缺卡', value: 4 },
-    { date: '11-18', type: '位置偏离', value: 9 },
-    { date: '11-18', type: '人脸不匹配', value: 5 },
-    { date: '11-18', type: '连续缺卡', value: 3 },
-    { date: '11-19', type: '位置偏离', value: 12 },
-    { date: '11-19', type: '人脸不匹配', value: 8 },
-    { date: '11-19', type: '连续缺卡', value: 5 },
-  ];
-
-  const alertLevelConfig = {
-    critical: { text: '严重', color: 'red' },
-    warning: { text: '警告', color: 'orange' },
-    info: { text: '提示', color: 'blue' },
-  };
-
-  const alertStatusConfig = {
+  const statusTag: Record<string, { text: string; color: string }> = {
     pending: { text: '待处理', color: 'orange' },
     processing: { text: '处理中', color: 'blue' },
-    resolved: { text: '已解决', color: 'green' },
+    resolved: { text: '已处置', color: 'green' },
   };
 
   const alertColumns = [
-    { title: '姓名', dataIndex: 'userName', key: 'userName', width: 100 },
-    { title: '联系电话', dataIndex: 'phone', key: 'phone', width: 120 },
+    {
+      title: '居民',
+      dataIndex: 'resident',
+      key: 'resident',
+      width: 140,
+      render: (id: string) => id || '-',
+    },
     {
       title: '预警类型',
-      dataIndex: 'alertType',
-      key: 'alertType',
-      width: 120,
-      render: (type: string, record: any) => (
-        <Tag color={alertLevelConfig[record.level as keyof typeof alertLevelConfig].color}>
-          {type}
+      dataIndex: 'title',
+      key: 'title',
+      width: 220,
+      render: (t: string) => <Tag>{t}</Tag>,
+    },
+    {
+      title: '级别',
+      dataIndex: 'level',
+      key: 'level',
+      width: 110,
+      render: (level: string) => (
+        <Tag color={levelTag[level]?.color ?? 'default'}>
+          {levelTag[level]?.text ?? level}
         </Tag>
       ),
     },
     {
-      title: '预警级别',
-      dataIndex: 'level',
-      key: 'level',
-      width: 100,
-      render: (level: string) => (
-        <Tag color={alertLevelConfig[level as keyof typeof alertLevelConfig].color}>
-          {alertLevelConfig[level as keyof typeof alertLevelConfig].text}
-        </Tag>
-      ),
+      title: '触发时间',
+      dataIndex: 'createTime',
+      key: 'createTime',
+      width: 180,
+      render: (t: string) => (t ? new Date(t).toLocaleString() : '-'),
     },
-    { title: '所属区域', dataIndex: 'location', key: 'location', width: 150 },
-    { title: '预警时间', dataIndex: 'time', key: 'time', width: 150 },
+    { title: '说明', dataIndex: 'content', key: 'content', ellipsis: true },
     {
       title: '处理状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 110,
       render: (status: string) => (
         <Badge
-          status={status === 'resolved' ? 'success' : status === 'processing' ? 'processing' : 'warning'}
-          text={alertStatusConfig[status as keyof typeof alertStatusConfig].text}
+          status={
+            status === 'resolved'
+              ? 'success'
+              : status === 'processing'
+                ? 'processing'
+                : 'warning'
+          }
+          text={statusTag[status]?.text ?? status}
         />
       ),
     },
-    { title: '预警说明', dataIndex: 'description', key: 'description', ellipsis: true },
     {
       title: '操作',
       key: 'action',
-      width: 150,
-      fixed: 'right' as const,
+      width: 120,
       render: (_: any, record: any) => (
         <Space size="small">
-          <Button type="link" size="small" onClick={() => navigate(`/monitor/alert/detail/${record.id}`)}>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => navigate(`/monitor/alert/detail/${record.id}`)}
+          >
             查看
           </Button>
-          {record.status !== 'resolved' && (
-            <Button type="link" size="small" onClick={() => console.log('处理预警', record.id)}>
-              处理
-            </Button>
-          )}
         </Space>
       ),
     },
   ];
 
-  const expiringColumns = [
-    { title: '姓名', dataIndex: 'name', key: 'name' },
-    {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type: string) => (
-        <Tag color={type === 'leave' ? 'blue' : 'green'}>{type === 'leave' ? '请假' : '备案'}</Tag>
-      ),
-    },
-    { title: '到期时间', dataIndex: 'expireDate', key: 'expireDate' },
-    {
-      title: '剩余天数',
-      dataIndex: 'days',
-      key: 'days',
-      render: (days: number) => (
-        <span style={{ color: days <= 1 ? '#ff4d4f' : days <= 3 ? '#faad14' : '#52c41a' }}>
-          {days} 天
-        </span>
-      ),
-    },
-  ];
+  // 欢迎卡 / KPI 的真实派生值(全部来自 store,无写死)
+  const sumVal = (k: string) => summaries[k]?.value ?? 0;
+  const checkedInToday = sumVal('attendance'); // 出勤率%(gauge 值)
+  const activeAlerts = liveStats?.activeAlerts ?? sumVal('alert');
+  const pendingApprovals =
+    liveStats?.pending ??
+    sumVal('eligibilityApplication') +
+      sumVal('leave') +
+      sumVal('attendanceMakeup');
+  const totalResidents =
+    liveStats?.totalResidents ?? sumVal('residentSnapshot');
+  const activeHouseholds =
+    liveStats?.activeHouseholds ?? sumVal('householdSnapshot');
 
   // 大数字优先用 store 真实值
-  const kpiAttendanceValue = liveStats?.attendanceRate ?? `${mockData.attendance.rate}%`;
-  const kpiAlertsValue = liveStats?.totalAlerts ?? liveAlertCount ?? mockData.alerts.total;
-  const kpiPendingValue = liveStats?.pending ?? mockData.approvals.pending;
-  const kpiHouseholdsValue = liveStats?.totalResidents ?? mockData.households.total;
+  const kpiAttendanceValue = liveStats?.attendanceRate ?? `${checkedInToday}%`;
+  const kpiAlertsValue = liveStats?.totalAlerts ?? liveAlertCount;
 
   // 当前用户姓名(回退到账号、占位)
   const userName =
     (userStore.user as any)?.fullName ||
     (userStore.user as any)?.account ||
     '用户';
-
-  // 顶部 4 张 stat 小卡数据(对齐 Tabler card-sm:方头像 + 主标题 + 副文案)
-  const statCards = [
-    {
-      icon: <CheckCircleOutlined />,
-      bg: '#1677ff',
-      title: `${mockData.attendance.checkedIn} 人已打卡`,
-      sub: `共 ${mockData.attendance.total} 人 / 缺卡 ${mockData.attendance.absent}`,
-      onClick: () => navigate('/monitor/attendance'),
-    },
-    {
-      icon: <AlertOutlined />,
-      bg: '#cf1322',
-      title: `${liveCritical || mockData.alerts.critical} 条严重预警`,
-      sub: `共 ${liveStats?.totalAlerts ?? mockData.alerts.total} 条 / 待处理`,
-      onClick: () => navigate('/monitor/alert-list'),
-    },
-    {
-      icon: <FileImageOutlined />,
-      bg: '#fa8c16',
-      title: `${liveStats?.pending ?? mockData.approvals.pending} 条待审批`,
-      sub: `材料 ${mockData.approvals.material} / 请假 ${mockData.approvals.leave} / 备案 ${mockData.approvals.filing}`,
-      onClick: () => navigate('/approval/material'),
-    },
-    {
-      icon: <ClockCircleOutlined />,
-      bg: '#722ed1',
-      title: `${mockData.expiring.length} 条到期提醒`,
-      sub: `${mockData.expiring.filter((e) => e.days <= 3).length} 条 3 天内到期`,
-      onClick: () => navigate('/monitor/alert-list'),
-    },
-  ];
 
   return (
     <div className="dashboard-container">
@@ -453,28 +366,20 @@ const Dashboard: React.FC = observer(() => {
               <div className="welcome-text">
                 <div className="welcome-greeting">欢迎回来，{userName}</div>
                 <div className="welcome-subtitle">
-                  您有 {liveStats?.activeAlerts ?? mockData.alerts.warning} 条活跃预警，
-                  {liveStats?.pending ?? mockData.approvals.pending} 条申请待审批。
+                  您有 {activeAlerts} 条活跃预警，{pendingApprovals}{' '}
+                  条申请待审批。
                 </div>
                 <div className="welcome-mini-stats">
                   <div className="mini-stat">
                     <div className="mini-label">今日打卡率</div>
                     <div className="mini-value-row">
                       <span className="mini-value">{kpiAttendanceValue}</span>
-                      <span className="mini-trend trend-up">
-                        <RiseOutlined /> {mockData.attendance.trend}%
-                      </span>
                     </div>
                   </div>
                   <div className="mini-stat">
                     <div className="mini-label">活跃保障户</div>
                     <div className="mini-value-row">
-                      <span className="mini-value">
-                        {liveStats?.activeHouseholds ?? mockData.households.active}
-                      </span>
-                      <span className="mini-trend trend-flat">
-                        <MinusOutlined /> 持平
-                      </span>
+                      <span className="mini-value">{activeHouseholds}</span>
                     </div>
                   </div>
                 </div>
@@ -486,222 +391,114 @@ const Dashboard: React.FC = observer(() => {
                   >
                     查看全部预警
                   </Button>
-                  <Button onClick={() => navigate('/approval/material')}>处理审批</Button>
+                  <Button onClick={() => navigate('/approval/material')}>
+                    处理审批
+                  </Button>
                 </div>
               </div>
               <div className="welcome-illustration">
                 <div className="illu-tile illu-blue">
                   <CheckCircleOutlined />
-                  <div className="illu-num">{mockData.attendance.checkedIn}</div>
-                  <div className="illu-label">今日打卡</div>
+                  <div className="illu-num">{kpiAttendanceValue}</div>
+                  <div className="illu-label">今日打卡率</div>
                 </div>
                 <div className="illu-tile illu-red">
                   <AlertOutlined />
-                  <div className="illu-num">{liveCritical || mockData.alerts.critical}</div>
+                  <div className="illu-num">{liveCritical || activeAlerts}</div>
                   <div className="illu-label">严重预警</div>
                 </div>
                 <div className="illu-tile illu-purple">
                   <TeamOutlined />
-                  <div className="illu-num">
-                    {liveStats?.totalResidents ?? mockData.households.total}
-                  </div>
+                  <div className="illu-num">{totalResidents}</div>
                   <div className="illu-label">保障户</div>
                 </div>
                 <div className="illu-tile illu-orange">
                   <ClockCircleOutlined />
-                  <div className="illu-num">{mockData.expiring.length}</div>
-                  <div className="illu-label">到期</div>
+                  <div className="illu-num">{pendingApprovals}</div>
+                  <div className="illu-label">待审批</div>
                 </div>
               </div>
             </div>
           </Card>
         </Col>
 
-        {/* 右上两张大 KPI — 保障户总数(折线) + 今日打卡率(仪表盘) */}
-        <Col xs={24} sm={12} lg={6}>
-          <KpiCard
-            label="保障户总数"
-            value={kpiHouseholdsValue}
-            trendValue={mockData.households.trend}
-            subText={`活跃家庭 ${liveStats?.activeHouseholds ?? mockData.households.active}`}
-            sparkData={sparkHouseholds}
-            sparkType="line"
-            color="#722ed1"
-          />
-        </Col>
-
+        {/* 右上两张大 KPI — 今日打卡率(仪表盘) + 监测预警(柱) */}
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             label="今日打卡率"
-            value={kpiAttendanceValue}
-            trendValue={mockData.attendance.trend}
-            sparkData={sparkAttendance}
+            value={
+              dashboardStore.reportSummaries.attendance
+                ? `${dashboardStore.reportSummaries.attendance.value}%`
+                : kpiAttendanceValue
+            }
+            sparkData={
+              dashboardStore.reportSummaries.attendance?.sparkData?.length
+                ? dashboardStore.reportSummaries.attendance.sparkData
+                : sparkAttendance
+            }
             sparkType="gauge"
             gaugePercent={
-              parseFloat(String(kpiAttendanceValue).replace(/%/g, '')) / 100 || 0.956
+              dashboardStore.reportSummaries.attendance?.gauge ??
+              (parseFloat(String(kpiAttendanceValue).replace(/%/g, '')) / 100 ||
+                0.956)
             }
             color="#52c41a"
           />
         </Col>
-      </Row>
 
-      {/* 第二行 — 4 张业务 stat 小卡(原型「sales/orders/shares/likes」位置) */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        {statCards.map((s, i) => (
-          <Col key={i} xs={12} lg={6}>
-            <Card
-              className="stat-mini"
-              bordered={false}
-              hoverable
-              onClick={s.onClick}
-            >
-              <div className="stat-mini-row">
-                <div className="stat-mini-icon" style={{ background: s.bg }}>
-                  {s.icon}
-                </div>
-                <div className="stat-mini-text">
-                  <div className="stat-mini-title">{s.title}</div>
-                  <div className="stat-mini-sub">{s.sub}</div>
-                </div>
-              </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      {/* 第三行 — 2 张带 sparkline 的 KPI 卡(预警总数 + 待审批) */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={24} sm={12} lg={12}>
+        <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            label="预警总数"
-            value={kpiAlertsValue}
-            trendValue={mockData.alerts.trend}
-            trendIsGood={false}
-            subText={
-              <span className="kpi-pills">
-                <span className="pill-critical">严重 {liveCritical || mockData.alerts.critical}</span>
-                <span className="pill-warning">活跃 {liveStats?.activeAlerts ?? mockData.alerts.warning}</span>
-                <span className="pill-info">已处置 {liveStats?.resolvedAlerts ?? mockData.alerts.info}</span>
-              </span>
+            label="监测预警"
+            value={
+              dashboardStore.reportSummaries.alert?.value ?? kpiAlertsValue
             }
-            sparkData={sparkAlerts}
+            trendIsGood={false}
+            subText={dashboardStore.reportSummaries.alert?.sub ?? '异常 / 缺勤'}
+            sparkData={
+              dashboardStore.reportSummaries.alert?.sparkData?.length
+                ? dashboardStore.reportSummaries.alert.sparkData
+                : sparkAlerts
+            }
             sparkType="column"
             color="#cf1322"
           />
         </Col>
-
-        <Col xs={24} sm={12} lg={12}>
-          <KpiCard
-            label="待审批"
-            value={kpiPendingValue}
-            trendValue={mockData.approvals.trend}
-            trendIsGood={false}
-            subText={
-              <span className="kpi-pills">
-                <span>材料 {mockData.approvals.material}</span>
-                <span>请假 {mockData.approvals.leave}</span>
-                <span>备案 {mockData.approvals.filing}</span>
-              </span>
-            }
-            sparkData={sparkApprovals}
-            sparkType="line"
-            color="#1677ff"
-          />
-        </Col>
       </Row>
 
-      {/* 数据展示区 — 最近预警 / 到期提醒 */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }} align="top" className="dashboard-scroll-row">
-        <Col xs={24} lg={12} className="dashboard-scroll-col">
-          <Card
-            className="dashboard-scroll-card"
-            styles={{
-              body: {
-                height: 380,
-                maxHeight: 380,
-                overflowY: 'auto',
-                display: 'block',
-                flex: 'none',
-                padding: '8px 24px 16px',
-              },
-            }}
-            title={
-              <Space>
-                <WarningOutlined />
-                最近预警
-              </Space>
-            }
-            extra={<a onClick={() => navigate('/monitor/alert-list')}>查看全部</a>}
-            bordered={false}
-          >
-            <List
-              dataSource={mockData.recentAlerts}
-              renderItem={(item) => (
-                <List.Item
-                  actions={[
-                    <Button type="link" size="small" onClick={() => navigate(`/monitor/alert/detail/${item.id}`)}>
-                      处理
-                    </Button>,
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Badge dot color={alertLevelConfig[item.level as keyof typeof alertLevelConfig].color}>
-                        <Avatar icon={<AlertOutlined />} style={{ backgroundColor: '#f5f5f5', color: '#999' }} />
-                      </Badge>
-                    }
-                    title={
-                      <Space>
-                        <span>{item.user}</span>
-                        <Tag color={alertLevelConfig[item.level as keyof typeof alertLevelConfig].color}>
-                          {item.type}
-                        </Tag>
-                      </Space>
-                    }
-                    description={
-                      <Space>
-                        <ClockCircleOutlined />
-                        <span style={{ color: '#999' }}>{item.time}</span>
-                      </Space>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={12} className="dashboard-scroll-col">
-          <Card
-            className="dashboard-scroll-card"
-            styles={{
-              body: {
-                height: 380,
-                maxHeight: 380,
-                overflowY: 'auto',
-                display: 'block',
-                flex: 'none',
-                padding: '8px 24px 16px',
-              },
-            }}
-            title={
-              <Space>
-                <ClockCircleOutlined />
-                到期提醒
-              </Space>
-            }
-            extra={<Badge count={mockData.expiring.length} />}
-            bordered={false}
-          >
-            <Table
-              dataSource={mockData.expiring}
-              columns={expiringColumns}
-              pagination={false}
-              size="small"
-              rowKey="id"
-            />
-          </Card>
-        </Col>
+      {/* 中部 — 16 报表卡墙(连续平铺,一排 4 个,全部真实聚合数据) */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        {wallCards.map((card) => {
+          const s = dashboardStore.reportSummaries[card.key];
+          const raw = s?.value ?? 0;
+          const display =
+            card.format === 'percent'
+              ? `${raw}%`
+              : card.format === 'currency'
+                ? `¥${Number(raw).toLocaleString()}`
+                : Number(raw).toLocaleString();
+          const spark =
+            s?.sparkData && s.sparkData.length > 0
+              ? s.sparkData
+              : [raw, raw, raw, raw, raw, raw, raw];
+          return (
+            <Col key={card.key} xs={12} sm={12} md={8} lg={6}>
+              <div
+                onClick={() => navigate(card.path)}
+                style={{ cursor: 'pointer' }}
+              >
+                <KpiCard
+                  label={card.title}
+                  value={display}
+                  subText={s?.sub}
+                  sparkData={spark}
+                  sparkType={card.spark === 'gauge' ? 'line' : card.spark}
+                  color={card.color}
+                  sparkHeight={48}
+                />
+              </div>
+            </Col>
+          );
+        })}
       </Row>
 
       {/* 图表区 — 打卡率趋势 + 预警趋势叠加柱 */}
@@ -728,15 +525,35 @@ const Dashboard: React.FC = observer(() => {
                   parentHeightOffset: 0,
                 },
                 stroke: { width: 2, lineCap: 'round', curve: 'smooth' },
-                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.32, opacityTo: 0.04, stops: [0, 100] } },
+                fill: {
+                  type: 'gradient',
+                  gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.32,
+                    opacityTo: 0.04,
+                    stops: [0, 100],
+                  },
+                },
                 dataLabels: { enabled: false },
                 colors: ['#1677ff'],
-                xaxis: { categories: attendanceTrendData.map((d) => d.date), axisBorder: { show: false } },
-                yaxis: { min: 90, max: 100, labels: { formatter: (v) => `${v}%` } },
+                xaxis: {
+                  categories: attendanceRateTrend.map((d) => d.date),
+                  axisBorder: { show: false },
+                },
+                yaxis: {
+                  min: 0,
+                  max: 100,
+                  labels: { formatter: (v) => `${v}%` },
+                },
                 grid: { strokeDashArray: 4 },
                 tooltip: { theme: 'dark', y: { formatter: (v) => `${v}%` } },
               }}
-              series={[{ name: '打卡率', data: attendanceTrendData.map((d) => d.rate) }]}
+              series={[
+                {
+                  name: '打卡率',
+                  data: attendanceRateTrend.map((d) => d.rate),
+                },
+              ]}
             />
           </Card>
         </Col>
@@ -765,9 +582,9 @@ const Dashboard: React.FC = observer(() => {
                 },
                 plotOptions: { bar: { columnWidth: '50%', borderRadius: 4 } },
                 dataLabels: { enabled: false },
-                colors: ['#1677ff', '#722ed1', '#fa8c16'],
+                colors: ['#fa8c16', '#cf1322'],
                 xaxis: {
-                  categories: Array.from(new Set(alertStackData.map((d) => d.date))),
+                  categories: alertTypeTrend.map((d) => d.date),
                   axisBorder: { show: false },
                 },
                 yaxis: { labels: { formatter: (v) => `${v}` } },
@@ -777,17 +594,10 @@ const Dashboard: React.FC = observer(() => {
               }}
               series={[
                 {
-                  name: '位置偏离',
-                  data: alertStackData.filter((d) => d.type === '位置偏离').map((d) => d.value),
+                  name: '打卡异常',
+                  data: alertTypeTrend.map((d) => d.invalid),
                 },
-                {
-                  name: '人脸不匹配',
-                  data: alertStackData.filter((d) => d.type === '人脸不匹配').map((d) => d.value),
-                },
-                {
-                  name: '连续缺卡',
-                  data: alertStackData.filter((d) => d.type === '连续缺卡').map((d) => d.value),
-                },
+                { name: '缺勤', data: alertTypeTrend.map((d) => d.missed) },
               ]}
             />
           </Card>
@@ -806,7 +616,11 @@ const Dashboard: React.FC = observer(() => {
             }
             extra={
               <Space>
-                <Button type="primary" size="small" onClick={() => navigate('/monitor/alert-list')}>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => navigate('/monitor/alert-list')}
+                >
                   查看更多
                 </Button>
               </Space>
@@ -814,10 +628,10 @@ const Dashboard: React.FC = observer(() => {
             bordered={false}
           >
             <Table
-              dataSource={alertListData}
+              dataSource={alertStore.alerts}
               columns={alertColumns}
               rowKey="id"
-              scroll={{ x: 1200 }}
+              loading={alertStore.loading}
               pagination={{
                 pageSize: 5,
                 showSizeChanger: true,

@@ -133,6 +133,7 @@ const routeTitleMap: Record<string, string> = {
   '/attendance-config/leave-types': '请假类型',
   '/attendance-config/calendars': '资源日历',
   '/attendance-config/workflow': '审批流程',
+  '/report/attendance-alert': '监测预警事实表',
   '/report/resident-snapshot': '居民快照',
   '/report/household-snapshot': '家庭快照',
   '/report/household-member-snapshot': '家庭成员快照',
@@ -150,8 +151,6 @@ const routeTitleMap: Record<string, string> = {
   '/report/household-member-change': '家庭成员变更',
   '/report/residence-change': '居住地址变更',
   '/report/employment-change': '工作地址变更',
-  '/report/statistics': '综合统计',
-  '/report/export': '报表导出',
   '/system/message': '消息中心',
   '/system/personnel': '人员管理',
   '/system/role': '角色管理',
@@ -369,6 +368,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
       '/attendance-config/workflow': [ROLE.APPROVER],
       // 报表
       '/report': [ROLE.APPROVER],
+      '/report/attendance-alert': [ROLE.APPROVER],
       '/report/resident-snapshot': [ROLE.APPROVER],
       '/report/household-snapshot': [ROLE.APPROVER],
       '/report/household-member-snapshot': [ROLE.APPROVER],
@@ -386,8 +386,6 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
       '/report/household-member-change': [ROLE.APPROVER],
       '/report/residence-change': [ROLE.APPROVER],
       '/report/employment-change': [ROLE.APPROVER],
-      '/report/statistics': [ROLE.APPROVER],
-      '/report/export': [ROLE.APPROVER],
       // 系统
       '/system': [],
       '/system/message': [ROLE.APPROVER, ROLE.STAFF, ROLE.RESIDENT],
@@ -551,6 +549,20 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
           label: '分析与报表',
           children: [
             {
+              key: 'report-group-alert',
+              label: '监测预警',
+              type: 'group' as const,
+              children: [
+                {
+                  key: '/report/attendance-alert',
+                  icon: iconMap['warning'],
+                  label: (
+                    <Link to="/report/attendance-alert">监测预警事实表</Link>
+                  ),
+                },
+              ],
+            },
+            {
               key: 'report-group-snapshot',
               label: '档案快照',
               type: 'group' as const,
@@ -675,16 +687,6 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   ),
                 },
               ],
-            },
-            {
-              key: '/report/statistics',
-              icon: iconMap['dot-chart'],
-              label: <Link to="/report/statistics">综合统计</Link>,
-            },
-            {
-              key: '/report/export',
-              icon: iconMap['download'],
-              label: <Link to="/report/export">报表导出</Link>,
             },
           ],
         },

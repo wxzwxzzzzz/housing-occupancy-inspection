@@ -190,6 +190,69 @@ const residentHandlers: Record<string, Handler> = {
 // 审批通用动作:approve / reject / withdraw / submit
 // 适用所有混入 IApprovalFlow 的实体
 // =============================================================================
+
+/**
+ * 审批后置联动(对应本体 XML 的 <post> 规则)。
+ * 让数据真正流转:跨实体状态联动 + 生成站内通知。
+ * 换真实后端后由后端做,前端 mock 这里模拟以便 demo 看到真流转。
+ */
+function runApprovalPostEffect(
+  objectType: string,
+  row: Record<string, any>,
+  result: 'APPROVED' | 'REJECTED',
+) {
+  // 通用:生成一条审批结果通知(预警/通知系统联动)
+  const recipient = row.resident ?? row.applicant;
+  insert(OT.Notification, {
+    recipient: typeof recipient === 'string' ? recipient : undefined,
+    notificationType: 'APPROVAL_RESULT',
+    channel: 'IN_APP',
+    title: result === 'APPROVED' ? '审批通过通知' : '审批驳回通知',
+    content: `您的申请(${simpleNameOf(objectType)})已${result === 'APPROVED' ? '审批通过' : '被驳回'}`,
+    status: 'UNREAD',
+    sentAt: new Date().toISOString(),
+    bizType: objectType,
+    bizRef: row.id,
+  });
+
+  if (result !== 'APPROVED') return;
+
+  // 资质申请通过 → 家庭进入候选(才能配租/补贴),对应本体准入流转
+  if (objectType === OT.EligibilityApplication && row.household) {
+    update(OT.Household, String(row.household), { status: 'CANDIDATE' });
+  }
+
+  // 资格终止通过 → 家庭归档退出
+  if (objectType === OT.EligibilityTermination && row.household) {
+    update(OT.Household, String(row.household), {
+      status: 'ARCHIVED',
+      archiveDate: new Date().toISOString().slice(0, 10),
+    });
+  }
+
+  // 居住/工作地址变更通过 → 落地到对应明细(标记变更生效)
+  if (objectType === OT.ResidenceChange && row.resident) {
+    // 仅 demo:把该居民最新一条居住记录标记 effectiveDate=now
+    const residences = findAll(OT.Residence).filter((r) => r.resident === row.resident);
+    const latest = residences[residences.length - 1];
+    if (latest) update(OT.Residence, latest.id, { effectiveDate: new Date().toISOString().slice(0, 10) });
+  }
+}
+
+function simpleNameOf(objectType: string): string {
+  const map: Record<string, string> = {
+    [OT.EligibilityApplication]: '资质申请',
+    [OT.EligibilityTermination]: '资格终止',
+    [OT.Leave]: '请假',
+    [OT.AttendanceMakeup]: '补卡',
+    [OT.MigrantWork]: '备案/外出务工',
+    [OT.ResidenceChange]: '居住地址变更',
+    [OT.EmploymentChange]: '工作地址变更',
+    [OT.HouseholdMemberChange]: '家庭成员变更',
+  };
+  return map[objectType] ?? '申请';
+}
+
 const approvalHandlers: Record<string, Handler> = {
   approve({ objectType, payload, id }) {
     const targetId = id ?? payload?.id;
@@ -202,7 +265,9 @@ const approvalHandlers: Record<string, Handler> = {
       approvalTime: new Date().toISOString(),
       approvalOpinion: payload?.opinion ?? '',
     });
-    return row ? successResponse({ data: [row] }) : notFound();
+    if (!row) return notFound();
+    runApprovalPostEffect(objectType, row, 'APPROVED');
+    return successResponse({ data: [row] });
   },
   reject({ objectType, payload, id }) {
     const targetId = id ?? payload?.id;
@@ -215,7 +280,9 @@ const approvalHandlers: Record<string, Handler> = {
       approvalTime: new Date().toISOString(),
       approvalOpinion: payload?.opinion ?? '',
     });
-    return row ? successResponse({ data: [row] }) : notFound();
+    if (!row) return notFound();
+    runApprovalPostEffect(objectType, row, 'REJECTED');
+    return successResponse({ data: [row] });
   },
   withdraw({ objectType, payload, id }) {
     const targetId = id ?? payload?.id;
@@ -242,12 +309,48 @@ const approvalHandlers: Record<string, Handler> = {
 };
 
 // =============================================================================
+// Notification.markRead / markAllRead / process（B 轨：站内消息已读 + 预警轻量处置）
+// =============================================================================
+const notificationHandlers: Record<string, Handler> = {
+  markRead({ payload, id }) {
+    const targetId = id ?? payload?.id;
+    if (!targetId) return failureResponse('MISSING_ID', '缺少 id');
+    const row = update(OT.Notification, targetId, {
+      status: 'READ',
+      readAt: new Date().toISOString(),
+    });
+    return row ? successResponse({ data: [row] }) : notFound();
+  },
+  markAllRead() {
+    const now = new Date().toISOString();
+    const unread = findAll(OT.Notification).filter((n) => n.status === 'UNREAD');
+    unread.forEach((n) => update(OT.Notification, n.id, { status: 'READ', readAt: now }));
+    return successResponse({ data: unread.map((n) => ({ ...n, status: 'READ', readAt: now })) });
+  },
+  /** 预警类消息的轻量处置：标记已处置（预警不单独建实体，处置标记挂在通知上） */
+  process({ payload, id }) {
+    const targetId = id ?? payload?.id;
+    if (!targetId) return failureResponse('MISSING_ID', '缺少 id');
+    const row = update(OT.Notification, targetId, {
+      handled: true,
+      handledAt: new Date().toISOString(),
+      handledBy: payload?.handledBy ?? 'user-approver',
+      handleNote: payload?.handleNote ?? '',
+      status: 'READ',
+      readAt: new Date().toISOString(),
+    });
+    return row ? successResponse({ data: [row] }) : notFound();
+  },
+};
+
+// =============================================================================
 // 路由表:objectType → action → handler
 // =============================================================================
 export const customHandlers: Record<string, Record<string, Handler>> = {
   [OT.User]: userHandlers,
   [OT.Attendance]: attendanceHandlers,
   [OT.Resident]: residentHandlers,
+  [OT.Notification]: notificationHandlers,
 };
 
 /** 全部含审批流的实体共享 approvalHandlers */

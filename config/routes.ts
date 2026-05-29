@@ -275,6 +275,13 @@ export default [
         icon: 'bar-chart',
         path: '/report',
         routes: [
+          // 监测预警(复用 AttendanceFact)
+          {
+            path: '/report/attendance-alert',
+            name: '监测预警事实表',
+            icon: 'warning',
+            component: './Report/AttendanceAlert',
+          },
           // 档案快照(5)
           {
             path: '/report/resident-snapshot',
@@ -379,19 +386,6 @@ export default [
             name: '工作地址变更',
             icon: 'swap',
             component: './Report/EmploymentChange',
-          },
-          // 历史保留
-          {
-            path: '/report/statistics',
-            name: '综合统计',
-            icon: 'dot-chart',
-            component: './Report/Statistics',
-          },
-          {
-            path: '/report/export',
-            name: '报表导出',
-            icon: 'download',
-            component: './Report/Export',
           },
         ],
       },

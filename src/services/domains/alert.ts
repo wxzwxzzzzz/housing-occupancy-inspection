@@ -1,8 +1,9 @@
 /**
  * 预警服务 — 由 AttendanceFact 派生
  *
- * 本体里没有独立的 Alert 实体,预警是从 AttendanceFact 中
- * 按规则计算出来的(参考手册 4.3:位置偏离/人脸不匹配/未打卡)。
+ * 决策(2026-05-29)：预警不做独立 Alert 实体。预警是从 AttendanceFact
+ * 按规则计算出来的只读视图(参考手册 4.3:位置偏离/人脸不匹配/未打卡)，
+ * 统计复用 AttendanceFact，处置标记轻量挂在 Notification 上。
  *
  * 这里把"预警"建模为 fact 的过滤视图:
  *   - INVALID  → ALERT_WARNING

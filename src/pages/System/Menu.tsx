@@ -1,68 +1,50 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Button,
-  Form,
-  Input,
-  message,
-  Modal,
-  Select,
-  Switch,
-  Tag,
-  TreeSelect,
-} from 'antd';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   PlusOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import {
-  OmnibarListPage,
+  Form,
+  Input,
+  Modal,
+  message,
+  Select,
+  Switch,
+  Tag,
+  TreeSelect,
+} from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
   type FilterConfig,
+  OmnibarListPage,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
+import { menuService } from '@/services/domains/rbac';
+import type { Menu as MenuEntity } from '@/types/ontology/prh/entities/menu';
 
 const { Option } = Select;
 
-interface MenuItem {
-  id: string;
-  name: string;
-  path: string;
-  icon?: string;
-  parentId?: string;
-  sort: number;
-  type: 'menu' | 'button';
-  permission?: string;
-  visible: boolean;
-  status: 'active' | 'inactive';
-  children?: MenuItem[];
-}
+type MenuItem = MenuEntity & { id: string; children?: MenuItem[] };
 
 const TYPE_LABEL: Record<string, string> = { menu: '菜单', button: '按钮' };
 const TYPE_COLOR: Record<string, string> = { menu: 'blue', button: 'green' };
-const STATUS_LABEL: Record<string, string> = { active: '启用', inactive: '停用' };
-const STATUS_COLOR: Record<string, string> = { active: 'green', inactive: 'red' };
-
-const FLAT_DATA: MenuItem[] = [
-  { id: '1', name: '工作台', path: '/dashboard', icon: 'dashboard', sort: 1, type: 'menu', visible: true, status: 'active' },
-  { id: '2', name: '监测与处置', path: '/monitor', icon: 'monitor', sort: 2, type: 'menu', visible: true, status: 'active' },
-  { id: '2-1', name: '打卡核验', path: '/monitor/attendance', icon: 'check-circle', parentId: '2', sort: 1, type: 'menu', permission: 'monitor:attendance', visible: true, status: 'active' },
-  { id: '2-2', name: '预警处置', path: '/monitor/alert', icon: 'warning', parentId: '2', sort: 2, type: 'menu', permission: 'monitor:alert', visible: true, status: 'active' },
-  { id: '3', name: '申请与审批', path: '/approval', icon: 'file-text', sort: 3, type: 'menu', visible: true, status: 'active' },
-  { id: '3-1', name: '材料审批', path: '/approval/material', icon: 'file-image', parentId: '3', sort: 1, type: 'menu', permission: 'approval:material', visible: true, status: 'active' },
-  { id: '3-2', name: '请假管理', path: '/approval/leave', icon: 'calendar', parentId: '3', sort: 2, type: 'menu', permission: 'approval:leave', visible: true, status: 'active' },
-  { id: '3-3', name: '备案管理', path: '/approval/filing', icon: 'environment', parentId: '3', sort: 3, type: 'menu', permission: 'approval:filing', visible: true, status: 'active' },
-  { id: '4', name: '分析与报表', path: '/report', icon: 'bar-chart', sort: 4, type: 'menu', visible: true, status: 'active' },
-  { id: '5', name: '系统与运维', path: '/system', icon: 'setting', sort: 5, type: 'menu', visible: true, status: 'active' },
-  { id: '5-1', name: '人员管理', path: '/system/personnel', icon: 'team', parentId: '5', sort: 1, type: 'menu', permission: 'system:personnel', visible: true, status: 'active' },
-  { id: '5-2', name: '角色管理', path: '/system/role', icon: 'user', parentId: '5', sort: 2, type: 'menu', permission: 'system:role', visible: true, status: 'active' },
-];
+const STATUS_LABEL: Record<string, string> = {
+  active: '启用',
+  inactive: '停用',
+};
+const STATUS_COLOR: Record<string, string> = {
+  active: 'green',
+  inactive: 'red',
+};
 
 /** 把扁平数组组成树 */
 function buildTree(flat: MenuItem[]): MenuItem[] {
   const map = new Map<string, MenuItem>();
-  flat.forEach((m) => map.set(m.id, { ...m, children: [] }));
+  flat.forEach((m) => {
+    map.set(m.id, { ...m, children: [] });
+  });
   const roots: MenuItem[] = [];
   flat.forEach((m) => {
     const node = map.get(m.id)!;
@@ -74,15 +56,22 @@ function buildTree(flat: MenuItem[]): MenuItem[] {
   });
   // 清理空 children
   const clean = (n: MenuItem) => {
-    if (n.children && n.children.length === 0) delete n.children;
-    else n.children?.forEach(clean);
+    if (n.children && n.children.length === 0) {
+      delete n.children;
+    } else {
+      n.children?.forEach((c) => {
+        clean(c);
+      });
+    }
   };
-  roots.forEach(clean);
+  roots.forEach((r) => {
+    clean(r);
+  });
   return roots;
 }
 
 const SystemMenu: React.FC = () => {
-  const [data, setData] = useState<MenuItem[]>(FLAT_DATA);
+  const [data, setData] = useState<MenuItem[]>([]);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
@@ -91,11 +80,33 @@ const SystemMenu: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<MenuItem | null>(null);
   const [form] = Form.useForm();
 
+  const load = async () => {
+    setLoading(true);
+    try {
+      const env = await menuService.list({
+        page: { pageNo: 1, pageSize: 1000 },
+      });
+      setData(env.data as MenuItem[]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 过滤后的扁平数据
   const filteredFlat = useMemo(() => {
     const v = filterValues;
     return data.filter((m) => {
-      if (v.keyword && !m.name.includes(v.keyword) && !m.path.includes(v.keyword)) return false;
+      if (
+        v.keyword &&
+        !m.name.includes(v.keyword) &&
+        !m.path.includes(v.keyword)
+      )
+        return false;
       if (v.type && m.type !== v.type) return false;
       if (v.status && m.status !== v.status) return false;
       if (v.visible !== undefined && v.visible !== '' && v.visible !== null) {
@@ -118,7 +129,11 @@ const SystemMenu: React.FC = () => {
     while (changed) {
       changed = false;
       data.forEach((m) => {
-        if (m.parentId && expandedIds.has(m.id) && !expandedIds.has(m.parentId)) {
+        if (
+          m.parentId &&
+          expandedIds.has(m.id) &&
+          !expandedIds.has(m.parentId)
+        ) {
           expandedIds.add(m.parentId);
           changed = true;
         }
@@ -128,7 +143,12 @@ const SystemMenu: React.FC = () => {
   }, [data, filteredFlat, filterValues]);
 
   const filters: FilterConfig[] = [
-    { key: 'keyword', label: '关键字', type: 'input', placeholder: '名称 / 路径' },
+    {
+      key: 'keyword',
+      label: '关键字',
+      type: 'input',
+      placeholder: '名称 / 路径',
+    },
     {
       key: 'type',
       label: '类型',
@@ -165,7 +185,12 @@ const SystemMenu: React.FC = () => {
     setEditMode(false);
     setCurrentRecord(null);
     form.resetFields();
-    form.setFieldsValue({ type: 'menu', sort: 1, visible: true, status: 'active' });
+    form.setFieldsValue({
+      type: 'menu',
+      sort: 1,
+      visible: true,
+      status: 'active',
+    });
     setModalVisible(true);
   };
 
@@ -187,12 +212,13 @@ const SystemMenu: React.FC = () => {
       onOk: async () => {
         setLoading(true);
         try {
-          // mock
-          await new Promise((r) => setTimeout(r, 300));
-          setData((prev) =>
-            prev.filter((m) => m.id !== record.id && m.parentId !== record.id),
-          );
+          const children = data.filter((m) => m.parentId === record.id);
+          await Promise.all([
+            menuService.delete(record.id),
+            ...children.map((c) => menuService.delete(c.id)),
+          ]);
           message.success('删除成功');
+          await load();
         } finally {
           setLoading(false);
         }
@@ -206,45 +232,44 @@ const SystemMenu: React.FC = () => {
       title: `批量删除 ${selectedKeys.length} 项`,
       content: '同时会移除其下的子菜单,确认?',
       okType: 'danger',
-      onOk: () => {
+      onOk: async () => {
         const idSet = new Set(selectedKeys.map(String));
-        setData((prev) =>
-          prev.filter((m) => !idSet.has(m.id) && !idSet.has(m.parentId ?? '')),
+        const toDelete = data.filter(
+          (m) => idSet.has(m.id) || idSet.has(m.parentId ?? ''),
         );
+        await Promise.all(toDelete.map((m) => menuService.delete(m.id)));
         setSelectedKeys([]);
         message.success('已删除');
+        await load();
       },
     });
   };
 
-  const handleMove = (record: MenuItem, dir: 'up' | 'down') => {
-    setData((prev) => {
-      const siblings = prev
-        .filter((m) => (m.parentId ?? null) === (record.parentId ?? null))
-        .sort((a, b) => a.sort - b.sort);
-      const idx = siblings.findIndex((m) => m.id === record.id);
-      const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= siblings.length) return prev;
-      const aId = siblings[idx].id;
-      const bId = siblings[swapIdx].id;
-      const aSort = siblings[idx].sort;
-      const bSort = siblings[swapIdx].sort;
-      return prev.map((m) => {
-        if (m.id === aId) return { ...m, sort: bSort };
-        if (m.id === bId) return { ...m, sort: aSort };
-        return m;
-      });
-    });
+  const handleMove = async (record: MenuItem, dir: 'up' | 'down') => {
+    const siblings = data
+      .filter((m) => (m.parentId ?? null) === (record.parentId ?? null))
+      .sort((a, b) => a.sort - b.sort);
+    const idx = siblings.findIndex((m) => m.id === record.id);
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= siblings.length) return;
+    const a = siblings[idx];
+    const b = siblings[swapIdx];
+    await Promise.all([
+      menuService.modify({ id: a.id, sort: b.sort } as Partial<MenuEntity> & {
+        id: string;
+      }),
+      menuService.modify({ id: b.id, sort: a.sort } as Partial<MenuEntity> & {
+        id: string;
+      }),
+    ]);
+    await load();
   };
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 300));
-
-      const next: MenuItem = {
-        id: editMode && currentRecord ? currentRecord.id : `new-${Date.now()}`,
+      const payload = {
         name: values.name,
         path: values.path,
         icon: values.icon,
@@ -255,14 +280,15 @@ const SystemMenu: React.FC = () => {
         visible: values.visible !== false,
         status: values.status === false ? 'inactive' : 'active',
       };
-
-      setData((prev) => {
-        if (editMode) return prev.map((m) => (m.id === next.id ? next : m));
-        return [...prev, next];
-      });
+      if (editMode && currentRecord) {
+        await menuService.modify({ id: currentRecord.id, ...payload } as any);
+      } else {
+        await menuService.add(payload as any);
+      }
       message.success(editMode ? '编辑成功' : '新增成功');
       setModalVisible(false);
       form.resetFields();
+      await load();
     } finally {
       setLoading(false);
     }
@@ -290,7 +316,7 @@ const SystemMenu: React.FC = () => {
       icon: <ReloadOutlined />,
       title: '刷新',
       onClick: () => {
-        setData(FLAT_DATA);
+        load();
         message.success('已刷新');
       },
     },
@@ -319,7 +345,9 @@ const SystemMenu: React.FC = () => {
       title: '类型',
       dataIndex: 'type',
       width: 90,
-      render: (t: string) => <Tag color={TYPE_COLOR[t]}>{TYPE_LABEL[t] ?? t}</Tag>,
+      render: (t: string) => (
+        <Tag color={TYPE_COLOR[t]}>{TYPE_LABEL[t] ?? t}</Tag>
+      ),
     },
     {
       title: '权限标识',
@@ -333,13 +361,17 @@ const SystemMenu: React.FC = () => {
       dataIndex: 'visible',
       width: 70,
       align: 'center',
-      render: (v: boolean) => <Tag color={v ? 'green' : 'red'}>{v ? '是' : '否'}</Tag>,
+      render: (v: boolean) => (
+        <Tag color={v ? 'green' : 'red'}>{v ? '是' : '否'}</Tag>
+      ),
     },
     {
       title: '状态',
       dataIndex: 'status',
       width: 90,
-      render: (s: string) => <Tag color={STATUS_COLOR[s]}>{STATUS_LABEL[s] ?? s}</Tag>,
+      render: (s: string) => (
+        <Tag color={STATUS_COLOR[s]}>{STATUS_LABEL[s] ?? s}</Tag>
+      ),
     },
     {
       title: '操作',

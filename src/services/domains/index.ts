@@ -20,3 +20,8 @@ export * from './resource';
 export * from './facts';
 export * from './alert';
 export * from './fence';
+export * from './notification';
+export * from './sys-config';
+export * from './rbac';
+export * from './saved-filter';
+export * from './approval-flow';

@@ -1,14 +1,3 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Button,
-  Card,
-  Descriptions,
-  message,
-  Modal,
-  Select,
-  Space,
-  Tag,
-} from 'antd';
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
@@ -19,17 +8,31 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import LogicFlow from '@logicflow/core';
+import {
+  Button,
+  Card,
+  Descriptions,
+  Modal,
+  message,
+  Select,
+  Space,
+  Tag,
+} from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import '@logicflow/core/dist/index.css';
 import type { ColumnsType } from 'antd/es/table';
-import WorkflowEditor from './WorkflowEditor';
 import {
-  OmnibarListPage,
   type FilterConfig,
+  OmnibarListPage,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
+import { approvalFlowService } from '@/services/domains/approval-flow';
+import type { ApprovalFlow } from '@/types/ontology/prh/entities/approval_flow';
+import WorkflowEditor from './WorkflowEditor';
 
 interface WorkflowItem {
   key: string;
+  id?: string;
   name: string;
   version: string;
   status: string;
@@ -45,49 +48,48 @@ const ApprovalWorkflow: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'detail' | 'edit'>('list');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [currentEditItem, setCurrentEditItem] = useState<WorkflowItem | null>(null);
+  const [currentEditItem, setCurrentEditItem] = useState<WorkflowItem | null>(
+    null,
+  );
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+  // 流程列表(走 service)
+  const [flows, setFlows] = useState<ApprovalFlow[]>([]);
 
-  // 模拟流程数据
-  const workflowOptions = [
-    { label: '材料审批流程', value: 'material' },
-    { label: '请假审批流程', value: 'leave' },
-    { label: '备案审批流程', value: 'filing' },
-  ];
-
-  // 流程详情数据
-  const workflowDetails: Record<string, any> = {
-    material: {
-      name: '材料审批流程',
-      version: 'v1.2',
-      status: '已启用',
-      creator: '管理员',
-      createTime: '2024-01-15',
-      description: '保障户材料提交审批流程，包括材料提交、初审、复审、终审等环节',
-    },
-    leave: {
-      name: '请假审批流程',
-      version: 'v1.0',
-      status: '已启用',
-      creator: '管理员',
-      createTime: '2024-01-20',
-      description: '保障户请假申请审批流程，包括申请提交、主管审批、备案等环节',
-    },
-    filing: {
-      name: '备案审批流程',
-      version: 'v1.1',
-      status: '已启用',
-      creator: '管理员',
-      createTime: '2024-02-01',
-      description: '保障户外出备案审批流程，包括备案申请、审核、批准等环节',
-    },
+  const loadFlows = async () => {
+    setLoading(true);
+    try {
+      const env = await approvalFlowService.list({
+        page: { pageNo: 1, pageSize: 1000 },
+      });
+      setFlows(env.data as ApprovalFlow[]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 不同流程的流程图数据
-  const workflowData: Record<string, any> = {
+  useEffect(() => {
+    loadFlows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 流程下拉(由列表派生)
+  const workflowOptions = flows.map((f) => ({
+    label: f.name,
+    value: f.flowKey,
+  }));
+
+  // 流程详情(由列表派生,key = flowKey)
+  const workflowDetails: Record<string, any> = useMemo(() => {
+    const map: Record<string, any> = {};
+    for (const f of flows) map[f.flowKey] = { ...f };
+    return map;
+  }, [flows]);
+
+  // 流程图默认模板(LogicFlow 图设计内容;后端补 graph 字段后改读 flow.graph)
+  const DEFAULT_GRAPHS: Record<string, any> = {
     material: {
       nodes: [
         {
@@ -172,8 +174,18 @@ const ApprovalWorkflow: React.FC = () => {
         },
       ],
       edges: [
-        { id: 'edge_1', type: 'polyline', sourceNodeId: 'node_1', targetNodeId: 'node_2' },
-        { id: 'edge_2', type: 'polyline', sourceNodeId: 'node_2', targetNodeId: 'node_3' },
+        {
+          id: 'edge_1',
+          type: 'polyline',
+          sourceNodeId: 'node_1',
+          targetNodeId: 'node_2',
+        },
+        {
+          id: 'edge_2',
+          type: 'polyline',
+          sourceNodeId: 'node_2',
+          targetNodeId: 'node_3',
+        },
         {
           id: 'edge_3',
           type: 'polyline',
@@ -195,7 +207,12 @@ const ApprovalWorkflow: React.FC = () => {
           targetNodeId: 'node_5',
           text: '通过',
         },
-        { id: 'edge_6', type: 'polyline', sourceNodeId: 'node_5', targetNodeId: 'node_6' },
+        {
+          id: 'edge_6',
+          type: 'polyline',
+          sourceNodeId: 'node_5',
+          targetNodeId: 'node_6',
+        },
         {
           id: 'edge_7',
           type: 'polyline',
@@ -210,7 +227,12 @@ const ApprovalWorkflow: React.FC = () => {
           targetNodeId: 'node_7',
           text: '通过',
         },
-        { id: 'edge_9', type: 'polyline', sourceNodeId: 'node_7', targetNodeId: 'node_8' },
+        {
+          id: 'edge_9',
+          type: 'polyline',
+          sourceNodeId: 'node_7',
+          targetNodeId: 'node_8',
+        },
       ],
     },
     leave: {
@@ -286,7 +308,12 @@ const ApprovalWorkflow: React.FC = () => {
         },
       ],
       edges: [
-        { id: 'edge_1', type: 'polyline', sourceNodeId: 'node_1', targetNodeId: 'node_2' },
+        {
+          id: 'edge_1',
+          type: 'polyline',
+          sourceNodeId: 'node_1',
+          targetNodeId: 'node_2',
+        },
         {
           id: 'edge_2',
           type: 'polyline',
@@ -294,7 +321,12 @@ const ApprovalWorkflow: React.FC = () => {
           targetNodeId: 'node_3',
           text: '否',
         },
-        { id: 'edge_3', type: 'polyline', sourceNodeId: 'node_3', targetNodeId: 'node_7' },
+        {
+          id: 'edge_3',
+          type: 'polyline',
+          sourceNodeId: 'node_3',
+          targetNodeId: 'node_7',
+        },
         {
           id: 'edge_4',
           type: 'polyline',
@@ -302,7 +334,12 @@ const ApprovalWorkflow: React.FC = () => {
           targetNodeId: 'node_4',
           text: '是',
         },
-        { id: 'edge_5', type: 'polyline', sourceNodeId: 'node_4', targetNodeId: 'node_5' },
+        {
+          id: 'edge_5',
+          type: 'polyline',
+          sourceNodeId: 'node_4',
+          targetNodeId: 'node_5',
+        },
         {
           id: 'edge_6',
           type: 'polyline',
@@ -392,8 +429,18 @@ const ApprovalWorkflow: React.FC = () => {
         },
       ],
       edges: [
-        { id: 'edge_1', type: 'polyline', sourceNodeId: 'node_1', targetNodeId: 'node_2' },
-        { id: 'edge_2', type: 'polyline', sourceNodeId: 'node_2', targetNodeId: 'node_3' },
+        {
+          id: 'edge_1',
+          type: 'polyline',
+          sourceNodeId: 'node_1',
+          targetNodeId: 'node_2',
+        },
+        {
+          id: 'edge_2',
+          type: 'polyline',
+          sourceNodeId: 'node_2',
+          targetNodeId: 'node_3',
+        },
         {
           id: 'edge_3',
           type: 'polyline',
@@ -415,7 +462,12 @@ const ApprovalWorkflow: React.FC = () => {
           targetNodeId: 'node_5',
           text: '是',
         },
-        { id: 'edge_6', type: 'polyline', sourceNodeId: 'node_5', targetNodeId: 'node_6' },
+        {
+          id: 'edge_6',
+          type: 'polyline',
+          sourceNodeId: 'node_5',
+          targetNodeId: 'node_6',
+        },
         {
           id: 'edge_7',
           type: 'polyline',
@@ -434,10 +486,16 @@ const ApprovalWorkflow: React.FC = () => {
     },
   };
 
-  // 准备表格数据
-  const workflowList: WorkflowItem[] = Object.keys(workflowDetails).map((key) => ({
-    key,
-    ...workflowDetails[key],
+  // 准备表格数据(由 service 加载的 flows 派生,key = flowKey)
+  const workflowList: WorkflowItem[] = flows.map((f) => ({
+    key: f.flowKey,
+    id: f.id,
+    name: f.name,
+    version: f.version,
+    status: f.status,
+    creator: f.creatorName ?? '',
+    createTime: f.createTime ?? '',
+    description: f.description ?? '',
   }));
 
   // 定义表格列
@@ -523,7 +581,8 @@ const ApprovalWorkflow: React.FC = () => {
 
   // 初始化 LogicFlow (在详情或编辑模式时)
   useEffect(() => {
-    if ((viewMode !== 'detail' && viewMode !== 'edit') || !containerRef.current) return;
+    if ((viewMode !== 'detail' && viewMode !== 'edit') || !containerRef.current)
+      return;
 
     // 如果已经存在实例，先销毁
     if (lfRef.current) {
@@ -601,14 +660,14 @@ const ApprovalWorkflow: React.FC = () => {
 
     setLoading(true);
     try {
-      const data = workflowData[workflowType];
+      const data = DEFAULT_GRAPHS[workflowType];
       if (data) {
         lfRef.current.render(data);
         // 居中显示
         lfRef.current.translateCenter();
         message.success('流程图加载成功');
       }
-    } catch (error) {
+    } catch {
       message.error('流程图加载失败');
     } finally {
       setLoading(false);
@@ -624,6 +683,7 @@ const ApprovalWorkflow: React.FC = () => {
   // 刷新流程图
   const handleRefresh = () => {
     if (viewMode === 'list') {
+      loadFlows();
       message.success('列表刷新成功');
     } else {
       loadWorkflowData(selectedWorkflow);
@@ -654,8 +714,17 @@ const ApprovalWorkflow: React.FC = () => {
   };
 
   // 保存编辑
-  const handleSaveEdit = (values: any, graphData: any) => {
-    console.log('保存流程:', currentEditItem?.key, values, graphData);
+  const handleSaveEdit = async (values: any, graphData: any) => {
+    if (currentEditItem?.id) {
+      await approvalFlowService.modify({
+        id: currentEditItem.id,
+        name: values.name,
+        version: values.version,
+        description: values.description,
+        graph: graphData,
+      });
+      await loadFlows();
+    }
     message.success('流程保存成功');
     setViewMode('list');
   };
@@ -672,8 +741,11 @@ const ApprovalWorkflow: React.FC = () => {
   };
 
   // 确认删除
-  const handleDeleteOk = () => {
-    console.log('删除流程:', currentEditItem?.key);
+  const handleDeleteOk = async () => {
+    if (currentEditItem?.id) {
+      await approvalFlowService.delete(currentEditItem.id);
+      await loadFlows();
+    }
     message.success('流程删除成功');
     setDeleteModalVisible(false);
   };
@@ -688,7 +760,11 @@ const ApprovalWorkflow: React.FC = () => {
   const filtered = useMemo(() => {
     const v = filterValues;
     return workflowList.filter((w) => {
-      if (v.keyword && !w.name.includes(v.keyword) && !w.description.includes(v.keyword))
+      if (
+        v.keyword &&
+        !w.name.includes(v.keyword) &&
+        !w.description.includes(v.keyword)
+      )
         return false;
       if (v.status && w.status !== v.status) return false;
       return true;
@@ -696,7 +772,12 @@ const ApprovalWorkflow: React.FC = () => {
   }, [workflowList, filterValues]);
 
   const filters: FilterConfig[] = [
-    { key: 'keyword', label: '关键字', type: 'input', placeholder: '名称 / 说明' },
+    {
+      key: 'keyword',
+      label: '关键字',
+      type: 'input',
+      placeholder: '名称 / 说明',
+    },
     {
       key: 'status',
       label: '状态',
@@ -806,7 +887,11 @@ const ApprovalWorkflow: React.FC = () => {
             key: 'status',
             label: '状态',
             children: (
-              <Tag color={currentWorkflow?.status === '已启用' ? 'success' : 'default'}>
+              <Tag
+                color={
+                  currentWorkflow?.status === '已启用' ? 'success' : 'default'
+                }
+              >
                 {currentWorkflow?.status}
               </Tag>
             ),
@@ -900,11 +985,13 @@ const ApprovalWorkflow: React.FC = () => {
   return (
     <>
       {viewMode === 'list' && renderListView()}
-      {viewMode === 'detail' && <div style={{ padding: '24px' }}>{renderDetailView()}</div>}
+      {viewMode === 'detail' && (
+        <div style={{ padding: '24px' }}>{renderDetailView()}</div>
+      )}
       {viewMode === 'edit' && currentEditItem && (
         <WorkflowEditor
           workflowKey={currentEditItem.key}
-          workflowData={workflowData[currentEditItem.key]}
+          workflowData={DEFAULT_GRAPHS[currentEditItem.key]}
           initialValues={{
             name: currentEditItem.name,
             version: currentEditItem.version,

@@ -31,7 +31,9 @@
       "Bash(npx @biomejs/biome check src/)",
       "Bash(npx @biomejs/biome check src/components/ThemeSettings.tsx src/layouts/BasicLayout.tsx)",
       "Bash(npm run *)",
-      "Read(//c/Users/Administrator/Desktop/work/模型/ontology/**)"
+      "Read(//c/Users/Administrator/Desktop/work/模型/ontology/**)",
+      "Read(//Users/xz/Downloads/**)",
+      "Read(//Users/xz/Downloads/模型/ontology/**)"
     ],
     "deny": [],
     "ask": []

@@ -1,59 +1,25 @@
-import React, { useState } from 'react';
-import { Button, Modal, Form, Input, Tag, message, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined } from '@ant-design/icons';
 import {
-  OmnibarListPage,
+  CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
+import { Form, Input, Modal, message, Popconfirm, Tag } from 'antd';
+import React, { useEffect, useState } from 'react';
+import {
   type FilterConfig,
+  OmnibarListPage,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
+import { savedFilterService } from '@/services/domains/saved-filter';
+import type { SavedFilter } from '@/types/ontology/prh/entities/saved_filter';
 import FilterEditor from './FilterEditor';
 
-interface FilterItem {
-  id: string;
-  name: string;
-  description: string;
-  fieldCount: number;
-  createdAt: string;
-  updatedAt: string;
-  status: 'active' | 'inactive';
-  jsonLogic: any;
-}
-
-const mockFilters: FilterItem[] = [
-  {
-    id: '1',
-    name: '高风险房屋筛选',
-    description: '筛选面积大于100平米且入住时间超过5年的房屋',
-    fieldCount: 3,
-    createdAt: '2024-01-15 10:30:00',
-    updatedAt: '2024-01-20 14:20:00',
-    status: 'active',
-    jsonLogic: null,
-  },
-  {
-    id: '2',
-    name: '待审核申请筛选',
-    description: '筛选状态为待审核且提交时间在30天内的申请',
-    fieldCount: 2,
-    createdAt: '2024-01-10 09:00:00',
-    updatedAt: '2024-01-18 16:45:00',
-    status: 'active',
-    jsonLogic: null,
-  },
-  {
-    id: '3',
-    name: '异常数据筛选',
-    description: '筛选入住人数异常或面积数据异常的记录',
-    fieldCount: 4,
-    createdAt: '2024-01-05 11:20:00',
-    updatedAt: '2024-01-12 10:30:00',
-    status: 'inactive',
-    jsonLogic: null,
-  },
-];
+type FilterItem = SavedFilter & { id: string };
 
 const FilterList: React.FC = () => {
-  const [filters, setFilters] = useState<FilterItem[]>(mockFilters);
+  const [filters, setFilters] = useState<FilterItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -63,11 +29,31 @@ const FilterList: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [form] = Form.useForm();
 
+  const load = async () => {
+    setLoading(true);
+    try {
+      const env = await savedFilterService.list({
+        page: { pageNo: 1, pageSize: 1000 },
+      });
+      setFilters(env.data as FilterItem[]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 过滤后的列表(支持 keyword 搜索)
   const filteredList = filters.filter((f) => {
     if (filterValues.keyword) {
       const kw = String(filterValues.keyword).toLowerCase();
-      if (!f.name.toLowerCase().includes(kw) && !f.description.toLowerCase().includes(kw)) {
+      if (
+        !f.name.toLowerCase().includes(kw) &&
+        !(f.description ?? '').toLowerCase().includes(kw)
+      ) {
         return false;
       }
     }
@@ -87,59 +73,61 @@ const FilterList: React.FC = () => {
   const handleCreateConfirm = async () => {
     try {
       const values = await form.validateFields();
-      const newFilter: FilterItem = {
-        id: Date.now().toString(),
+      const env = await savedFilterService.add({
         name: values.name,
         description: values.description || '',
         fieldCount: 0,
-        createdAt: new Date().toLocaleString(),
-        updatedAt: new Date().toLocaleString(),
         status: 'active',
         jsonLogic: null,
-      };
-      setFilters([newFilter, ...filters]);
+        createdAt: new Date().toLocaleString(),
+        updatedAt: new Date().toLocaleString(),
+      });
       setCreateModalVisible(false);
       form.resetFields();
-      setCurrentFilter(newFilter);
-      setEditorVisible(true);
+      await load();
+      if (env.data) {
+        setCurrentFilter(env.data as FilterItem);
+        setEditorVisible(true);
+      }
       message.success('筛选器创建成功');
     } catch {
       // 表单验证失败,忽略
     }
   };
 
-  const handleDelete = (id: string) => {
-    setFilters(filters.filter((f) => f.id !== id));
+  const handleDelete = async (id: string) => {
+    await savedFilterService.delete(id);
     message.success('筛选器已删除');
+    load();
   };
 
-  const handleCopy = (record: FilterItem) => {
-    const newFilter: FilterItem = {
-      ...record,
-      id: Date.now().toString(),
+  const handleCopy = async (record: FilterItem) => {
+    await savedFilterService.add({
       name: `${record.name} (副本)`,
+      description: record.description,
+      fieldCount: record.fieldCount,
+      status: record.status,
+      jsonLogic: record.jsonLogic,
       createdAt: new Date().toLocaleString(),
       updatedAt: new Date().toLocaleString(),
-    };
-    setFilters([newFilter, ...filters]);
+    });
     message.success('筛选器已复制');
+    load();
   };
 
-  const handleSaveFilter = (filterData: { jsonLogic: any; fieldCount: number }) => {
+  const handleSaveFilter = async (filterData: {
+    jsonLogic: any;
+    fieldCount: number;
+  }) => {
     if (currentFilter) {
-      setFilters(
-        filters.map((f) =>
-          f.id === currentFilter.id
-            ? {
-                ...f,
-                jsonLogic: filterData.jsonLogic,
-                fieldCount: filterData.fieldCount,
-                updatedAt: new Date().toLocaleString(),
-              }
-            : f,
-        ),
-      );
+      await savedFilterService.modify({
+        id: currentFilter.id,
+        jsonLogic: filterData.jsonLogic,
+        fieldCount: filterData.fieldCount,
+        updatedAt: new Date().toLocaleString(),
+      });
       message.success('筛选器配置已保存');
+      load();
     }
     setEditorVisible(false);
     setCurrentFilter(null);
@@ -152,16 +140,24 @@ const FilterList: React.FC = () => {
     }
     Modal.confirm({
       title: `确定删除选中的 ${selectedKeys.length} 个筛选器吗?`,
-      onOk: () => {
-        setFilters(filters.filter((f) => !selectedKeys.includes(f.id)));
+      onOk: async () => {
+        await Promise.all(
+          selectedKeys.map((id) => savedFilterService.delete(String(id))),
+        );
         setSelectedKeys([]);
         message.success('已删除');
+        load();
       },
     });
   };
 
   const filterConfigs: FilterConfig[] = [
-    { key: 'keyword', label: '关键字', type: 'input', placeholder: '名称 / 描述' },
+    {
+      key: 'keyword',
+      label: '关键字',
+      type: 'input',
+      placeholder: '名称 / 描述',
+    },
     {
       key: 'status',
       label: '状态',
@@ -175,9 +171,20 @@ const FilterList: React.FC = () => {
   ];
 
   const toolbarActions: ToolbarAction[] = [
-    { key: 'create', label: '新建', type: 'primary', icon: <PlusOutlined />, onClick: handleCreate },
+    {
+      key: 'create',
+      label: '新建',
+      type: 'primary',
+      icon: <PlusOutlined />,
+      onClick: handleCreate,
+    },
     { divider: true },
-    { key: 'delete', label: '批量删除', danger: true, onClick: handleBatchDelete },
+    {
+      key: 'delete',
+      label: '批量删除',
+      danger: true,
+      onClick: handleBatchDelete,
+    },
   ];
 
   const columns = [
@@ -248,6 +255,7 @@ const FilterList: React.FC = () => {
         toolbarActions={toolbarActions}
         data={pageList}
         columns={columns}
+        loading={loading}
         rowKey="id"
         selectedKeys={selectedKeys}
         onSelectionChange={setSelectedKeys}
@@ -290,7 +298,12 @@ const FilterList: React.FC = () => {
       {editorVisible && currentFilter && (
         <FilterEditor
           visible={editorVisible}
-          filter={currentFilter}
+          filter={{
+            id: currentFilter.id,
+            name: currentFilter.name,
+            description: currentFilter.description,
+            jsonLogic: currentFilter.jsonLogic,
+          }}
           onSave={handleSaveFilter}
           onCancel={() => {
             setEditorVisible(false);

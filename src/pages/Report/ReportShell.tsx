@@ -27,6 +27,9 @@ const ReportShell: React.FC<ReportShellProps> = ({ configKey }) => {
       factService={config.factService}
       dimensions={config.dimensions}
       metrics={config.metrics}
+      filters={config.filters}
+      buildExtraQuery={config.buildExtraQuery}
+      defaultFilterValues={config.defaultFilterValues}
     />
   );
 };

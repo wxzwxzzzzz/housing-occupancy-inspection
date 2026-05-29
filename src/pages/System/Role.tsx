@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
-import { Button, Modal, Form, Input, message, Tag, Tree, Divider, Space } from 'antd';
 import {
-  PlusOutlined,
-  EditOutlined,
   DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
   SafetyOutlined,
 } from '@ant-design/icons';
+import { Button, Divider, Form, Input, Modal, message, Tag, Tree } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
+import React, { useEffect, useState } from 'react';
 import {
-  OmnibarListPage,
   type FilterConfig,
+  OmnibarListPage,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
+import { roleService } from '@/services/domains/rbac';
+import type { Role } from '@/types/ontology/prh/entities/role';
 
-interface RoleItem {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  userCount: number;
-  permissions: string[];
-  status: 'active' | 'inactive';
-  createTime: string;
-}
+type RoleItem = Role & { id: string };
 
 const permissionTreeData: DataNode[] = [
-  { title: '工作台', key: 'dashboard', children: [{ title: '查看工作台', key: 'dashboard:view' }] },
+  {
+    title: '工作台',
+    key: 'dashboard',
+    children: [{ title: '查看工作台', key: 'dashboard:view' }],
+  },
   {
     title: '监测与处置',
     key: 'monitor',
@@ -83,53 +80,33 @@ const SystemRole: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
 
-  const [dataSource, setDataSource] = useState<RoleItem[]>([
-    {
-      id: '1',
-      name: '系统管理员',
-      code: 'admin',
-      description: '系统最高权限,可管理所有功能',
-      userCount: 3,
-      permissions: ['dashboard', 'monitor', 'approval', 'report', 'system'],
-      status: 'active',
-      createTime: '2025-01-01 00:00:00',
-    },
-    {
-      id: '2',
-      name: '审批员',
-      code: 'approver',
-      description: '负责审批材料、请假、备案等申请',
-      userCount: 15,
-      permissions: ['dashboard', 'approval', 'report'],
-      status: 'active',
-      createTime: '2025-01-01 00:00:00',
-    },
-    {
-      id: '3',
-      name: '监测员',
-      code: 'monitor',
-      description: '负责打卡核验、预警处置',
-      userCount: 8,
-      permissions: ['dashboard', 'monitor', 'report'],
-      status: 'active',
-      createTime: '2025-01-01 00:00:00',
-    },
-    {
-      id: '4',
-      name: '只读用户',
-      code: 'viewer',
-      description: '只能查看数据,无操作权限',
-      userCount: 5,
-      permissions: ['dashboard', 'report'],
-      status: 'active',
-      createTime: '2025-02-15 10:00:00',
-    },
-  ]);
+  const [dataSource, setDataSource] = useState<RoleItem[]>([]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const env = await roleService.list({
+        page: { pageNo: 1, pageSize: 1000 },
+      });
+      setDataSource(env.data as RoleItem[]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = dataSource.filter((r) => {
     if (filterValues.keyword) {
       const kw = String(filterValues.keyword).toLowerCase();
-      if (!r.name.toLowerCase().includes(kw) && !r.code.toLowerCase().includes(kw)) return false;
+      if (
+        !r.name.toLowerCase().includes(kw) &&
+        !r.code.toLowerCase().includes(kw)
+      )
+        return false;
     }
     if (filterValues.status && r.status !== filterValues.status) return false;
     return true;
@@ -154,13 +131,13 @@ const SystemRole: React.FC = () => {
     setEditMode(true);
     setCurrentRecord(record);
     form.setFieldsValue(record);
-    setCheckedKeys(record.permissions);
+    setCheckedKeys(record.permissions ?? []);
     setModalVisible(true);
   };
 
   const handleViewPermission = (record: RoleItem) => {
     setCurrentRecord(record);
-    setCheckedKeys(record.permissions);
+    setCheckedKeys(record.permissions ?? []);
     setPermissionModalVisible(true);
   };
 
@@ -172,8 +149,9 @@ const SystemRole: React.FC = () => {
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
-        setDataSource(dataSource.filter((r) => r.id !== record.id));
+        await roleService.delete(record.id);
         message.success('删除成功');
+        load();
       },
     });
   };
@@ -182,32 +160,25 @@ const SystemRole: React.FC = () => {
     try {
       const values = await form.validateFields();
       setLoading(true);
-      // TODO: 调用真实接口
-      await new Promise((r) => setTimeout(r, 300));
       if (editMode && currentRecord) {
-        setDataSource(
-          dataSource.map((r) =>
-            r.id === currentRecord.id
-              ? { ...r, ...values, permissions: checkedKeys as string[] }
-              : r,
-          ),
-        );
+        await roleService.modify({
+          id: currentRecord.id,
+          ...values,
+          permissions: checkedKeys as string[],
+        });
       } else {
-        setDataSource([
-          {
-            id: Date.now().toString(),
-            ...values,
-            permissions: checkedKeys as string[],
-            userCount: 0,
-            status: 'active',
-            createTime: new Date().toLocaleString(),
-          },
-          ...dataSource,
-        ]);
+        await roleService.add({
+          ...values,
+          permissions: checkedKeys as string[],
+          userCount: 0,
+          status: 'active',
+          createTime: new Date().toLocaleString(),
+        });
       }
       message.success(editMode ? '编辑成功' : '新增成功');
       setModalVisible(false);
       form.resetFields();
+      load();
     } catch {
       // 表单验证失败
     } finally {
@@ -216,7 +187,12 @@ const SystemRole: React.FC = () => {
   };
 
   const filterConfigs: FilterConfig[] = [
-    { key: 'keyword', label: '关键字', type: 'input', placeholder: '名称 / 编码' },
+    {
+      key: 'keyword',
+      label: '关键字',
+      type: 'input',
+      placeholder: '名称 / 编码',
+    },
     {
       key: 'status',
       label: '状态',
@@ -230,7 +206,13 @@ const SystemRole: React.FC = () => {
   ];
 
   const toolbarActions: ToolbarAction[] = [
-    { key: 'add', label: '新增角色', type: 'primary', icon: <PlusOutlined />, onClick: handleAdd },
+    {
+      key: 'add',
+      label: '新增角色',
+      type: 'primary',
+      icon: <PlusOutlined />,
+      onClick: handleAdd,
+    },
   ];
 
   const columns: ColumnsType<RoleItem> = [
@@ -263,7 +245,9 @@ const SystemRole: React.FC = () => {
       dataIndex: 'status',
       width: 100,
       render: (status: string) => (
-        <Tag color={statusConfig[status]?.color}>{statusConfig[status]?.text}</Tag>
+        <Tag color={statusConfig[status]?.color}>
+          {statusConfig[status]?.text}
+        </Tag>
       ),
     },
     { title: '创建时间', dataIndex: 'createTime', width: 160 },
@@ -273,14 +257,20 @@ const SystemRole: React.FC = () => {
       width: 220,
       render: (_, record) => (
         <span className="opp-row-actions">
-          <span className="opp-row-action" onClick={() => handleViewPermission(record)}>
+          <span
+            className="opp-row-action"
+            onClick={() => handleViewPermission(record)}
+          >
             权限
           </span>
           <span className="opp-row-action" onClick={() => handleEdit(record)}>
             <EditOutlined /> 编辑
           </span>
           {record.code !== 'admin' && (
-            <span className="opp-row-action danger" onClick={() => handleDelete(record)}>
+            <span
+              className="opp-row-action danger"
+              onClick={() => handleDelete(record)}
+            >
               <DeleteOutlined /> 删除
             </span>
           )}

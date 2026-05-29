@@ -1,17 +1,16 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Modal, Button, Space, Card, Typography, Divider, Alert } from 'antd';
-import { SaveOutlined, UndoOutlined, CodeOutlined } from '@ant-design/icons';
-
+import { CodeOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons';
 // Query Builder imports - 使用 Ant Design 版本
 import {
-  Query,
+  AntdConfig,
   Builder,
-  Utils as QbUtils,
-  type ImmutableTree,
-  type Config,
   type BuilderProps,
+  type Config,
+  type ImmutableTree,
+  Utils as QbUtils,
+  Query,
 } from '@react-awesome-query-builder/antd';
-import { AntdConfig } from '@react-awesome-query-builder/antd';
+import { Alert, Button, Card, Divider, Modal, Space, Typography } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // 样式
 import '@react-awesome-query-builder/antd/css/styles.css';
@@ -146,8 +145,8 @@ const InitialConfig: Config = {
   },
   settings: {
     ...AntdConfig.settings,
-    showLabels: false,  // 关闭标签显示，使用左右结构
-    showNot: true,     // 隐藏 NOT 按钮
+    showLabels: false, // 关闭标签显示，使用左右结构
+    showNot: true, // 隐藏 NOT 按钮
     canReorder: true,
     canRegroup: true,
     maxNesting: 3,
@@ -157,21 +156,30 @@ const InitialConfig: Config = {
 };
 
 // 创建空的初始查询树
-const createEmptyTree = () => QbUtils.checkTree(QbUtils.loadTree({ id: QbUtils.uuid(), type: 'group' }), InitialConfig);
+const createEmptyTree = () =>
+  QbUtils.checkTree(
+    QbUtils.loadTree({ id: QbUtils.uuid(), type: 'group' }),
+    InitialConfig,
+  );
 
 interface FilterEditorProps {
   visible: boolean;
   filter: {
     id: string;
     name: string;
-    description: string;
+    description?: string;
     jsonLogic: any;
   };
   onSave: (data: { jsonLogic: any; fieldCount: number }) => void;
   onCancel: () => void;
 }
 
-const FilterEditor: React.FC<FilterEditorProps> = ({ visible, filter, onSave, onCancel }) => {
+const FilterEditor: React.FC<FilterEditorProps> = ({
+  visible,
+  filter,
+  onSave,
+  onCancel,
+}) => {
   const [tree, setTree] = useState<ImmutableTree>(() => createEmptyTree());
   const [config] = useState<Config>(InitialConfig);
   const [showJsonLogic, setShowJsonLogic] = useState(false);
@@ -184,8 +192,8 @@ const FilterEditor: React.FC<FilterEditorProps> = ({ visible, filter, onSave, on
           setTree(
             QbUtils.checkTree(
               QbUtils.loadFromJsonLogic(filter.jsonLogic, InitialConfig),
-              InitialConfig
-            )
+              InitialConfig,
+            ),
           );
         } catch (e) {
           console.error('Failed to load jsonLogic:', e);
@@ -229,7 +237,9 @@ const FilterEditor: React.FC<FilterEditorProps> = ({ visible, filter, onSave, on
       if (node.type === 'rule') {
         count++;
       } else if (node.children1) {
-        Object.values(node.children1).forEach((child) => countRules(child));
+        Object.values(node.children1).forEach((child) => {
+          countRules(child);
+        });
       }
     };
 
@@ -254,7 +264,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({ visible, filter, onSave, on
         <Builder {...props} />
       </div>
     ),
-    []
+    [],
   );
 
   return (
