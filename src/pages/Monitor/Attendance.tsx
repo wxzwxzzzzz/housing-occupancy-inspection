@@ -6,19 +6,7 @@
 
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from '@umijs/max';
-import {
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Modal,
-  message,
-  Row,
-  Select,
-  Statistic,
-  Tag,
-} from 'antd';
+import { Form, Input, Modal, message, Select, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -30,7 +18,6 @@ import {
 } from '@/components/OmnibarPage';
 import ResidentLink from '@/components/ResidentLink';
 import { attendanceService } from '@/services/domains/attendance';
-import { invokeQuery } from '@/services/ontology/client';
 import { OT } from '@/services/ontology/object-types';
 import { qb } from '@/services/ontology/query';
 import { dictLabel, dictStore } from '@/stores/dictStore';
@@ -46,32 +33,9 @@ const MonitorAttendance: React.FC = () => {
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
-  const [stats, setStats] = useState({
-    valid: 0,
-    invalid: 0,
-    missed: 0,
-    pending: 0,
-  });
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [checkinForm] = Form.useForm();
   const [checkinSubmitting, setCheckinSubmitting] = useState(false);
-
-  const loadStats = async () => {
-    const counts = await Promise.all(
-      ['VALID', 'INVALID', 'MISSED', 'PENDING'].map((s) =>
-        invokeQuery(
-          OT.Attendance,
-          qb(OT.Attendance).eq('status', s).page(1, 1).build(),
-        ),
-      ),
-    );
-    setStats({
-      valid: counts[0].page?.total ?? 0,
-      invalid: counts[1].page?.total ?? 0,
-      missed: counts[2].page?.total ?? 0,
-      pending: counts[3].page?.total ?? 0,
-    });
-  };
 
   const load = useCallback(
     async (p = page, s = pageSize, override?: Record<string, any>) => {
@@ -101,7 +65,6 @@ const MonitorAttendance: React.FC = () => {
   );
 
   useEffect(() => {
-    loadStats();
     load(1, pageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -154,7 +117,6 @@ const MonitorAttendance: React.FC = () => {
       checkinForm.resetFields();
       setCheckinOpen(false);
       load();
-      loadStats();
     } catch (err: any) {
       if (err?.errorFields) return;
       message.error(err?.message ?? '代录失败');
@@ -178,7 +140,6 @@ const MonitorAttendance: React.FC = () => {
       title: '刷新',
       onClick: () => {
         load();
-        loadStats();
       },
     },
   ];
@@ -245,7 +206,6 @@ const MonitorAttendance: React.FC = () => {
                 } as any);
                 message.success('已标记豁免');
                 load();
-                loadStats();
               }}
             >
               标记豁免
@@ -256,47 +216,9 @@ const MonitorAttendance: React.FC = () => {
     },
   ];
 
-  const topSlot = (
-    <Row gutter={12}>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic
-            title="有效打卡"
-            value={stats.valid}
-            valueStyle={{ color: '#52c41a' }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic
-            title="无效打卡"
-            value={stats.invalid}
-            valueStyle={{ color: '#ff4d4f' }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic
-            title="缺勤"
-            value={stats.missed}
-            valueStyle={{ color: '#faad14' }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic title="待打卡" value={stats.pending} />
-        </Card>
-      </Col>
-    </Row>
-  );
-
   return (
     <div style={{ height: '100%' }}>
       <OmnibarListPage<Attendance>
-        topSlot={topSlot}
         filters={filters}
         filterValues={filterValues}
         onFilterChange={setFilterValues}

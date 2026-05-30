@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Col, Row, Spin, Statistic } from 'antd';
 import { Column, Pie } from '@ant-design/charts';
+import { Card, Col, Row, Spin, Statistic } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
 import { invokeQuery } from '@/services/ontology/client';
-import { qb } from '@/services/ontology/query';
 import { OT } from '@/services/ontology/object-types';
-import { EnumLabels } from '@/utils/enum-options';
+import { qb } from '@/services/ontology/query';
+import { dictLabel } from '@/stores/dictStore';
 import type { AttendanceFact } from '@/types/ontology/prh/facts/attendance_fact';
 import type { LeaveFact } from '@/types/ontology/prh/facts/leave_fact';
 import type { MigrantWorkFact } from '@/types/ontology/prh/facts/migrant_work_fact';
+import { EnumLabels } from '@/utils/enum-options';
 
 const ReportStatistics: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -19,9 +20,18 @@ const ReportStatistics: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      invokeQuery<AttendanceFact>(OT.AttendanceFact, qb(OT.AttendanceFact).page(1, 1000).build()),
-      invokeQuery<LeaveFact>(OT.LeaveFact, qb(OT.LeaveFact).page(1, 1000).build()),
-      invokeQuery<MigrantWorkFact>(OT.MigrantWorkFact, qb(OT.MigrantWorkFact).page(1, 1000).build()),
+      invokeQuery<AttendanceFact>(
+        OT.AttendanceFact,
+        qb(OT.AttendanceFact).page(1, 1000).build(),
+      ),
+      invokeQuery<LeaveFact>(
+        OT.LeaveFact,
+        qb(OT.LeaveFact).page(1, 1000).build(),
+      ),
+      invokeQuery<MigrantWorkFact>(
+        OT.MigrantWorkFact,
+        qb(OT.MigrantWorkFact).page(1, 1000).build(),
+      ),
       invokeQuery(OT.Resident, qb(OT.Resident).page(1, 1).build()),
     ])
       .then(([a, l, m, r]) => {
@@ -35,8 +45,12 @@ const ReportStatistics: React.FC = () => {
 
   const stats = useMemo(() => {
     const valid = att.filter((f: any) => f.attendanceStatus === 'VALID').length;
-    const invalid = att.filter((f: any) => f.attendanceStatus === 'INVALID').length;
-    const missed = att.filter((f: any) => f.attendanceStatus === 'MISSED').length;
+    const invalid = att.filter(
+      (f: any) => f.attendanceStatus === 'INVALID',
+    ).length;
+    const missed = att.filter(
+      (f: any) => f.attendanceStatus === 'MISSED',
+    ).length;
     const total = att.length || 1;
     return {
       total,
@@ -51,7 +65,10 @@ const ReportStatistics: React.FC = () => {
   const statusPie = useMemo(() => {
     const map = new Map<string, number>();
     att.forEach((f: any) => {
-      const key = EnumLabels.AttendanceStatus[f.attendanceStatus as keyof typeof EnumLabels.AttendanceStatus] ?? f.attendanceStatus;
+      const key =
+        EnumLabels.AttendanceStatus[
+          f.attendanceStatus as keyof typeof EnumLabels.AttendanceStatus
+        ] ?? f.attendanceStatus;
       map.set(key, (map.get(key) ?? 0) + 1);
     });
     return Array.from(map.entries()).map(([type, value]) => ({ type, value }));
@@ -70,7 +87,11 @@ const ReportStatistics: React.FC = () => {
       const b = buckets.get(d);
       if (!b) return;
       if (f.attendanceStatus === 'VALID') b.valid++;
-      else if (f.attendanceStatus === 'INVALID' || f.attendanceStatus === 'MISSED') b.alert++;
+      else if (
+        f.attendanceStatus === 'INVALID' ||
+        f.attendanceStatus === 'MISSED'
+      )
+        b.alert++;
     });
     const out: Array<{ date: string; type: string; value: number }> = [];
     buckets.forEach((v, date) => {
@@ -94,7 +115,7 @@ const ReportStatistics: React.FC = () => {
   const migrantPie = useMemo(() => {
     const map = new Map<string, number>();
     migrant.forEach((f: any) => {
-      const key = String(f.type ?? '其他');
+      const key = dictLabel('MigrantWorkType', f.type, f.type ?? '其他');
       map.set(key, (map.get(key) ?? 0) + 1);
     });
     return Array.from(map.entries()).map(([type, value]) => ({ type, value }));
@@ -118,17 +139,29 @@ const ReportStatistics: React.FC = () => {
         </Col>
         <Col xs={12} sm={6}>
           <Card>
-            <Statistic title="出勤率" value={stats.rate} valueStyle={{ color: '#52c41a' }} />
+            <Statistic
+              title="出勤率"
+              value={stats.rate}
+              valueStyle={{ color: '#52c41a' }}
+            />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card>
-            <Statistic title="无效打卡" value={stats.invalid} valueStyle={{ color: '#ff4d4f' }} />
+            <Statistic
+              title="无效打卡"
+              value={stats.invalid}
+              valueStyle={{ color: '#ff4d4f' }}
+            />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card>
-            <Statistic title="缺勤" value={stats.missed} valueStyle={{ color: '#faad14' }} />
+            <Statistic
+              title="缺勤"
+              value={stats.missed}
+              valueStyle={{ color: '#faad14' }}
+            />
           </Card>
         </Col>
       </Row>
@@ -148,17 +181,35 @@ const ReportStatistics: React.FC = () => {
         </Col>
         <Col xs={24} lg={12}>
           <Card title="打卡状态分布" style={{ marginBottom: 16 }}>
-            <Pie data={statusPie} angleField="value" colorField="type" radius={0.85} height={280} />
+            <Pie
+              data={statusPie}
+              angleField="value"
+              colorField="type"
+              radius={0.85}
+              height={280}
+            />
           </Card>
         </Col>
         <Col xs={24} lg={12}>
           <Card title="请假类型分布" style={{ marginBottom: 16 }}>
-            <Pie data={leavePie} angleField="value" colorField="type" radius={0.85} height={280} />
+            <Pie
+              data={leavePie}
+              angleField="value"
+              colorField="type"
+              radius={0.85}
+              height={280}
+            />
           </Card>
         </Col>
         <Col xs={24} lg={12}>
           <Card title="备案类型分布" style={{ marginBottom: 16 }}>
-            <Pie data={migrantPie} angleField="value" colorField="type" radius={0.85} height={280} />
+            <Pie
+              data={migrantPie}
+              angleField="value"
+              colorField="type"
+              radius={0.85}
+              height={280}
+            />
           </Card>
         </Col>
       </Row>

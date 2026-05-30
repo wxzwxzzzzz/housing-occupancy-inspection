@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Badge, Card, Col, Row, Statistic, Tag } from 'antd';
-import { CheckCircleOutlined, ReloadOutlined, MessageOutlined, BellOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Badge, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { invokeAction, invokeQuery } from '@/services/ontology/client';
-import { qb } from '@/services/ontology/query';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  OmnibarListPage,
   type FilterConfig,
+  OmnibarListPage,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
+import { invokeAction, invokeQuery } from '@/services/ontology/client';
+import { qb } from '@/services/ontology/query';
 
 const MSG_TYPE = 'cn.byteawake.prh.Message';
 
@@ -71,15 +71,6 @@ const SystemMessage: React.FC = () => {
   }, []);
 
   const unreadCount = data.filter((r) => !r.read).length;
-  const totalShown = data.length;
-
-  // 顶部统计:总数 / 未读 / 警告 / 错误
-  const stats = {
-    total: totalShown,
-    unread: unreadCount,
-    warning: data.filter((r) => r.level === 'warning').length,
-    error: data.filter((r) => r.level === 'error').length,
-  };
 
   const markRead = async (row: MessageRow) => {
     await invokeAction({
@@ -201,11 +192,7 @@ const SystemMessage: React.FC = () => {
       dataIndex: 'read',
       width: 90,
       render: (v: boolean) =>
-        v ? (
-          <Tag color="default">已读</Tag>
-        ) : (
-          <Tag color="blue">未读</Tag>
-        ),
+        v ? <Tag color="default">已读</Tag> : <Tag color="blue">未读</Tag>,
     },
     {
       title: '时间',
@@ -235,48 +222,9 @@ const SystemMessage: React.FC = () => {
     },
   ];
 
-  const topSlot = (
-    <Row gutter={12}>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic
-            title="消息总数"
-            value={stats.total}
-            prefix={<MessageOutlined style={{ color: '#1677ff' }} />}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic
-            title="未读"
-            value={stats.unread}
-            valueStyle={{ color: '#1677ff' }}
-            prefix={<BellOutlined />}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic
-            title="警告"
-            value={stats.warning}
-            valueStyle={{ color: '#faad14' }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card size="small">
-          <Statistic title="错误" value={stats.error} valueStyle={{ color: '#ff4d4f' }} />
-        </Card>
-      </Col>
-    </Row>
-  );
-
   return (
     <div style={{ height: '100%' }}>
       <OmnibarListPage<MessageRow>
-        topSlot={topSlot}
         filters={filters}
         filterValues={filterValues}
         onFilterChange={setFilterValues}

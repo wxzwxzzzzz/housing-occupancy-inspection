@@ -24,17 +24,7 @@
 
 import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import {
-  Card,
-  Form,
-  Input,
-  Modal,
-  message,
-  Skeleton,
-  Space,
-  Tag,
-  Timeline,
-} from 'antd';
+import { Card, Modal, message, Skeleton, Timeline } from 'antd';
 import React, { useCallback } from 'react';
 import {
   type DetailSection,
@@ -43,12 +33,10 @@ import {
   type StatusBadge,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
-import { approvalService } from '@/services/domains/approval';
 import { invokeAction } from '@/services/ontology/client';
 import type { EntityApi } from '@/services/ontology/crud';
 import { approvalPanelStore } from '@/stores';
 import { dictLabel } from '@/stores/dictStore';
-import { StatusColors } from '@/utils/enum-options';
 
 export interface ApplicationDetailPageProps<T = Record<string, any>> {
   /** 页面标题前缀,如"请假申请" */
@@ -97,7 +85,6 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
     buildSections,
     buildTabs,
     defaultTabKey,
-    allowApprove = true,
     allowCancel = true,
     extraHeaderActions,
   } = props;
@@ -130,12 +117,6 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
     return () => approvalPanelStore.clear();
   }, [objectType, record?.id, record?.status, reload]);
 
-  const [opinionModal, setOpinionModal] = React.useState<
-    'approve' | 'reject' | null
-  >(null);
-  const [submittingApprove, setSubmittingApprove] = React.useState(false);
-  const [opinionForm] = Form.useForm();
-
   const handleSubmitApplication = async () => {
     await service.submit(id);
     message.success('已提交');
@@ -160,26 +141,6 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
         reload();
       },
     });
-  };
-
-  const handleApproveSubmit = async () => {
-    if (!opinionModal) return;
-    const values = await opinionForm.validateFields();
-    setSubmittingApprove(true);
-    try {
-      if (opinionModal === 'approve') {
-        await approvalService.approve(objectType, id, values.opinion);
-        message.success('已通过');
-      } else {
-        await approvalService.reject(objectType, id, values.opinion);
-        message.success('已驳回');
-      }
-      setOpinionModal(null);
-      opinionForm.resetFields();
-      reload();
-    } finally {
-      setSubmittingApprove(false);
-    }
   };
 
   if (loading || !record) {
@@ -209,24 +170,7 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
         label: '撤回',
         onClick: handleUnsubmit,
       });
-      if (allowApprove) {
-        list.push({
-          key: 'approve',
-          type: 'primary',
-          label: '审批通过',
-          onClick: () => {
-            setOpinionModal('approve');
-          },
-        });
-        list.push({
-          key: 'reject',
-          danger: true,
-          label: '驳回',
-          onClick: () => {
-            setOpinionModal('reject');
-          },
-        });
-      }
+      // 审批通过/驳回已移至右侧审批面板,此处不再重复
     }
     if (allowCancel && (status === 'DRAFT' || status === 'UNDER_APPROVAL')) {
       list.push({
@@ -292,53 +236,23 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
     : [timelineTab];
 
   return (
-    <>
-      <OmnibarDetailPage
-        title={`${title} #${String(r.id).slice(-6)}`}
-        statusBadge={statusBadge(status)}
-        onBack={() => navigate(listPath)}
-        backLabel="返回列表"
-        headerActions={headerActions}
-        sections={buildSections(r)}
-        tabs={tabs}
-        defaultTabKey={defaultTabKey ?? tabs[0]?.key}
-        footerFields={[
-          { label: '创建人', value: r.creator ?? '-' },
-          { label: '创建时间', value: r.createAt ?? '-' },
-          { label: '提交人', value: r.submittedBy ?? '-' },
-          { label: '提交时间', value: r.submittedAt ?? '-' },
-          { label: '审批人', value: r.approver ?? '-' },
-        ]}
-      />
-
-      <Modal
-        title={opinionModal === 'approve' ? '审批通过' : '审批驳回'}
-        open={!!opinionModal}
-        onOk={handleApproveSubmit}
-        onCancel={() => {
-          setOpinionModal(null);
-          opinionForm.resetFields();
-        }}
-        confirmLoading={submittingApprove}
-        okText="确认"
-        cancelText="取消"
-        styles={{ footer: { textAlign: 'right' } }}
-      >
-        <Form form={opinionForm} layout="vertical">
-          <Form.Item
-            name="opinion"
-            label={opinionModal === 'approve' ? '审批意见' : '驳回原因'}
-            rules={
-              opinionModal === 'reject'
-                ? [{ required: true, message: '请填写驳回原因' }]
-                : []
-            }
-          >
-            <Input.TextArea rows={4} placeholder="请输入审批意见..." />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </>
+    <OmnibarDetailPage
+      title={`${title} #${String(r.id).slice(-6)}`}
+      statusBadge={statusBadge(status)}
+      onBack={() => navigate(listPath)}
+      backLabel="返回列表"
+      headerActions={headerActions}
+      sections={buildSections(r)}
+      tabs={tabs}
+      defaultTabKey={defaultTabKey ?? tabs[0]?.key}
+      footerFields={[
+        { label: '创建人', value: r.creator ?? '-' },
+        { label: '创建时间', value: r.createAt ?? '-' },
+        { label: '提交人', value: r.submittedBy ?? '-' },
+        { label: '提交时间', value: r.submittedAt ?? '-' },
+        { label: '审批人', value: r.approver ?? '-' },
+      ]}
+    />
   );
 }
 

@@ -131,8 +131,21 @@ const householdMemberSnapshot: ReportConfig = {
   group: '档案快照',
   factService: factService.householdMemberSnapshot as any,
   dimensions: [
-    { key: 'relationship', label: '与申请人关系' },
-    { key: 'included', label: '是否计入人口' },
+    {
+      key: 'relationship',
+      label: '与申请人关系',
+      render: (v) => dictLabel('Relationship', v as string),
+    },
+    {
+      key: 'included',
+      label: '是否计入人口',
+      render: (v) =>
+        v === true || v === 'true'
+          ? '是'
+          : v === false || v === 'false'
+            ? '否'
+            : '-',
+    },
     dictDim('householdGuaranteeType', '家庭保障类型', 'GuaranteeType'),
     dictDim('householdStatus', '家庭状态', 'HouseholdStatus'),
     dictDim('residentStatus', '居民状态', 'ResidentStatus'),
@@ -277,7 +290,7 @@ const attendanceMakeup: ReportConfig = {
   factService: factService.attendanceMakeup as any,
   dimensions: [
     dictDim('makeupStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
     dictDim('targetAttendanceType', '目标考勤类型', 'AttendanceType'),
     dictDim('targetAttendanceStatus', '目标考勤状态', 'AttendanceStatus'),
     { key: 'submittedAt', label: '提交时间' },
@@ -307,7 +320,7 @@ const eligibilityApplication: ReportConfig = {
     dictDim('applicationType', '申请类型', 'ApplicationType'),
     dictDim('guaranteeType', '保障类型', 'GuaranteeType'),
     dictDim('applicationStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
     { key: 'approvalStep', label: '审批环节' },
     { key: 'submittedAt', label: '提交时间' },
     { key: 'approvalTime', label: '审批时间' },
@@ -400,7 +413,7 @@ const eligibilityTermination: ReportConfig = {
   dimensions: [
     dictDim('terminationType', '终止类型', 'TerminationReason'),
     dictDim('terminationStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
     { key: 'effectiveDate', label: '期望生效日期' },
   ],
   metrics: [
@@ -424,7 +437,7 @@ const migrantWork: ReportConfig = {
     { key: 'residentAddressRegion', label: '务工居住区划' },
     { key: 'companyAddressRegion', label: '工作区划' },
     dictDim('migrantWorkStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
     { key: 'startDate', label: '开始日期' },
     { key: 'endDate', label: '结束日期' },
   ],
@@ -447,9 +460,22 @@ const householdMemberChange: ReportConfig = {
   dimensions: [
     dictDim('changeType', '变更类型', 'MemberChangeType'),
     dictDim('changeStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
-    { key: 'memberRelationship', label: '目标成员关系' },
-    { key: 'memberIncluded', label: '目标成员是否计入人口' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
+    {
+      key: 'memberRelationship',
+      label: '目标成员关系',
+      render: (v) => dictLabel('Relationship', v as string),
+    },
+    {
+      key: 'memberIncluded',
+      label: '目标成员是否计入人口',
+      render: (v) =>
+        v === true || v === 'true'
+          ? '是'
+          : v === false || v === 'false'
+            ? '否'
+            : '-',
+    },
   ],
   metrics: [
     { key: 'memberChangeCount', label: '变更数', format: 'integer' },
@@ -471,7 +497,7 @@ const residenceChange: ReportConfig = {
   dimensions: [
     { key: 'residenceRegion', label: '新居住区划' },
     dictDim('changeStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
   ],
   metrics: [
     { key: 'residenceChangeCount', label: '变更数', format: 'integer' },
@@ -491,7 +517,7 @@ const employmentChange: ReportConfig = {
   dimensions: [
     { key: 'employmentRegion', label: '工作区划' },
     dictDim('changeStatus', '申请状态', 'ApplicationStatus'),
-    { key: 'approvalResult', label: '审批结果' },
+    dictDimSearch('approvalResult', '审批结果', 'ApprovalResult'),
   ],
   metrics: [
     { key: 'employmentChangeCount', label: '变更数', format: 'integer' },

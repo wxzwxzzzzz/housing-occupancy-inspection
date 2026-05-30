@@ -1,12 +1,10 @@
 import {
   AlertOutlined,
   ArrowRightOutlined,
-  BarChartOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DownOutlined,
   FallOutlined,
-  LineChartOutlined,
   MinusOutlined,
   RiseOutlined,
   TeamOutlined,
@@ -66,6 +64,8 @@ interface KpiCardProps {
   sparkHeight?: number;
   /** 仪表盘数值(0~1),仅 gauge 类型需要 */
   gaugePercent?: number;
+  /** 大卡(右上两张核心 KPI):更大数字 + 更高 sparkline */
+  large?: boolean;
 }
 
 function getTrendType(v: number | undefined): TrendType {
@@ -84,6 +84,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   color,
   sparkHeight,
   gaugePercent,
+  large,
 }) => {
   const trendType = getTrendType(trendValue);
   const visualClass =
@@ -101,7 +102,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
       <MinusOutlined />
     );
 
-  const height = sparkHeight ?? (sparkType === 'gauge' ? 130 : 60);
+  const height = sparkHeight ?? (sparkType === 'gauge' ? 130 : large ? 96 : 60);
 
   // ---------- 各类型 ApexCharts options ----------
   let options: ApexOptions = { ...sparkBase, colors: [color] };
@@ -166,20 +167,25 @@ const KpiCard: React.FC<KpiCardProps> = ({
 
   return (
     <Card
-      className={`kpi-card${sparkType === 'gauge' ? ' kpi-card-gauge' : ''}`}
+      className={`kpi-card${sparkType === 'gauge' ? ' kpi-card-gauge' : ''}${
+        large ? ' kpi-card-lg' : ''
+      }`}
       bordered={false}
     >
       <div className="kpi-body">
-        <div className="kpi-head">
-          <span className="kpi-label">{label}</span>
-          {trendValue !== undefined && (
-            <span className={`kpi-trend ${visualClass}`}>
-              {trendIcon}
-              <span>{Math.abs(trendValue)}%</span>
-            </span>
-          )}
-        </div>
-        {sparkType !== 'gauge' && <div className="kpi-value">{value}</div>}
+        {/* 原型范式:小标题独占一行 → 大数字+涨跌同基线 → 副文案 */}
+        <span className="kpi-label">{label}</span>
+        {sparkType !== 'gauge' && (
+          <div className="kpi-value-row">
+            <span className="kpi-value">{value}</span>
+            {trendValue !== undefined && (
+              <span className={`kpi-trend ${visualClass}`}>
+                {trendIcon}
+                <span>{Math.abs(trendValue)}%</span>
+              </span>
+            )}
+          </div>
+        )}
         {subText && <div className="kpi-subtext">{subText}</div>}
       </div>
       <div className="kpi-sparkline" style={{ height }}>
@@ -443,6 +449,7 @@ const Dashboard: React.FC = observer(() => {
                 0.956)
             }
             color="#52c41a"
+            large
           />
         </Col>
 
@@ -461,6 +468,7 @@ const Dashboard: React.FC = observer(() => {
             }
             sparkType="column"
             color="#cf1322"
+            large
           />
         </Col>
       </Row>
@@ -505,12 +513,7 @@ const Dashboard: React.FC = observer(() => {
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={12}>
           <Card
-            title={
-              <Space>
-                <LineChartOutlined />
-                打卡率趋势
-              </Space>
-            }
+            title="打卡率趋势"
             extra={<TimeRangeDropdown />}
             bordered={false}
           >
@@ -559,16 +562,7 @@ const Dashboard: React.FC = observer(() => {
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card
-            title={
-              <Space>
-                <BarChartOutlined />
-                预警趋势
-              </Space>
-            }
-            extra={<TimeRangeDropdown />}
-            bordered={false}
-          >
+          <Card title="预警趋势" extra={<TimeRangeDropdown />} bordered={false}>
             <Chart
               type="bar"
               height={240}

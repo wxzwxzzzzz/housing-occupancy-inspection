@@ -105,7 +105,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.residentSnapshot,
     path: '/report/resident-snapshot',
     spark: 'line',
-    color: '#722ed1',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cnt(rows),
       sub: `已激活 ${cntIf(rows, (r) => r.residentStatus === 'ACTIVATED' || r.status === 'ACTIVATED')}`,
@@ -118,7 +118,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.householdSnapshot,
     path: '/report/household-snapshot',
     spark: 'line',
-    color: '#2f54eb',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(rows, (r) => (r.householdStatus ?? r.status) === 'ACTIVE'),
       sub: `候选 ${cntIf(rows, (r) => (r.householdStatus ?? r.status) === 'CANDIDATE')}`,
@@ -144,7 +144,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.residenceSnapshot,
     path: '/report/residence-snapshot',
     spark: 'area',
-    color: '#13c2c2',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(
         rows,
@@ -160,7 +160,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.employmentSnapshot,
     path: '/report/employment-snapshot',
     spark: 'area',
-    color: '#08979c',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(
         rows,
@@ -178,7 +178,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.personalIncome,
     path: '/report/personal-income',
     spark: 'area',
-    color: '#52c41a',
+    color: '#1677ff',
     format: 'currency',
     summarize: (rows) => ({
       value: sumBy(rows, (r) => r.amount),
@@ -212,7 +212,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.leave,
     path: '/report/leave',
     spark: 'column',
-    color: '#fa8c16',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(
         rows,
@@ -228,7 +228,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.attendanceMakeup,
     path: '/report/attendance-makeup',
     spark: 'column',
-    color: '#faad14',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(
         rows,
@@ -262,7 +262,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.housingAllocation,
     path: '/report/housing-allocation',
     spark: 'line',
-    color: '#2f54eb',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(
         rows,
@@ -278,7 +278,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.rentalSubsidy,
     path: '/report/rental-subsidy',
     spark: 'area',
-    color: '#52c41a',
+    color: '#1677ff',
     format: 'currency',
     summarize: (rows) => ({
       value: sumBy(
@@ -295,7 +295,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.eligibilityTermination,
     path: '/report/eligibility-termination',
     spark: 'column',
-    color: '#cf1322',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cntIf(
         rows,
@@ -311,7 +311,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.migrantWork,
     path: '/report/migrant-work',
     spark: 'column',
-    color: '#13c2c2',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cnt(rows),
       sub: `审批中 ${cntIf(rows, (r) => (r.migrantWorkStatus ?? r.status) === 'UNDER_APPROVAL')}`,
@@ -324,7 +324,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.householdMemberChange,
     path: '/report/household-member-change',
     spark: 'column',
-    color: '#722ed1',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cnt(rows),
       sub: `审批中 ${cntIf(rows, (r) => (r.changeStatus ?? r.status) === 'UNDER_APPROVAL')}`,
@@ -337,7 +337,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.residenceChange,
     path: '/report/residence-change',
     spark: 'column',
-    color: '#eb2f96',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cnt(rows),
       sub: `审批中 ${cntIf(rows, (r) => (r.changeStatus ?? r.status) === 'UNDER_APPROVAL')}`,
@@ -350,7 +350,7 @@ export const reportCards: ReportCardConfig[] = [
     service: factService.employmentChange,
     path: '/report/employment-change',
     spark: 'column',
-    color: '#fa541c',
+    color: '#1677ff',
     summarize: (rows) => ({
       value: cnt(rows),
       sub: `审批中 ${cntIf(rows, (r) => (r.changeStatus ?? r.status) === 'UNDER_APPROVAL')}`,

@@ -9,6 +9,8 @@
  *   <Select options={enumOptions(Gender, EnumLabels.Gender)} />
  */
 
+import { ApprovalResult } from '@/types/ontology/ap/approval/approval_result';
+import { VerifyState } from '@/types/ontology/ap/approval/verify_state';
 import {
   AgeGroup,
   AlertLevel,
@@ -203,6 +205,32 @@ export const EnumLabels = {
     [HouseholdSizeBand.FOUR_PLUS_PERSON]: '四人及以上',
     [HouseholdSizeBand.UNKNOWN]: '未知',
   },
+  ApprovalResult: {
+    [ApprovalResult.APPROVED]: '通过',
+    [ApprovalResult.REJECTED]: '驳回',
+    [ApprovalResult.RETURNED]: '退回',
+  },
+  VerifyState: {
+    [VerifyState.PENDING]: '待审批',
+    [VerifyState.APPROVED]: '已通过',
+    [VerifyState.REJECTED]: '已驳回',
+    [VerifyState.RETURNED]: '已退回',
+    [VerifyState.CANCELLED]: '已取消',
+  },
+  /** 备案/外出务工类型(MigrantWork.type,本体暂无枚举,前端字典) */
+  MigrantWorkType: {
+    EXTERNAL_WORK: '外出务工',
+    TEMPORARY_OUT: '临时外出',
+    LONG_TERM_REMOTE: '长期异地',
+  },
+  /** 家庭成员关系(seed 用代码,前端字典) */
+  Relationship: {
+    SPOUSE: '配偶',
+    CHILD: '子女',
+    PARENT: '父母',
+    SIBLING: '兄弟姐妹',
+    OTHER: '其他',
+  },
 } as const;
 
 /** 给 antd Tag 用的颜色映射 */
@@ -237,5 +265,30 @@ export const StatusColors = {
     [AlertLevel.ALERT_INFO]: 'blue',
     [AlertLevel.ALERT_WARNING]: 'orange',
     [AlertLevel.ALERT_RED]: 'red',
+  },
+  AllocationStatus: {
+    [AllocationStatus.DRAFT]: 'default',
+    [AllocationStatus.ALLOC_ACTIVE]: 'success',
+    [AllocationStatus.ALLOC_TERMINATED]: 'error',
+    [AllocationStatus.ALLOC_EXPIRED]: 'default',
+  },
+  SubsidyStatus: {
+    [SubsidyStatus.SUBSIDY_ACTIVE]: 'success',
+    [SubsidyStatus.SUBSIDY_SUSPENDED]: 'warning',
+    [SubsidyStatus.SUBSIDY_TERMINATED]: 'error',
+    [SubsidyStatus.SUBSIDY_EXPIRED]: 'default',
+  },
+  RecordStatus: {
+    [RecordStatus.RECORD_ACTIVE]: 'success',
+    [RecordStatus.RECORD_ARCHIVED]: 'default',
+  },
+  MemberChangeType: {
+    [MemberChangeType.ADD_MEMBER]: 'green',
+    [MemberChangeType.REMOVE_MEMBER]: 'red',
+  },
+  ApprovalResult: {
+    APPROVED: 'success',
+    REJECTED: 'error',
+    RETURNED: 'warning',
   },
 } as const;

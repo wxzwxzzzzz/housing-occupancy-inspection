@@ -1,8 +1,24 @@
-import React, { useMemo } from 'react';
 import { Table } from 'antd';
 import type { ColumnsType, TableProps } from 'antd/es/table';
+import React, { useMemo } from 'react';
+import { formatDate, formatDateTime, isDateField } from '@/utils/format';
 import type { ToolbarAction } from '../types';
 import ToolbarActions from './ToolbarActions';
+
+/** 纯日期字段(只到天)用 formatDate,其余时间字段用 formatDateTime */
+const DATE_ONLY_FIELDS = new Set([
+  'startDate',
+  'endDate',
+  'effectiveDate',
+  'missedDate',
+  'archiveDate',
+  'reviewStartDate',
+  'reviewEndDate',
+  'birthDate',
+  'effectiveFrom',
+  'joinedAt',
+  'joinAt',
+]);
 
 export interface ListContainerProps<T> {
   /** 视图切换 radio,如「表头 / 表头+明细」 */
@@ -37,7 +53,9 @@ export interface ListContainerProps<T> {
   scroll?: TableProps<T>['scroll'];
 }
 
-function ListContainerInner<T extends Record<string, any>>(props: ListContainerProps<T>) {
+function ListContainerInner<T extends Record<string, any>>(
+  props: ListContainerProps<T>,
+) {
   const {
     viewModes,
     viewMode,
@@ -57,9 +75,21 @@ function ListContainerInner<T extends Record<string, any>>(props: ListContainerP
     scroll,
   } = props;
 
-  // 自动加序号列
+  // 自动加序号列 + 时间列自动格式化(无自定义 render 且 dataIndex 命中时间字段)
   const finalColumns: ColumnsType<T> = useMemo(() => {
-    if (!showIndex) return columns;
+    const autoFmt = columns.map((col) => {
+      const anyCol = col as any;
+      const di = anyCol.dataIndex;
+      if (typeof di === 'string' && !anyCol.render && isDateField(di)) {
+        return {
+          ...anyCol,
+          render: (v: any) =>
+            DATE_ONLY_FIELDS.has(di) ? formatDate(v) : formatDateTime(v),
+        };
+      }
+      return col;
+    });
+    if (!showIndex) return autoFmt;
     const indexCol: ColumnsType<T>[number] = {
       title: '序号',
       key: '__index__',
@@ -67,7 +97,7 @@ function ListContainerInner<T extends Record<string, any>>(props: ListContainerP
       align: 'center',
       render: (_v: any, _r: T, idx: number) => idx + 1,
     };
-    return [indexCol, ...columns];
+    return [indexCol, ...autoFmt];
   }, [columns, showIndex]);
 
   return (

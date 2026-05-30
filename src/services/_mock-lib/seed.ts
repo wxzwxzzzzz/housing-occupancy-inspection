@@ -9,7 +9,7 @@
  */
 
 import { OT } from '../ontology/object-types';
-import { insert, table, findAll, findById, applyQuery } from './store';
+import { insert, table, findAll, findById, update, applyQuery } from './store';
 
 let seedDone = false;
 
@@ -37,6 +37,7 @@ export function ensureSeeded() {
   seedRentalSubsidies();
   seedAttendanceMakeups();
   seedChanges();
+  enrichApprovalDocs();
   seedFacts();
   seedNotifications();
   seedSysConfig();
@@ -412,39 +413,96 @@ function seedAttendanceMakeups() {
 }
 
 function seedChanges() {
-  // 居住地址变更/就业变更/家庭成员变更/资格终止 各 3 条
+  // 居住地址变更/就业变更/家庭成员变更/资格终止 各 3 条,状态铺开(审批中/已完成/已取消)
+  const CHANGE_STATUSES = ['UNDER_APPROVAL', 'COMPLETED', 'CANCELLED'];
+  const vstate = (s: string) =>
+    s === 'UNDER_APPROVAL' ? 10 : s === 'COMPLETED' ? 30 : 90;
   for (let i = 0; i < 3; i++) {
+    const st = CHANGE_STATUSES[i];
     insert(OT.ResidenceChange, {
       resident: `resident-${i + 1}`,
       effectiveFrom: '2026-04-01',
       reason: '搬迁',
-      status: 'COMPLETED',
-      verifyState: 30,
+      status: st,
+      verifyState: vstate(st),
       submittedAt: '2026-03-15T10:00:00.000Z',
     });
     insert(OT.EmploymentChange, {
       resident: `resident-${i + 4}`,
       reason: '换工作',
-      status: 'UNDER_APPROVAL',
-      verifyState: 10,
+      status: st,
+      verifyState: vstate(st),
       submittedAt: '2026-04-01T10:00:00.000Z',
     });
     insert(OT.HouseholdMemberChange, {
       household: `household-${i + 1}`,
       changeType: i % 2 === 0 ? 'ADD_MEMBER' : 'REMOVE_MEMBER',
       reason: i % 2 === 0 ? '新生儿' : '成员搬出',
-      status: 'COMPLETED',
-      verifyState: 30,
+      status: st,
+      verifyState: vstate(st),
       submittedAt: '2026-02-01T10:00:00.000Z',
     });
     insert(OT.EligibilityTermination, {
       household: `household-${15 + i}`,
       reason: ['VOLUNTARY', 'INCOME_EXCEED', 'HOUSING_ACQUIRED'][i],
       effectiveDate: '2026-04-15',
-      status: 'COMPLETED',
-      verifyState: 30,
+      status: st,
+      verifyState: vstate(st),
       submittedAt: '2026-04-10T10:00:00.000Z',
     });
+  }
+}
+
+// -------------------- 审批字段补全(让 COMPLETED 区分通过/驳回 + 填审批意见) --------------------
+/**
+ * 各审批单据 seed 时只设了 status,没设 approvalResult/approver/approvalOpinion。
+ * 这里统一补全:COMPLETED 大部分→通过、部分→驳回(便于报表"通过/驳回"指标和详情看到原因);
+ * CANCELLED→撤回。在 seedFacts 之前运行,projectFact 会把这些字段一并镜像到 Fact。
+ */
+function enrichApprovalDocs() {
+  const APPROVAL_TYPES = [
+    OT.Leave,
+    OT.MigrantWork,
+    OT.EligibilityApplication,
+    OT.AttendanceMakeup,
+    OT.EligibilityTermination,
+    OT.HouseholdMemberChange,
+    OT.ResidenceChange,
+    OT.EmploymentChange,
+  ];
+  const APPROVERS = ['刘振伟', '裴晨宇', '赵艳', '刘倡利'];
+  const PASS_OPINIONS = ['材料齐全,同意', '情况属实,予以通过', '符合条件,审核通过', '同意'];
+  const REJECT_OPINIONS = ['材料不全,退回补充', '不符合保障条件,驳回', '信息有误,需重新提交', '驳回'];
+
+  for (const ot of APPROVAL_TYPES) {
+    let n = 0;
+    for (const doc of findAll(ot)) {
+      n += 1;
+      const approver = `user-approver`;
+      const approverName = APPROVERS[n % APPROVERS.length];
+      const baseTime = new Date(Date.now() - n * 43200000).toISOString();
+      if (doc.status === 'COMPLETED') {
+        // 每 4 条里 1 条驳回,其余通过
+        const rejected = n % 4 === 0;
+        update(ot, doc.id, {
+          approvalResult: rejected ? 'REJECTED' : 'APPROVED',
+          approver,
+          approverName,
+          approvalTime: baseTime,
+          approvalOpinion: rejected
+            ? REJECT_OPINIONS[n % REJECT_OPINIONS.length]
+            : PASS_OPINIONS[n % PASS_OPINIONS.length],
+        });
+      } else if (doc.status === 'CANCELLED') {
+        update(ot, doc.id, {
+          approvalResult: 'REJECTED',
+          approver,
+          approverName,
+          approvalTime: baseTime,
+          approvalOpinion: REJECT_OPINIONS[n % REJECT_OPINIONS.length],
+        });
+      }
+    }
   }
 }
 

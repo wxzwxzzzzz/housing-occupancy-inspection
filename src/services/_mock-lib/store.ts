@@ -13,6 +13,8 @@ import type { QueryFilterGroup } from '../../types/ontology/ap/oql/query_filter_
 import type { QueryPage } from '../../types/ontology/ap/oql/query_page';
 import type { QuerySortItem } from '../../types/ontology/ap/oql/query_sort_item';
 import type { QuerySpec } from '../../types/ontology/ap/oql/query_spec';
+import { aggregateRows } from './fact-aggregate';
+import { factMetricRegistry } from './fact-metric-registry';
 
 type Row = Record<string, any>;
 
@@ -104,6 +106,23 @@ export function applyQuery(objectType: string, spec: Partial<QuerySpec>): {
 
   if (spec.filter) {
     rows = rows.filter((row) => evalGroup(spec.filter!, row));
+  }
+
+  // Fact 聚合:spec 带 metrics 时,按 dimensions 分组 + 计算 metrics
+  // (模拟 SEMANTIC_MODEL;真实后端返回已聚合结果)
+  if (spec.metrics) {
+    const registry = factMetricRegistry[objectType];
+    if (registry) {
+      const groupKeys = String(spec.dimensions ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const metricKeys = String(spec.metrics)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      rows = aggregateRows(rows, groupKeys, metricKeys, registry);
+    }
   }
 
   if (spec.sortItems && spec.sortItems.length > 0) {

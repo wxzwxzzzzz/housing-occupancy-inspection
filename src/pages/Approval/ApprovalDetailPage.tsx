@@ -4,15 +4,10 @@
  * Material/Leave/Filing 的 Detail 都用它包装,只传 sections + 业务字段。
  */
 
-import {
-  ArrowLeftOutlined,
-  CheckOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from '@umijs/max';
-import { useKeyPress } from 'ahooks';
-import { Button, Form, Input, Modal, message, Skeleton, Tooltip } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Skeleton } from 'antd';
+import React, { useEffect } from 'react';
 import {
   type DetailSection,
   type DetailTabItem,
@@ -21,10 +16,9 @@ import {
   type ToolbarAction,
   useDetail,
 } from '@/components/OmnibarPage';
-import { approvalService } from '@/services/domains/approval';
 import type { EntityApi } from '@/services/ontology/crud';
 import { approvalPanelStore } from '@/stores';
-import { EnumLabels, StatusColors } from '@/utils/enum-options';
+import { EnumLabels } from '@/utils/enum-options';
 
 interface ApprovalDetailPageProps<T extends { id: string; status?: string }> {
   /** 业务对象类型,如 OT.Leave */
@@ -94,53 +88,6 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
     return () => approvalPanelStore.clear();
   }, [objectType, data?.id, data?.status, reload]);
 
-  const [approving, setApproving] = useState<'approve' | 'reject' | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [form] = Form.useForm();
-
-  const handleConfirm = async () => {
-    if (!data || !approving) return;
-    const values = await form.validateFields();
-    setSubmitting(true);
-    try {
-      if (approving === 'approve') {
-        await approvalService.approve(objectType, data.id, values.opinion);
-        message.success('已通过');
-      } else {
-        await approvalService.reject(objectType, data.id, values.opinion);
-        message.success('已驳回');
-      }
-      setApproving(null);
-      form.resetFields();
-      // 刷新当前详情(状态会变成 COMPLETED/REJECTED)
-      await reload();
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // ==== Y / N 快捷键 ====
-  useKeyPress(
-    ['y', 'Y'],
-    (e) => {
-      if (isInputFocus()) return;
-      if (data?.status !== 'UNDER_APPROVAL') return;
-      e.preventDefault();
-      setApproving('approve');
-    },
-    { exactMatch: false },
-  );
-  useKeyPress(
-    ['n', 'N'],
-    (e) => {
-      if (isInputFocus()) return;
-      if (data?.status !== 'UNDER_APPROVAL') return;
-      e.preventDefault();
-      setApproving('reject');
-    },
-    { exactMatch: false },
-  );
-
   if (loading || !data) {
     return (
       <div style={{ padding: 16 }}>
@@ -149,31 +96,8 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
     );
   }
 
-  const isApprovable = data.status === 'UNDER_APPROVAL';
-
   const headerActions: ToolbarAction[] = [
     ...(extraHeaderActions?.(data) ?? []),
-    ...(isApprovable
-      ? [
-          {
-            key: 'approve',
-            type: 'primary' as const,
-            label: '通过 (Y)',
-            icon: <CheckOutlined />,
-            onClick: () => setApproving('approve'),
-            title: '快捷键 Y',
-          },
-          {
-            key: 'reject',
-            label: '驳回 (N)',
-            danger: true,
-            icon: <CloseOutlined />,
-            onClick: () => setApproving('reject'),
-            title: '快捷键 N',
-          },
-        ]
-      : []),
-    { divider: true },
     {
       key: 'back',
       label: '返回列表',
@@ -245,43 +169,8 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
           },
         ]}
       />
-
-      <Modal
-        title={approving === 'approve' ? '审批通过' : '审批驳回'}
-        open={!!approving}
-        onOk={handleConfirm}
-        confirmLoading={submitting}
-        okText="确认提交"
-        onCancel={() => {
-          setApproving(null);
-          form.resetFields();
-        }}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="opinion"
-            label={approving === 'approve' ? '审批意见' : '驳回原因'}
-            rules={
-              approving === 'reject'
-                ? [{ required: true, message: '请填写驳回原因' }]
-                : []
-            }
-          >
-            <Input.TextArea rows={4} placeholder="请输入..." autoFocus />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
-}
-
-function isInputFocus(): boolean {
-  const ae = document.activeElement;
-  if (!ae) return false;
-  const tag = ae.tagName.toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-  if ((ae as HTMLElement).isContentEditable) return true;
-  return false;
 }
 
 export default ApprovalDetailPage;

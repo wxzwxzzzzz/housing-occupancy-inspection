@@ -1,36 +1,22 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import {
-  Card,
-  Col,
-  message,
-  Modal,
-  Row,
-  Statistic,
-  Tag,
-} from 'antd';
-import {
-  AlertOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
-import { observer } from 'mobx-react-lite';
+import { ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from '@umijs/max';
+import { Modal, message, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { alertStore } from '@/stores';
-import type { AlertItem } from '@/services/domains/alert';
-import { EnumLabels, StatusColors, enumOptions } from '@/utils/enum-options';
-import { AlertLevel } from '@/types/ontology/prh/enums';
-import ResidentLink from '@/components/ResidentLink';
-import { invokeQuery } from '@/services/ontology/client';
-import { qb } from '@/services/ontology/query';
-import { OT } from '@/services/ontology/object-types';
+import { observer } from 'mobx-react-lite';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  OmnibarListPage,
   type FilterConfig,
+  OmnibarListPage,
   type ToolbarAction,
 } from '@/components/OmnibarPage';
+import ResidentLink from '@/components/ResidentLink';
+import type { AlertItem } from '@/services/domains/alert';
+import { invokeQuery } from '@/services/ontology/client';
+import { OT } from '@/services/ontology/object-types';
+import { qb } from '@/services/ontology/query';
+import { alertStore } from '@/stores';
+import { AlertLevel } from '@/types/ontology/prh/enums';
+import { EnumLabels, enumOptions, StatusColors } from '@/utils/enum-options';
 
 const AlertList: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -41,17 +27,6 @@ const AlertList: React.FC = observer(() => {
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
-
-  const stats = useMemo(() => {
-    const list = alertStore.alerts;
-    return {
-      total: list.length,
-      pending: list.filter((a) => a.status === 'pending').length,
-      processing: list.filter((a) => a.status === 'processing').length,
-      resolved: list.filter((a) => a.status === 'resolved').length,
-      critical: list.filter((a) => a.level === 'ALERT_RED').length,
-    };
-  }, [alertStore.alerts]);
 
   const load = useCallback(
     async (p = page, s = pageSize, override?: Record<string, any>) => {
@@ -75,7 +50,10 @@ const AlertList: React.FC = observer(() => {
             id: String(fact.attendance ?? fact.id ?? ''),
             factId: String(fact.id ?? ''),
             resident: String(fact.resident ?? ''),
-            level: fact.attendanceStatus === 'MISSED' ? 'ALERT_RED' : 'ALERT_WARNING',
+            level:
+              fact.attendanceStatus === 'MISSED'
+                ? 'ALERT_RED'
+                : 'ALERT_WARNING',
             title:
               fact.attendanceStatus === 'MISSED'
                 ? '未在规定时间打卡'
@@ -90,8 +68,12 @@ const AlertList: React.FC = observer(() => {
             if (v.keyword) {
               const kw = String(v.keyword).toLowerCase();
               if (
-                !String(item.resident ?? '').toLowerCase().includes(kw) &&
-                !String(item.title ?? '').toLowerCase().includes(kw)
+                !String(item.resident ?? '')
+                  .toLowerCase()
+                  .includes(kw) &&
+                !String(item.title ?? '')
+                  .toLowerCase()
+                  .includes(kw)
               )
                 return false;
             }
@@ -115,7 +97,12 @@ const AlertList: React.FC = observer(() => {
   }, []);
 
   const filters: FilterConfig[] = [
-    { key: 'keyword', label: '关键字', type: 'input', placeholder: '居民 / 类型' },
+    {
+      key: 'keyword',
+      label: '关键字',
+      type: 'input',
+      placeholder: '居民 / 类型',
+    },
     {
       key: 'level',
       label: '级别',
@@ -143,7 +130,8 @@ const AlertList: React.FC = observer(() => {
       title: '居民',
       dataIndex: 'resident',
       width: 140,
-      render: (id: string) => (id ? <ResidentLink id={id}>{id}</ResidentLink> : '-'),
+      render: (id: string) =>
+        id ? <ResidentLink id={id}>{id}</ResidentLink> : '-',
     },
     {
       title: '类型',
@@ -217,64 +205,9 @@ const AlertList: React.FC = observer(() => {
     },
   ];
 
-  const topSlot = (
-    <Row gutter={12}>
-      <Col xs={12} md={4} lg={5}>
-        <Card size="small">
-          <Statistic
-            title="预警总数"
-            value={stats.total}
-            prefix={<AlertOutlined style={{ color: '#1890ff' }} />}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} md={4} lg={5}>
-        <Card size="small">
-          <Statistic
-            title="待处理"
-            value={stats.pending}
-            valueStyle={{ color: '#faad14' }}
-            prefix={<ClockCircleOutlined />}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} md={4} lg={5}>
-        <Card size="small">
-          <Statistic
-            title="处理中"
-            value={stats.processing}
-            valueStyle={{ color: '#1890ff' }}
-            prefix={<ExclamationCircleOutlined />}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} md={4} lg={5}>
-        <Card size="small">
-          <Statistic
-            title="已解决"
-            value={stats.resolved}
-            valueStyle={{ color: '#52c41a' }}
-            prefix={<CheckCircleOutlined />}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} md={4} lg={4}>
-        <Card size="small">
-          <Statistic
-            title="红色预警"
-            value={stats.critical}
-            valueStyle={{ color: '#ff4d4f' }}
-            prefix={<AlertOutlined />}
-          />
-        </Card>
-      </Col>
-    </Row>
-  );
-
   return (
     <div style={{ height: '100%' }}>
       <OmnibarListPage<AlertItem>
-        topSlot={topSlot}
         filters={filters}
         filterValues={filterValues}
         onFilterChange={setFilterValues}

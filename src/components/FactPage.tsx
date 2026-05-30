@@ -42,6 +42,12 @@ export interface FactDimension {
   render?: (v: any, row: Record<string, any>) => React.ReactNode;
   width?: number;
   /**
+   * 是否作为分组键(GROUP BY)。
+   * 低基数枚举维度应为 true;日期/自由输入等高基数维度应为 false
+   * (否则每组只剩 1 行、指标退化成 0/1)。缺省由 dictDim 设 true、其余 false。
+   */
+  groupBy?: boolean;
+  /**
    * 把该维度暴露为搜索项(维度本就是 XML 声明的可查询字段)。
    * 不填则该维度只用于分组展示,不进搜索栏。
    *  - 'enum'   下拉,需配 dictName 取选项
@@ -184,8 +190,17 @@ const FactPage: React.FC<FactPageProps> = ({
     async (p = page, s = pageSize) => {
       setLoading(true);
       try {
+        // 仅低基数维度参与 GROUP BY:dictDim 默认 groupBy=true;
+        // 日期/自由输入维度(search.type==='date'|'input')默认不分组,只当筛选。
+        const groupDims = dimensions.filter(
+          (d) =>
+            d.groupBy === true ||
+            (d.groupBy === undefined &&
+              d.search?.type !== 'date' &&
+              d.search?.type !== 'input'),
+        );
         const builder = qb(objectType)
-          .dimensions(dimensions.map((d) => d.key).join(','))
+          .dimensions(groupDims.map((d) => d.key).join(','))
           .metrics(metrics.map((m) => m.key).join(','))
           .page(p, s);
         applyDimensionFilters(builder, filterValues);
@@ -231,15 +246,24 @@ const FactPage: React.FC<FactPageProps> = ({
 
   const columns: ColumnsType<Record<string, any>> = useMemo(
     () => [
-      ...dimensions.map<ColumnsType<Record<string, any>>[number]>((d) => ({
-        title: d.label,
-        dataIndex: d.key,
-        width: d.width ?? 140,
-        render: d.render
-          ? (v: any, row: Record<string, any>) => d.render!(v, row)
-          : (v: any) =>
-              v === null || v === undefined || v === '' ? '-' : String(v),
-      })),
+      // 聚合后只展示分组维度列(非分组维度在聚合行里无意义)
+      ...dimensions
+        .filter(
+          (d) =>
+            d.groupBy === true ||
+            (d.groupBy === undefined &&
+              d.search?.type !== 'date' &&
+              d.search?.type !== 'input'),
+        )
+        .map<ColumnsType<Record<string, any>>[number]>((d) => ({
+          title: d.label,
+          dataIndex: d.key,
+          width: d.width ?? 140,
+          render: d.render
+            ? (v: any, row: Record<string, any>) => d.render!(v, row)
+            : (v: any) =>
+                v === null || v === undefined || v === '' ? '-' : String(v),
+        })),
       ...metrics.map<ColumnsType<Record<string, any>>[number]>((m) => ({
         title: m.label,
         dataIndex: m.key,
