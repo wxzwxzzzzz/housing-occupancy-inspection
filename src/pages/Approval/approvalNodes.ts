@@ -71,10 +71,8 @@ export const registerApprovalNodes = (lf: any) => {
         view: BaseApprovalNodeView,
         model: BaseApprovalNodeModel,
       });
-      console.log(`成功注册节点: ${node.type}`);
     } catch (error) {
       // 节点可能已经注册过，忽略错误
-      console.warn(`节点 ${node.type} 已注册或注册失败:`, error);
     }
   });
 };

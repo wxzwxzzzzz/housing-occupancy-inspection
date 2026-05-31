@@ -222,7 +222,7 @@ const SystemRole: React.FC = () => {
       width: 160,
       render: (text, record) => (
         <span className="opp-link-cell" onClick={() => handleEdit(record)}>
-          <SafetyOutlined style={{ marginRight: 4, color: '#1677ff' }} />
+          <SafetyOutlined style={{ marginRight: 4, color: '#1d4ed8' }} />
           {text}
         </span>
       ),

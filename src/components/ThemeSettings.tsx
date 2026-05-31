@@ -17,7 +17,7 @@ import React from 'react';
 import { appStore, type ThemeMode } from '@/stores';
 
 export const PRESET_COLORS = [
-  '#1677ff', // 拂晓蓝(默认)
+  '#1d4ed8', // 拂晓蓝(默认)
   '#722ed1', // 酱紫
   '#13c2c2', // 明青
   '#52c41a', // 极光绿
@@ -31,7 +31,7 @@ export const PRESET_COLORS = [
   '#161616', // 中性黑
 ];
 
-const DEFAULT_PRIMARY = '#1677ff';
+const DEFAULT_PRIMARY = '#1d4ed8';
 const DEFAULT_MODE: ThemeMode = 'light';
 
 const useStyles = createStyles(({ token, css }) => ({

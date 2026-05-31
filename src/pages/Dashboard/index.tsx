@@ -538,7 +538,7 @@ const Dashboard: React.FC = observer(() => {
                   },
                 },
                 dataLabels: { enabled: false },
-                colors: ['#1677ff'],
+                colors: ['#1d4ed8'],
                 xaxis: {
                   categories: attendanceRateTrend.map((d) => d.date),
                   axisBorder: { show: false },

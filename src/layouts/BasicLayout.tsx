@@ -800,7 +800,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
         key: 'eligibility',
         icon: <SafetyOutlined />,
         label: '业务',
-        color: '#1890ff',
+        color: '#1d4ed8',
         lightColor: '#e6f7ff',
         hoverColor: '#bae7ff',
         children: [

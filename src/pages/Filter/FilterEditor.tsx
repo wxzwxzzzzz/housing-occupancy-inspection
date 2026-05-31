@@ -220,7 +220,6 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
     const jsonLogic = QbUtils.jsonLogicFormat(tree, config);
     const fieldCount = countFields(tree);
 
-    console.log('JsonLogic:', jsonLogic);
 
     onSave({
       jsonLogic: jsonLogic.logic,
@@ -439,8 +438,8 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
 
         /* AND/OR 选中状态 - 蓝色 */
         .query-builder-container .group--conjunctions .ant-btn-primary {
-          background: #1890ff;
-          border-color: #1890ff;
+          background: #1d4ed8;
+          border-color: #1d4ed8;
           color: #fff;
         }
 
@@ -466,8 +465,8 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         }
 
         .query-builder-container .group--actions .ant-btn:hover {
-          color: #1890ff;
-          border-color: #1890ff;
+          color: #1d4ed8;
+          border-color: #1d4ed8;
         }
 
         /* 组子元素容器 */
@@ -549,7 +548,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         }
 
         .query-builder-container .ant-select-focused .ant-select-selector {
-          border-color: #1890ff !important;
+          border-color: #1d4ed8 !important;
           box-shadow: none !important;
         }
 
@@ -582,7 +581,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         .query-builder-container .ant-input:focus,
         .query-builder-container .ant-input-number:focus,
         .query-builder-container .ant-input-number-focused {
-          border-color: #1890ff;
+          border-color: #1d4ed8;
           box-shadow: none;
         }
 
@@ -640,7 +639,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         /* 嵌套组样式 */
         .query-builder-container .group .group {
           margin: 8px 0;
-          border-left: 3px solid #1890ff;
+          border-left: 3px solid #1d4ed8;
         }
 
         /* 删除组头部多余间距 */

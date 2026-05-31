@@ -1,28 +1,29 @@
 import type { ProLayoutProps } from '@ant-design/pro-components';
 
 /**
- * @name
+ * 公租房保障监测系统 — 全局主题配置
+ *
+ * 配色参考 HTML 原型(Tabler UI):
+ *   - 浅色主题 + 深蓝主色(#1d4ed8,接近 Tabler #206bc4)
+ *   - 侧边栏浅色底,选中态主色高亮
+ *   - 克制、信息密度高、无彩色装饰
  */
 const Settings: ProLayoutProps & {
   pwa?: boolean;
   logo?: string;
 } = {
   navTheme: 'light',
-  // 拂晓蓝
-  colorPrimary: '#1890ff',
+  colorPrimary: '#1d4ed8',
   layout: 'mix',
   contentWidth: 'Fluid',
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Ant Design Pro',
+  title: '公租房保障监测',
   pwa: true,
   logo: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
   iconfontUrl: '',
-  token: {
-    // 参见ts声明，demo 见文档，通过token 修改样式
-    //https://procomponents.ant.design/components/layout#%E9%80%9A%E8%BF%87-token-%E4%BF%AE%E6%94%B9%E6%A0%B7%E5%BC%8F
-  },
+  token: {},
 };
 
 export default Settings;

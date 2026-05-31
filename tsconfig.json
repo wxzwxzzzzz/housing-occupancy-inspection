@@ -12,6 +12,7 @@
     "declaration": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "types": ["node"],
     "paths": {
       "@/*": ["./src/*"],
       "@@/*": ["./src/.umi/*"],

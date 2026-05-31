@@ -249,7 +249,7 @@ const FencePage: React.FC = () => {
       width: 200,
       render: (v: string) => (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <EnvironmentOutlined style={{ color: '#1677ff' }} />
+          <EnvironmentOutlined style={{ color: '#1d4ed8' }} />
           {v ?? '-'}
         </span>
       ),

@@ -19,9 +19,9 @@ interface WorkflowEditorProps {
 const approvalNodeTypes = [
   { type: 'start', text: '开始', color: '#52c41a', shape: 'circle' },
   { type: 'check', text: '材料校验', color: '#fa8c16', shape: 'rect' },
-  { type: 'approve', text: '初审', color: '#1890ff', shape: 'rect' },
-  { type: 'approve2', text: '复审', color: '#1890ff', shape: 'rect' },
-  { type: 'approve3', text: '终审', color: '#1890ff', shape: 'rect' },
+  { type: 'approve', text: '初审', color: '#1d4ed8', shape: 'rect' },
+  { type: 'approve2', text: '复审', color: '#1d4ed8', shape: 'rect' },
+  { type: 'approve3', text: '终审', color: '#1d4ed8', shape: 'rect' },
   { type: 'warning', text: '预警校验', color: '#fa8c16', shape: 'rect' },
   { type: 'condition', text: '条件判断', color: '#722ed1', shape: 'diamond' },
   { type: 'reject', text: '驳回', color: '#ff4d4f', shape: 'rect' },
@@ -63,9 +63,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
       return;
     }
 
-    console.log('Initializing X6 Graph...');
-    console.log('Container:', containerRef.current);
-    console.log('Container size:', containerRef.current.offsetWidth, containerRef.current.offsetHeight);
 
     // 创建画布
     const graph = new Graph({
@@ -122,8 +119,8 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           name: 'stroke',
           args: {
             attrs: {
-              fill: '#5F95FF',
-              stroke: '#5F95FF',
+              fill: '#3b82f6',
+              stroke: '#3b82f6',
             },
           },
         },
@@ -139,7 +136,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
     });
 
     graphRef.current = graph;
-    console.log('Graph created successfully:', graph);
 
     // 注册快捷键
     graph.bindKey(['meta+c', 'ctrl+c'], () => {
@@ -254,10 +250,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         data: { nodeType: 'start', text: '开始' },
         ports: {
           groups: {
-            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
           },
           items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
         },
@@ -276,10 +272,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         data: { nodeType: 'check', text: '材料校验' },
         ports: {
           groups: {
-            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
           },
           items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
         },
@@ -292,16 +288,16 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         height: 50,
         shape: 'rect',
         attrs: {
-          body: { fill: '#1890ff', stroke: '#1890ff', rx: 6, ry: 6 },
+          body: { fill: '#1d4ed8', stroke: '#1d4ed8', rx: 6, ry: 6 },
           label: { text: '初审', fill: '#fff', fontSize: 14 },
         },
         data: { nodeType: 'approve', text: '初审' },
         ports: {
           groups: {
-            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
           },
           items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
         },
@@ -314,16 +310,16 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         height: 50,
         shape: 'rect',
         attrs: {
-          body: { fill: '#1890ff', stroke: '#1890ff', rx: 6, ry: 6 },
+          body: { fill: '#1d4ed8', stroke: '#1d4ed8', rx: 6, ry: 6 },
           label: { text: '复审', fill: '#fff', fontSize: 14 },
         },
         data: { nodeType: 'approve2', text: '复审' },
         ports: {
           groups: {
-            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
           },
           items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
         },
@@ -342,10 +338,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         data: { nodeType: 'end', text: '结束' },
         ports: {
           groups: {
-            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+            top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+            right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
           },
           items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
         },
@@ -441,7 +437,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
     const localPoint = graph.clientToLocal({ x, y });
     const point = { x: localPoint.x, y: localPoint.y };
 
-    console.log('Drop position:', { clientX: e.clientX, clientY: e.clientY, x, y, point });
 
     try {
       // 创建节点
@@ -470,10 +465,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           },
           ports: {
             groups: {
-              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
             },
             items: [
               { group: 'top' },
@@ -508,10 +503,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           },
           ports: {
             groups: {
-              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
             },
             items: [
               { group: 'top' },
@@ -547,10 +542,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           },
           ports: {
             groups: {
-              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
             },
             items: [
               { group: 'top' },
@@ -562,7 +557,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
         });
       }
 
-      console.log('Node created:', node);
       message.success(`已添加节点: ${nodeType.text}`);
     } catch (error) {
       console.error('Failed to create node:', error);
@@ -578,13 +572,11 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
 
   // 点击添加节点（备用方案）
   const handleClickAdd = (nodeType: typeof approvalNodeTypes[0]) => {
-    console.log('handleClickAdd called with:', nodeType);
     const graph = graphRef.current;
     if (!graph) {
       console.error('Graph not initialized!');
       return;
     }
-    console.log('Graph instance:', graph);
 
     // 获取画布视口中心位置
     const container = containerRef.current;
@@ -595,7 +587,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
       centerX = container.offsetWidth / 2 + Math.random() * 100 - 50;
       centerY = container.offsetHeight / 2 + Math.random() * 100 - 50;
     }
-    console.log('Center position:', { centerX, centerY });
 
     try {
       let node;
@@ -613,10 +604,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           data: { nodeType: nodeType.type, text: nodeType.text },
           ports: {
             groups: {
-              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
             },
             items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
           },
@@ -635,10 +626,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           data: { nodeType: nodeType.type, text: nodeType.text },
           ports: {
             groups: {
-              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
             },
             items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
           },
@@ -657,10 +648,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
           data: { nodeType: nodeType.type, text: nodeType.text },
           ports: {
             groups: {
-              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
-              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#5F95FF', strokeWidth: 1, fill: '#fff' } } },
+              top: { position: 'top', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              bottom: { position: 'bottom', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              left: { position: 'left', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
+              right: { position: 'right', attrs: { circle: { r: 4, magnet: true, stroke: '#3b82f6', strokeWidth: 1, fill: '#fff' } } },
             },
             items: [{ group: 'top' }, { group: 'bottom' }, { group: 'left' }, { group: 'right' }],
           },
@@ -914,7 +905,6 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   border: '1px solid #e8e8e8',
                 }}
                 onClick={() => {
-                  console.log('Button clicked:', nodeType.text);
                   handleClickAdd(nodeType);
                 }}
               >

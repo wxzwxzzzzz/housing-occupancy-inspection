@@ -19,7 +19,7 @@ export type ThemeMode = 'light' | 'dark';
 
 const PRIMARY_COLOR_KEY = 'prh:primaryColor';
 const THEME_MODE_KEY = 'prh:themeMode';
-const DEFAULT_PRIMARY = '#1677ff';
+const DEFAULT_PRIMARY = '#1d4ed8';
 const DEFAULT_MODE: ThemeMode = 'light';
 
 class AppStore {

@@ -161,7 +161,7 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({
               >
                 <List.Item.Meta
                   avatar={
-                    <FileOutlined style={{ fontSize: 22, color: '#1677ff' }} />
+                    <FileOutlined style={{ fontSize: 22, color: '#1d4ed8' }} />
                   }
                   title={file.name ?? `#${String(item.id).slice(-6)}`}
                   description={

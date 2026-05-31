@@ -90,7 +90,7 @@ const Login: React.FC = () => {
         <Card className="login-card">
           <div className="login-header">
             <div className="login-logo">
-              <SafetyOutlined style={{ fontSize: 48, color: '#1890ff' }} />
+              <SafetyOutlined style={{ fontSize: 48, color: '#1d4ed8' }} />
             </div>
             <h1 className="login-title">公租房监测系统</h1>
             <p className="login-subtitle">审批端管理平台</p>

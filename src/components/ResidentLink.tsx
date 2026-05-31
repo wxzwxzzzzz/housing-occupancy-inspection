@@ -154,7 +154,7 @@ const ResidentLink: React.FC<ResidentLinkProps> = ({
   const label = children ?? (record?.fullName as React.ReactNode) ?? id;
 
   const inner = clickable ? (
-    <Link to={`/profile/residents/detail/${id}`} style={{ color: '#1677ff' }}>
+    <Link to={`/profile/residents/detail/${id}`} style={{ color: '#1d4ed8' }}>
       {label}
     </Link>
   ) : (
