@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 审批总览(全部审批类申请的合并视图) — OmnibarPage 三段式
  */

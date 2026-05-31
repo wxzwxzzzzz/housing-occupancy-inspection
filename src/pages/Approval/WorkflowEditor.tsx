@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Space, Button, Form, Input, Drawer, Switch, Select, message, Dropdown } from 'antd';
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';

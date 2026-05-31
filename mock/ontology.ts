@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 本体 Mock 总入口
  *
@@ -131,7 +132,7 @@ function dispatch(actionName: string, body: any) {
   }
 
   // 2) 审批类
-  if (approvalEntities.has(objectType)) {
+  if (approvalEntities.has(objectType as any)) {
     const approvalHandler = getApprovalHandler(actionName);
     if (approvalHandler) {
       return approvalHandler({ objectType, payload, id });

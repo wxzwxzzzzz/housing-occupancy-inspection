@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CodeOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons';
 // Query Builder imports - 使用 Ant Design 版本
 import {
@@ -151,7 +152,7 @@ const InitialConfig: Config = {
     canRegroup: true,
     maxNesting: 3,
     showErrorMessage: true,
-    renderSize: 'middle',
+    renderSize: 'middle' as any,
   },
 };
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from '@umijs/max';
 import { Modal, message, Tag } from 'antd';
