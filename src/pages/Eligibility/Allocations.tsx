@@ -67,7 +67,7 @@ const EligibilityAllocations: React.FC = () => {
 
   const filters: FilterConfig[] = useMemo(
     () => [
-      { key: 'keyword', label: '项目', type: 'input', placeholder: '项目名称' },
+      { key: 'keyword', label: '地址', type: 'input', placeholder: '配租地址' },
       {
         key: 'status',
         label: '状态',
@@ -108,7 +108,7 @@ const EligibilityAllocations: React.FC = () => {
       width: 140,
       render: (v: string) => (v ? `家庭#${String(v).slice(-6)}` : '-'),
     },
-    { title: '项目名称', dataIndex: 'projectName', width: 180, ellipsis: true },
+    { title: '地址', dataIndex: 'projectName', width: 180, ellipsis: true },
     {
       title: '楼栋/单元/房号',
       key: 'addr',
@@ -198,7 +198,7 @@ const EligibilityAllocations: React.FC = () => {
           },
           {
             name: 'projectName',
-            label: '项目名称',
+            label: '地址',
             type: 'input',
             required: true,
           },

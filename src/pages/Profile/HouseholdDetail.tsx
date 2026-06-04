@@ -20,7 +20,7 @@ import {
   Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import EntityReferSelect from '@/components/EntityReferSelect';
 import {
   type DetailSection,
@@ -30,18 +30,9 @@ import {
   type ToolbarAction,
 } from '@/components/OmnibarPage';
 import ResidentLink from '@/components/ResidentLink';
-import { householdMemberChangeService } from '@/services/domains/change';
 import {
-  eligibilityApplicationService,
-  eligibilityTerminationService,
-  housingAllocationService,
-  rentalSubsidyService,
-} from '@/services/domains/eligibility';
-import {
-  employmentService,
   householdMemberService,
   householdService,
-  personalIncomeService,
   residenceService,
 } from '@/services/domains/household';
 import { invokeAction } from '@/services/ontology/client';
@@ -49,15 +40,8 @@ import { OT } from '@/services/ontology/object-types';
 import { qb } from '@/services/ontology/query';
 import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
 import { dictLabel, dictStore } from '@/stores/dictStore';
-import type { EligibilityApplication } from '@/types/ontology/prh/entities/eligibility_application';
-import type { EligibilityTermination } from '@/types/ontology/prh/entities/eligibility_termination';
-import type { Employment } from '@/types/ontology/prh/entities/employment';
 import type { Household } from '@/types/ontology/prh/entities/household';
 import type { HouseholdMember } from '@/types/ontology/prh/entities/household_member';
-import type { HouseholdMemberChange } from '@/types/ontology/prh/entities/household_member_change';
-import type { HousingAllocation } from '@/types/ontology/prh/entities/housing_allocation';
-import type { PersonalIncome } from '@/types/ontology/prh/entities/personal_income';
-import type { RentalSubsidy } from '@/types/ontology/prh/entities/rental_subsidy';
 import type { Residence } from '@/types/ontology/prh/entities/residence';
 import { StatusColors } from '@/utils/enum-options';
 
@@ -170,45 +154,6 @@ const HouseholdDetail: React.FC = () => {
     residenceService,
     residentIds,
   );
-  const { data: employments = [] } = useListByResident<Employment>(
-    OT.Employment,
-    employmentService,
-    residentIds,
-  );
-  const { data: incomes = [] } = useListByResident<PersonalIncome>(
-    OT.PersonalIncome,
-    personalIncomeService,
-    residentIds,
-  );
-
-  const { data: memberChanges = [] } =
-    useListByHousehold<HouseholdMemberChange>(
-      OT.HouseholdMemberChange,
-      householdMemberChangeService,
-      id,
-    );
-  const { data: applications = [] } =
-    useListByHousehold<EligibilityApplication>(
-      OT.EligibilityApplication,
-      eligibilityApplicationService,
-      id,
-    );
-  const { data: allocations = [] } = useListByHousehold<HousingAllocation>(
-    OT.HousingAllocation,
-    housingAllocationService,
-    id,
-  );
-  const { data: subsidies = [] } = useListByHousehold<RentalSubsidy>(
-    OT.RentalSubsidy,
-    rentalSubsidyService,
-    id,
-  );
-  const { data: terminations = [] } =
-    useListByHousehold<EligibilityTermination>(
-      OT.EligibilityTermination,
-      eligibilityTerminationService,
-      id,
-    );
 
   if (loading || !household) {
     return (
@@ -351,197 +296,6 @@ const HouseholdDetail: React.FC = () => {
     { title: '生效日期', dataIndex: 'effectiveDate', width: 120 },
   ];
 
-  // ========== Tab: 工作信息 ==========
-  const employmentCols: ColumnsType<Employment> = [
-    {
-      title: '所属居民',
-      dataIndex: 'resident',
-      width: 130,
-      render: (v: string) =>
-        v ? <ResidentLink id={String(v)}>{String(v)}</ResidentLink> : '-',
-    },
-    { title: '工作单位', dataIndex: 'unitName', width: 200, ellipsis: true },
-    {
-      title: '工作类型',
-      dataIndex: 'addressType',
-      width: 120,
-      render: (v: any) => dictLabel('EmploymentAddressType', v),
-    },
-    {
-      title: '工作地址',
-      dataIndex: 'workAddress',
-      ellipsis: true,
-      render: (v: any) => v?.detail ?? '-',
-    },
-    {
-      title: '记录状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => dictLabel('RecordStatus', v),
-    },
-  ];
-
-  // ========== Tab: 个人收入 ==========
-  const incomeCols: ColumnsType<PersonalIncome> = [
-    {
-      title: '所属居民',
-      dataIndex: 'resident',
-      width: 130,
-      render: (v: string) =>
-        v ? <ResidentLink id={String(v)}>{String(v)}</ResidentLink> : '-',
-    },
-    {
-      title: '收入类型',
-      dataIndex: 'incomeType',
-      width: 130,
-      render: (v: any) => dictLabel('IncomeType', v),
-    },
-    { title: '金额', dataIndex: 'amount', width: 120 },
-    { title: '所属期间', dataIndex: 'period', width: 120 },
-    { title: '收入来源', dataIndex: 'employer', ellipsis: true },
-  ];
-
-  // ========== Tab: 资质申请 ==========
-  const applicationCols: ColumnsType<EligibilityApplication> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    {
-      title: '申请类型',
-      dataIndex: 'applicationType',
-      width: 120,
-      render: (v: any) => dictLabel('ApplicationType', v),
-    },
-    {
-      title: '保障类型',
-      dataIndex: 'guaranteeType',
-      width: 130,
-      render: (v: any) => dictLabel('GuaranteeType', v),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {dictLabel('ApplicationStatus', v)}
-        </Tag>
-      ),
-    },
-    { title: '提交时间', dataIndex: 'submittedAt', width: 160 },
-  ];
-
-  // ========== Tab: 实物配租 ==========
-  const allocationCols: ColumnsType<HousingAllocation> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    { title: '项目', dataIndex: 'projectName', width: 180, ellipsis: true },
-    {
-      title: '楼栋/单元/房号',
-      key: 'addr',
-      width: 160,
-      render: (_, r: any) =>
-        [r.buildingNo, r.unitNo, r.roomNo].filter(Boolean).join('-') || '-',
-    },
-    { title: '面积', dataIndex: 'area', width: 90 },
-    { title: '月租金', dataIndex: 'monthlyRent', width: 100 },
-    { title: '起租', dataIndex: 'leaseStartDate', width: 110 },
-    { title: '到期', dataIndex: 'leaseEndDate', width: 110 },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => dictLabel('AllocationStatus', v),
-    },
-  ];
-
-  // ========== Tab: 租赁补贴 ==========
-  const subsidyCols: ColumnsType<RentalSubsidy> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    { title: '月补贴金额', dataIndex: 'monthlyAmount', width: 130 },
-    { title: '起始日期', dataIndex: 'startDate', width: 120 },
-    { title: '截止日期', dataIndex: 'endDate', width: 120 },
-    { title: '收款账户', dataIndex: 'bankAccount', width: 180, ellipsis: true },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => dictLabel('SubsidyStatus', v),
-    },
-  ];
-
-  // ========== Tab: 资格终止 ==========
-  const terminationCols: ColumnsType<EligibilityTermination> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    {
-      title: '终止类型',
-      dataIndex: 'terminationType',
-      width: 140,
-      render: (v: any) => dictLabel('TerminationReason', v),
-    },
-    { title: '期望生效日期', dataIndex: 'effectiveDate', width: 140 },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {dictLabel('ApplicationStatus', v)}
-        </Tag>
-      ),
-    },
-    { title: '终止原因', dataIndex: 'reason', ellipsis: true },
-  ];
-
-  // ========== Tab: 成员变更记录 ==========
-  const memberChangeCols: ColumnsType<HouseholdMemberChange> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    {
-      title: '变更类型',
-      dataIndex: 'changeType',
-      width: 110,
-      render: (v: any) => dictLabel('MemberChangeType', v),
-    },
-    {
-      title: '目标成员',
-      dataIndex: 'member',
-      width: 140,
-      render: (v: string) => (v ? `成员#${String(v).slice(-6)}` : '-'),
-    },
-    { title: '变更原因', dataIndex: 'reason', ellipsis: true },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {dictLabel('ApplicationStatus', v)}
-        </Tag>
-      ),
-    },
-  ];
 
   const renderTable = <T extends { id?: string }>(
     list: T[],
@@ -575,51 +329,6 @@ const HouseholdDetail: React.FC = () => {
       key: 'residences',
       label: `居住信息 (${residences.length})`,
       content: renderTable(residences, residenceCols),
-    },
-    {
-      key: 'employments',
-      label: `工作信息 (${employments.length})`,
-      content: renderTable(employments, employmentCols),
-    },
-    {
-      key: 'incomes',
-      label: `个人收入 (${incomes.length})`,
-      content: renderTable(incomes, incomeCols),
-    },
-    {
-      key: 'memberChanges',
-      label: `成员变更 (${memberChanges.length})`,
-      content: renderTable(memberChanges, memberChangeCols, (r: any) =>
-        navigate(`/monitor/member-changes/detail/${r.id}`),
-      ),
-    },
-    {
-      key: 'applications',
-      label: `资质申请 (${applications.length})`,
-      content: renderTable(applications, applicationCols, (r: any) =>
-        navigate(`/eligibility/applications/detail/${r.id}`),
-      ),
-    },
-    {
-      key: 'allocations',
-      label: `实物配租 (${allocations.length})`,
-      content: renderTable(allocations, allocationCols, (r: any) =>
-        navigate(`/eligibility/allocations/detail/${r.id}`),
-      ),
-    },
-    {
-      key: 'subsidies',
-      label: `租赁补贴 (${subsidies.length})`,
-      content: renderTable(subsidies, subsidyCols, (r: any) =>
-        navigate(`/eligibility/subsidies/detail/${r.id}`),
-      ),
-    },
-    {
-      key: 'terminations',
-      label: `资格终止 (${terminations.length})`,
-      content: renderTable(terminations, terminationCols, (r: any) =>
-        navigate(`/eligibility/terminations/detail/${r.id}`),
-      ),
     },
   ];
 

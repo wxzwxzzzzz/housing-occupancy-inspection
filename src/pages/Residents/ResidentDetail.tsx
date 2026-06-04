@@ -15,7 +15,6 @@ import {
   message,
   Select,
   Skeleton,
-  Space,
   Table,
   Tag,
 } from 'antd';
@@ -32,36 +31,20 @@ import {
 } from '@/components/OmnibarPage';
 import PhotoCell from '@/components/PhotoCell';
 import {
-  attendanceMakeupService,
-  attendanceService,
-} from '@/services/domains/attendance';
-import {
-  employmentChangeService,
-  residenceChangeService,
-} from '@/services/domains/change';
-import {
   employmentService,
   householdMemberService,
   personalIncomeService,
   residenceService,
 } from '@/services/domains/household';
-import { leaveService } from '@/services/domains/leave';
-import { migrantWorkService } from '@/services/domains/migrant-work';
 import { residentService } from '@/services/domains/resident';
 import { invokeAction } from '@/services/ontology/client';
 import { OT } from '@/services/ontology/object-types';
 import { qb } from '@/services/ontology/query';
 import { dictStore } from '@/stores/dictStore';
-import type { Attendance } from '@/types/ontology/prh/entities/attendance';
-import type { AttendanceMakeup } from '@/types/ontology/prh/entities/attendance_makeup';
 import type { Employment } from '@/types/ontology/prh/entities/employment';
-import type { EmploymentChange } from '@/types/ontology/prh/entities/employment_change';
 import type { HouseholdMember } from '@/types/ontology/prh/entities/household_member';
-import type { Leave } from '@/types/ontology/prh/entities/leave';
-import type { MigrantWork } from '@/types/ontology/prh/entities/migrant_work';
 import type { PersonalIncome } from '@/types/ontology/prh/entities/personal_income';
 import type { Residence } from '@/types/ontology/prh/entities/residence';
-import type { ResidenceChange } from '@/types/ontology/prh/entities/residence_change';
 import type { Resident } from '@/types/ontology/prh/entities/resident';
 import {
   Gender,
@@ -175,36 +158,6 @@ const ResidentDetail: React.FC = () => {
       personalIncomeService,
       id,
     );
-  const { data: attendances = [] } = useListByResident<Attendance>(
-    OT.Attendance,
-    attendanceService,
-    id,
-  );
-  const { data: leaves = [] } = useListByResident<Leave>(
-    OT.Leave,
-    leaveService,
-    id,
-  );
-  const { data: makeups = [] } = useListByResident<AttendanceMakeup>(
-    OT.AttendanceMakeup,
-    attendanceMakeupService,
-    id,
-  );
-  const { data: migrants = [] } = useListByResident<MigrantWork>(
-    OT.MigrantWork,
-    migrantWorkService,
-    id,
-  );
-  const { data: residenceChanges = [] } = useListByResident<ResidenceChange>(
-    OT.ResidenceChange,
-    residenceChangeService,
-    id,
-  );
-  const { data: employmentChanges = [] } = useListByResident<EmploymentChange>(
-    OT.EmploymentChange,
-    employmentChangeService,
-    id,
-  );
 
   if (loading || !data) {
     return (
@@ -552,153 +505,6 @@ const ResidentDetail: React.FC = () => {
     { title: '收入来源', dataIndex: 'employer', ellipsis: true },
   ];
 
-  const attendanceCols: ColumnsType<Attendance> = [
-    { title: '打卡时间', dataIndex: 'checkIn', width: 180 },
-    {
-      title: '出勤类型',
-      dataIndex: 'attendanceType',
-      width: 110,
-      render: (v: any) => enumLabel(EnumLabels.AttendanceType, v),
-    },
-    {
-      title: '打卡方式',
-      dataIndex: 'mode',
-      width: 110,
-      render: (v: any) => enumLabel(EnumLabels.AttendanceMode, v),
-    },
-    {
-      title: '考勤状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.AttendanceStatus as any)[v]}>
-          {enumLabel(EnumLabels.AttendanceStatus, v)}
-        </Tag>
-      ),
-    },
-  ];
-
-  const leaveCols: ColumnsType<Leave> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    { title: '请假类型', dataIndex: 'leaveType', width: 130 },
-    { title: '开始', dataIndex: 'startDate', width: 110 },
-    { title: '结束', dataIndex: 'endDate', width: 110 },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {enumLabel(EnumLabels.ApplicationStatus, v)}
-        </Tag>
-      ),
-    },
-  ];
-
-  const makeupCols: ColumnsType<AttendanceMakeup> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    {
-      title: '关联打卡',
-      dataIndex: 'targetAttendance',
-      width: 130,
-      render: (v: string) => (v ? `#${String(v).slice(-6)}` : '-'),
-    },
-    { title: '补卡原因', dataIndex: 'reason', ellipsis: true },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {enumLabel(EnumLabels.ApplicationStatus, v)}
-        </Tag>
-      ),
-    },
-  ];
-
-  const migrantCols: ColumnsType<MigrantWork> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    { title: '务工单位', dataIndex: 'company', width: 180, ellipsis: true },
-    { title: '开始', dataIndex: 'startDate', width: 110 },
-    { title: '结束', dataIndex: 'endDate', width: 110 },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {enumLabel(EnumLabels.ApplicationStatus, v)}
-        </Tag>
-      ),
-    },
-  ];
-
-  const residenceChangeCols: ColumnsType<ResidenceChange> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    {
-      title: '新地址',
-      dataIndex: 'address',
-      ellipsis: true,
-      render: (v: any) => v?.detail ?? '-',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {enumLabel(EnumLabels.ApplicationStatus, v)}
-        </Tag>
-      ),
-    },
-  ];
-
-  const employmentChangeCols: ColumnsType<EmploymentChange> = [
-    {
-      title: '编号',
-      dataIndex: 'id',
-      width: 110,
-      render: (v: string) => `#${v.slice(-6)}`,
-    },
-    { title: '工作单位', dataIndex: 'company', width: 180, ellipsis: true },
-    {
-      title: '工作地址',
-      dataIndex: 'companyAddress',
-      ellipsis: true,
-      render: (v: any) => v?.detail ?? '-',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (v: any) => (
-        <Tag color={(StatusColors.ApplicationStatus as any)[v]}>
-          {enumLabel(EnumLabels.ApplicationStatus, v)}
-        </Tag>
-      ),
-    },
-  ];
-
   const tabs: DetailTabItem[] = [
     {
       key: 'households',
@@ -767,48 +573,6 @@ const ResidentDetail: React.FC = () => {
           </div>
           {renderTable(incomes, incomeCols)}
         </div>
-      ),
-    },
-    {
-      key: 'attendances',
-      label: `打卡记录 (${attendances.length})`,
-      content: renderTable(attendances, attendanceCols, (a: any) =>
-        navigate(`/monitor/attendance/detail/${a.id}`),
-      ),
-    },
-    {
-      key: 'leaves',
-      label: `请假 (${leaves.length})`,
-      content: renderTable(leaves, leaveCols, (l: any) =>
-        navigate(`/monitor/leaves/detail/${l.id}`),
-      ),
-    },
-    {
-      key: 'makeups',
-      label: `补卡 (${makeups.length})`,
-      content: renderTable(makeups, makeupCols, (m: any) =>
-        navigate(`/monitor/makeups/detail/${m.id}`),
-      ),
-    },
-    {
-      key: 'migrants',
-      label: `外出务工 (${migrants.length})`,
-      content: renderTable(migrants, migrantCols, (m: any) =>
-        navigate(`/monitor/migrant-works/detail/${m.id}`),
-      ),
-    },
-    {
-      key: 'residenceChanges',
-      label: `居住变更 (${residenceChanges.length})`,
-      content: renderTable(residenceChanges, residenceChangeCols, (c: any) =>
-        navigate(`/monitor/residence-changes/detail/${c.id}`),
-      ),
-    },
-    {
-      key: 'employmentChanges',
-      label: `工作变更 (${employmentChanges.length})`,
-      content: renderTable(employmentChanges, employmentChangeCols, (c: any) =>
-        navigate(`/monitor/employment-changes/detail/${c.id}`),
       ),
     },
   ];

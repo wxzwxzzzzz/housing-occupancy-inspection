@@ -139,7 +139,7 @@ const HousingAllocationDetail: React.FC = () => {
           label: '所属家庭',
           value: r.household ? `家庭#${String(r.household).slice(-6)}` : '-',
         },
-        { label: '项目名称', value: r.projectName ?? '-' },
+        { label: '地址', value: r.projectName ?? '-' },
         { label: '楼栋号', value: r.buildingNo ?? '-' },
         { label: '单元号', value: r.unitNo ?? '-' },
         { label: '房号', value: r.roomNo ?? '-' },

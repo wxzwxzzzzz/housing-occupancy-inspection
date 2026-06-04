@@ -120,7 +120,11 @@
       "Bash(sed -i 's/\\\\.btn-primary { background: #2563eb; color: #fff; }/\\\\.btn-go { background: #2563eb; color: #fff; }/' pages/index/index.vue)",
       "Bash(sed -i 's/\\\\.btn-secondary { background: #f3f4f6; color: #2563eb; }/\\\\.btn-done { background: #f1f5f9; color: #475569; }/' pages/index/index.vue)",
       "Bash(node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json)",
-      "Bash(npx @biomejs/biome lint src/components/LifecyclePanel.tsx src/stores/lifecyclePanelStore.ts)"
+      "Bash(npx @biomejs/biome lint src/components/LifecyclePanel.tsx src/stores/lifecyclePanelStore.ts)",
+      "Bash(npx @biomejs/biome lint --write --unsafe src/pages/Residents/ResidentDetail.tsx)",
+      "Bash(npx @biomejs/biome lint src/pages/Residents/ResidentDetail.tsx)",
+      "Bash(sed -i '315,505d' src/pages/Profile/HouseholdDetail.tsx)",
+      "Bash(sed -n '312,318p' src/pages/Profile/HouseholdDetail.tsx)"
     ],
     "deny": [],
     "ask": []
