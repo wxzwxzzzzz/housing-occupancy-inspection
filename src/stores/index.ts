@@ -4,6 +4,7 @@ import AppStore from './appStore';
 import ConfigStore from './configStore';
 import DashboardStore from './dashboardStore';
 import { dictStore } from './dictStore';
+import LifecyclePanelStore from './lifecyclePanelStore';
 import UserStore from './userStore';
 
 // 创建单例实例
@@ -13,8 +14,10 @@ export const alertStore = new AlertStore();
 export const configStore = new ConfigStore();
 export const dashboardStore = new DashboardStore();
 export const approvalPanelStore = new ApprovalPanelStore();
+export const lifecyclePanelStore = new LifecyclePanelStore();
 
 export type { ThemeMode } from './appStore';
+export type { LifecycleStep } from './lifecyclePanelStore';
 export {
   dictLabel,
   useEnumOptions,
@@ -27,6 +30,7 @@ export {
   ConfigStore,
   DashboardStore,
   dictStore,
+  LifecyclePanelStore,
   UserStore,
 };
 
@@ -38,5 +42,6 @@ export const useStores = () => ({
   configStore,
   dashboardStore,
   approvalPanelStore,
+  lifecyclePanelStore,
   dictStore,
 });

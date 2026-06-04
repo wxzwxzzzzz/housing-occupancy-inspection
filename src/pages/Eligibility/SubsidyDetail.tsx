@@ -6,7 +6,7 @@
 import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Modal, message, Skeleton, Tag } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   type DetailSection,
   type DetailTabItem,
@@ -17,6 +17,7 @@ import {
 import { rentalSubsidyService } from '@/services/domains/eligibility';
 import { invokeAction } from '@/services/ontology/client';
 import { OT } from '@/services/ontology/object-types';
+import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
 import { dictLabel } from '@/stores/dictStore';
 
 const StatusBadgeColor: Record<string, StatusBadge['color']> = {
@@ -26,6 +27,15 @@ const StatusBadgeColor: Record<string, StatusBadge['color']> = {
   SUBSIDY_TERMINATED: 'danger',
   SUBSIDY_EXPIRED: 'secondary',
 };
+
+/** 补贴状态机流程节点 */
+const SUBSIDY_LIFECYCLE_STEPS: LifecycleStep[] = [
+  { status: 'DRAFT', label: '草稿', kind: 'main', desc: '补贴方案录入,待提交生效' },
+  { status: 'SUBSIDY_ACTIVE', label: '发放中', kind: 'main', desc: '补贴正常按月发放' },
+  { status: 'SUBSIDY_SUSPENDED', label: '已暂停', kind: 'branch', desc: '暂停发放,可恢复' },
+  { status: 'SUBSIDY_EXPIRED', label: '已到期', kind: 'terminal', desc: '到达截止日期自动结束' },
+  { status: 'SUBSIDY_TERMINATED', label: '已终止', kind: 'terminal', desc: '提前终止,不可恢复' },
+];
 
 const RentalSubsidyDetail: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -39,6 +49,20 @@ const RentalSubsidyDetail: React.FC = () => {
     { refreshDeps: [id] },
   );
   const [busy, setBusy] = useState(false);
+
+  // 注入状态流程面板上下文 → 右侧 rail 显示「状态流程」入口并自动展开
+  const recordStatus = (data as any)?.status as string | undefined;
+  useEffect(() => {
+    if (data) {
+      lifecyclePanelStore.setContext(
+        '补贴状态流程',
+        SUBSIDY_LIFECYCLE_STEPS,
+        recordStatus,
+        'SubsidyStatus',
+      );
+    }
+    return () => lifecyclePanelStore.clear();
+  }, [data, recordStatus]);
 
   if (loading || !data) {
     return (

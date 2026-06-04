@@ -75,6 +75,7 @@ import {
   enumOptions,
   StatusColors,
 } from '@/utils/enum-options';
+import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
 import ResidentFencePanel from './ResidentFencePanel';
 
 function maskIdCard(idCard?: string): string {
@@ -118,6 +119,14 @@ function useListByResident<T>(
   );
 }
 
+const RESIDENT_LIFECYCLE_STEPS: LifecycleStep[] = [
+  { status: 'DRAFT', label: '草稿', kind: 'main', desc: '居民信息录入中' },
+  { status: 'UNVERIFIED', label: '待核验', kind: 'main', desc: '待实名/人脸核验' },
+  { status: 'VERIFIED', label: '已核验', kind: 'main', desc: '身份核验通过' },
+  { status: 'ACTIVATED', label: '已激活', kind: 'main', desc: '正式纳入监测' },
+  { status: 'ARCHIVED', label: '已归档', kind: 'terminal', desc: '退出保障,归档' },
+];
+
 const ResidentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -135,6 +144,20 @@ const ResidentDetail: React.FC = () => {
     return env.data as Resident;
   }, []);
   const { data, loading, reload } = useDetail(id, fetcher);
+
+  // 注入状态流程面板上下文 → 右侧 rail 显示「状态流程」并自动展开
+  const residentStatus = (data as any)?.status as string | undefined;
+  React.useEffect(() => {
+    if (data) {
+      lifecyclePanelStore.setContext(
+        '居民状态流程',
+        RESIDENT_LIFECYCLE_STEPS,
+        residentStatus,
+        'ResidentStatus',
+      );
+    }
+    return () => lifecyclePanelStore.clear();
+  }, [data, residentStatus]);
 
   // 子档案
   const { data: members = [] } = useListByResident<HouseholdMember>(

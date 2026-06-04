@@ -118,7 +118,9 @@
       "Bash(sed -n '355,395p' pages/index/index.vue)",
       "Bash(sed -i 's/:class=\"todayChecked ? '\\\\''btn-secondary'\\\\'' : '\\\\''btn-primary'\\\\''\"/:class=\"todayChecked ? '\\\\''btn-done'\\\\'' : '\\\\''btn-go'\\\\''\"/' pages/index/index.vue)",
       "Bash(sed -i 's/\\\\.btn-primary { background: #2563eb; color: #fff; }/\\\\.btn-go { background: #2563eb; color: #fff; }/' pages/index/index.vue)",
-      "Bash(sed -i 's/\\\\.btn-secondary { background: #f3f4f6; color: #2563eb; }/\\\\.btn-done { background: #f1f5f9; color: #475569; }/' pages/index/index.vue)"
+      "Bash(sed -i 's/\\\\.btn-secondary { background: #f3f4f6; color: #2563eb; }/\\\\.btn-done { background: #f1f5f9; color: #475569; }/' pages/index/index.vue)",
+      "Bash(node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json)",
+      "Bash(npx @biomejs/biome lint src/components/LifecyclePanel.tsx src/stores/lifecyclePanelStore.ts)"
     ],
     "deny": [],
     "ask": []

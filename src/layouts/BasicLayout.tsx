@@ -60,7 +60,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import ThemeSettings from '@/components/ThemeSettings';
 import ApprovalPanel from '../components/ApprovalPanel';
-import { approvalPanelStore, appStore, userStore } from '../stores';
+import LifecyclePanel from '../components/LifecyclePanel';
+import {
+  approvalPanelStore,
+  appStore,
+  lifecyclePanelStore,
+  userStore,
+} from '../stores';
 
 const { Header, Sider, Content } = Layout;
 
@@ -200,6 +206,8 @@ const TABS_STORAGE_KEY = 'app_tabs';
 const LEFT_RAIL_KEY = 'layout_left_rail_expanded';
 /** 右侧 rail 的「审批」特殊菜单 key */
 const APPROVAL_MENU_KEY = '__approval__';
+/** 右侧 rail 的「流程」特殊菜单 key(状态机生命周期) */
+const LIFECYCLE_MENU_KEY = '__lifecycle__';
 
 const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
   ({ children }) => {
@@ -222,6 +230,18 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apActive, apPending, apBizRef]);
+
+    // 状态流程面板自动展开:进入状态机详情页(补贴/配租)默认打开右侧流程面板
+    const lcActive = lifecyclePanelStore.active;
+    const lcStatus = lifecyclePanelStore.currentStatus;
+    useEffect(() => {
+      if (lcActive) {
+        setActiveQuickMenu(LIFECYCLE_MENU_KEY);
+      } else {
+        setActiveQuickMenu((cur) => (cur === LIFECYCLE_MENU_KEY ? null : cur));
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lcActive, lcStatus]);
 
     // 左侧主菜单 rail 展开/收起 — 收起时 56px 只显图标(rail 模式)
     const [leftExpanded, setLeftExpanded] = useState<boolean>(() => {
@@ -1323,7 +1343,12 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
               {/* 右侧快捷菜单子面板 — 点击 rail 图标弹出(首页不显示) */}
               {location.pathname !== '/dashboard' && activeQuickMenu && (
                 <Sider
-                  width={activeQuickMenu === APPROVAL_MENU_KEY ? 360 : 280}
+                  width={
+                    activeQuickMenu === APPROVAL_MENU_KEY ||
+                    activeQuickMenu === LIFECYCLE_MENU_KEY
+                      ? 360
+                      : 280
+                  }
                   theme={appStore.isDark ? 'dark' : 'light'}
                   style={{
                     background: 'var(--ant-color-bg-container)',
@@ -1353,8 +1378,10 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                     >
                       {activeQuickMenu === APPROVAL_MENU_KEY
                         ? '审批'
-                        : quickMenuGroups.find((g) => g.key === activeQuickMenu)
-                            ?.label}
+                        : activeQuickMenu === LIFECYCLE_MENU_KEY
+                          ? lifecyclePanelStore.title ?? '状态流程'
+                          : quickMenuGroups.find((g) => g.key === activeQuickMenu)
+                              ?.label}
                     </span>
                     <div
                       onClick={() => setActiveQuickMenu(null)}
@@ -1389,7 +1416,10 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                       height: 'calc(100vh - 26px - 36px - 48px)',
                       overflowY: 'auto',
                       padding:
-                        activeQuickMenu === APPROVAL_MENU_KEY ? 0 : '8px 8px',
+                        activeQuickMenu === APPROVAL_MENU_KEY ||
+                        activeQuickMenu === LIFECYCLE_MENU_KEY
+                          ? 0
+                          : '8px 8px',
                     }}
                   >
                     {activeQuickMenu === APPROVAL_MENU_KEY &&
@@ -1400,6 +1430,11 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                         bizRef={approvalPanelStore.bizRef as string}
                         status={approvalPanelStore.status}
                         onApproved={() => approvalPanelStore.onApproved?.()}
+                      />
+                    ) : activeQuickMenu === LIFECYCLE_MENU_KEY &&
+                      lifecyclePanelStore.active ? (
+                      <LifecyclePanel
+                        key={`lc-${lifecyclePanelStore.version}`}
                       />
                     ) : (
                       quickMenuGroups
@@ -1541,6 +1576,45 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                           }
                         >
                           <SafetyOutlined style={{ fontSize: 18 }} />
+                        </div>
+                      </Tooltip>
+                    )}
+                    {/* 流程入口 — 仅状态机详情页(补贴/配租)显示,默认高亮 */}
+                    {lifecyclePanelStore.active && (
+                      <Tooltip
+                        placement="left"
+                        title="状态流程"
+                        mouseEnterDelay={0.3}
+                      >
+                        <div
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 8,
+                            background:
+                              activeQuickMenu === LIFECYCLE_MENU_KEY
+                                ? `${appStore.primaryColor}15`
+                                : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            color:
+                              activeQuickMenu === LIFECYCLE_MENU_KEY
+                                ? appStore.primaryColor
+                                : 'var(--ant-color-text-tertiary)',
+                            marginBottom: 4,
+                          }}
+                          onClick={() =>
+                            setActiveQuickMenu(
+                              activeQuickMenu === LIFECYCLE_MENU_KEY
+                                ? null
+                                : LIFECYCLE_MENU_KEY,
+                            )
+                          }
+                        >
+                          <ApartmentOutlined style={{ fontSize: 18 }} />
                         </div>
                       </Tooltip>
                     )}

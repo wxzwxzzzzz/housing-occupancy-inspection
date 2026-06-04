@@ -47,6 +47,7 @@ import {
 import { invokeAction } from '@/services/ontology/client';
 import { OT } from '@/services/ontology/object-types';
 import { qb } from '@/services/ontology/query';
+import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
 import { dictLabel, dictStore } from '@/stores/dictStore';
 import type { EligibilityApplication } from '@/types/ontology/prh/entities/eligibility_application';
 import type { EligibilityTermination } from '@/types/ontology/prh/entities/eligibility_termination';
@@ -108,6 +109,13 @@ function useListByResident<T>(
   );
 }
 
+const HOUSEHOLD_LIFECYCLE_STEPS: LifecycleStep[] = [
+  { status: 'DRAFT', label: '草稿', kind: 'main', desc: '家庭信息录入中' },
+  { status: 'CANDIDATE', label: '轮候中', kind: 'main', desc: '已通过资质,等待配租/补贴' },
+  { status: 'ACTIVE', label: '生效中', kind: 'main', desc: '保障生效,正常监测' },
+  { status: 'ARCHIVED', label: '已归档', kind: 'terminal', desc: '退出保障,归档' },
+];
+
 const HouseholdDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -131,6 +139,20 @@ const HouseholdDetail: React.FC = () => {
     },
     { refreshDeps: [id] },
   );
+
+  // 注入状态流程面板上下文 → 右侧 rail 显示「状态流程」并自动展开
+  const householdStatus = (household as any)?.status as string | undefined;
+  React.useEffect(() => {
+    if (household) {
+      lifecyclePanelStore.setContext(
+        '家庭状态流程',
+        HOUSEHOLD_LIFECYCLE_STEPS,
+        householdStatus,
+        'HouseholdStatus',
+      );
+    }
+    return () => lifecyclePanelStore.clear();
+  }, [household, householdStatus]);
 
   // 家庭成员
   const { data: members = [] } = useListByHousehold<HouseholdMember>(

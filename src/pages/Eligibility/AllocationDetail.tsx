@@ -6,7 +6,7 @@
 import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Modal, message, Skeleton, Tag } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   type DetailSection,
   type DetailTabItem,
@@ -17,6 +17,7 @@ import {
 import { housingAllocationService } from '@/services/domains/eligibility';
 import { invokeAction } from '@/services/ontology/client';
 import { OT } from '@/services/ontology/object-types';
+import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
 import { dictLabel, dictStore } from '@/stores/dictStore';
 
 const StatusBadgeColor: Record<string, StatusBadge['color']> = {
@@ -25,6 +26,14 @@ const StatusBadgeColor: Record<string, StatusBadge['color']> = {
   ALLOC_TERMINATED: 'danger',
   ALLOC_EXPIRED: 'warning',
 };
+
+/** 配租状态机流程节点 */
+const ALLOCATION_LIFECYCLE_STEPS: LifecycleStep[] = [
+  { status: 'DRAFT', label: '草稿', kind: 'main', desc: '配租方案录入,待提交生效' },
+  { status: 'ALLOC_ACTIVE', label: '生效中', kind: 'main', desc: '配租正常生效,租赁进行中' },
+  { status: 'ALLOC_EXPIRED', label: '已到期', kind: 'terminal', desc: '租赁到期自动结束' },
+  { status: 'ALLOC_TERMINATED', label: '已终止', kind: 'terminal', desc: '提前终止配租' },
+];
 
 const HousingAllocationDetail: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
@@ -38,6 +47,20 @@ const HousingAllocationDetail: React.FC = () => {
     { refreshDeps: [id] },
   );
   const [terminating, setTerminating] = useState(false);
+
+  // 注入状态流程面板上下文 → 右侧 rail 显示「状态流程」入口并自动展开
+  const recordStatus = (data as any)?.status as string | undefined;
+  useEffect(() => {
+    if (data) {
+      lifecyclePanelStore.setContext(
+        '配租状态流程',
+        ALLOCATION_LIFECYCLE_STEPS,
+        recordStatus,
+        'AllocationStatus',
+      );
+    }
+    return () => lifecyclePanelStore.clear();
+  }, [data, recordStatus]);
 
   if (loading || !data) {
     return (
