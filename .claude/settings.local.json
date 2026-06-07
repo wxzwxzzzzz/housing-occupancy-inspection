@@ -124,7 +124,13 @@
       "Bash(npx @biomejs/biome lint --write --unsafe src/pages/Residents/ResidentDetail.tsx)",
       "Bash(npx @biomejs/biome lint src/pages/Residents/ResidentDetail.tsx)",
       "Bash(sed -i '315,505d' src/pages/Profile/HouseholdDetail.tsx)",
-      "Bash(sed -n '312,318p' src/pages/Profile/HouseholdDetail.tsx)"
+      "Bash(sed -n '312,318p' src/pages/Profile/HouseholdDetail.tsx)",
+      "Bash(echo \"errors: $\\(node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json 2>&1)",
+      "Bash(sed -n '/const tabs: DetailTabItem/,/];/p' src/pages/Eligibility/AllocationDetail.tsx)",
+      "Bash(sed -n '/const tabs: DetailTabItem/,/];/p' src/pages/Eligibility/SubsidyDetail.tsx)",
+      "Bash(npx @biomejs/biome lint src/pages/Eligibility/AllocationDetail.tsx src/pages/Eligibility/SubsidyDetail.tsx)",
+      "Bash(npx @biomejs/biome lint --write --unsafe src/pages/Eligibility/AllocationDetail.tsx)",
+      "Bash(npx @biomejs/biome lint src/pages/Monitor/MemberChangeDetail.tsx)"
     ],
     "deny": [],
     "ask": []

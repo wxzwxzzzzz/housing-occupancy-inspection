@@ -51,6 +51,8 @@ export interface ApplicationDetailPageProps<T = Record<string, any>> {
   buildSections: (record: any) => DetailSection[];
   /** 额外的 Tab(如附件 / 关联记录) */
   buildTabs?: (record: any) => DetailTabItem[];
+  /** 隐藏中间 Tab 区域(连默认的审批流程时间线也不显示) */
+  hideTabs?: boolean;
   /** 默认 tabKey */
   defaultTabKey?: string;
   /** 是否允许审批通过/驳回(默认 true) */
@@ -84,6 +86,7 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
     listPath,
     buildSections,
     buildTabs,
+    hideTabs,
     defaultTabKey,
     allowCancel = true,
     extraHeaderActions,
@@ -231,9 +234,11 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
     ),
   };
 
-  const tabs: DetailTabItem[] = buildTabs
-    ? [timelineTab, ...buildTabs(r)]
-    : [timelineTab];
+  const tabs: DetailTabItem[] = hideTabs
+    ? []
+    : buildTabs
+      ? [timelineTab, ...buildTabs(r)]
+      : [timelineTab];
 
   return (
     <OmnibarDetailPage

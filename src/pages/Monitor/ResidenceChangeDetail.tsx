@@ -11,6 +11,7 @@ const ResidenceChangeDetail: React.FC = () => (
     objectType={OT.ResidenceChange}
     service={residenceChangeService as any}
     listPath="/monitor/residence-changes"
+    hideTabs
     buildSections={(r) => [
       {
         key: 'base',

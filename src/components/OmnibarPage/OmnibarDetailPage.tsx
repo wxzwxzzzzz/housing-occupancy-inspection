@@ -172,13 +172,15 @@ const OmnibarDetailPage: React.FC<OmnibarDetailPageProps> = ({
         </DetailSections>
       )}
 
-      <DetailTabs
-        tabs={tabs}
-        defaultActiveKey={defaultTabKey}
-        activeKey={activeTabKey}
-        onChange={onTabChange}
-        actions={tabActions}
-      />
+      {tabs.length > 0 && (
+        <DetailTabs
+          tabs={tabs}
+          defaultActiveKey={defaultTabKey}
+          activeKey={activeTabKey}
+          onChange={onTabChange}
+          actions={tabActions}
+        />
+      )}
 
       {footerFields && footerFields.length > 0 && <DetailFooter fields={footerFields} />}
     </div>

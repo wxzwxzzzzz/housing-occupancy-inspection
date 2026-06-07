@@ -11,6 +11,7 @@ const MigrantWorkDetail: React.FC = () => (
     objectType={OT.MigrantWork}
     service={migrantWorkService as any}
     listPath="/monitor/migrant-works"
+    hideTabs
     buildSections={(r) => [
       {
         key: 'base',

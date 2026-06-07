@@ -1,5 +1,5 @@
 import { ScheduleOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Form, Modal, message } from 'antd';
+import { DatePicker, Form, Modal, message } from 'antd';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
 import ApplicationDetailPage from '@/components/ApplicationDetailPage';
@@ -7,6 +7,12 @@ import { eligibilityApplicationService } from '@/services/domains/eligibility';
 import { OT } from '@/services/ontology/object-types';
 import { dictLabel } from '@/stores/dictStore';
 import type { EligibilityApplication } from '@/types/ontology/prh/entities/eligibility_application';
+import {
+  FamilyEmploymentsTab,
+  FamilyIncomesTab,
+  FamilyMembersTab,
+  FamilyResidencesTab,
+} from './ApplicationFamilyTabs';
 
 const EligibilityApplicationDetail: React.FC = () => {
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -98,6 +104,31 @@ const EligibilityApplicationDetail: React.FC = () => {
             ],
           },
         ]}
+        buildTabs={(r) => {
+          const householdId = r.household ? String(r.household) : undefined;
+          return [
+            {
+              key: 'members',
+              label: '家庭成员',
+              content: <FamilyMembersTab householdId={householdId} />,
+            },
+            {
+              key: 'residences',
+              label: '居住信息',
+              content: <FamilyResidencesTab householdId={householdId} />,
+            },
+            {
+              key: 'employments',
+              label: '工作信息',
+              content: <FamilyEmploymentsTab householdId={householdId} />,
+            },
+            {
+              key: 'incomes',
+              label: '个人收入',
+              content: <FamilyIncomesTab householdId={householdId} />,
+            },
+          ];
+        }}
       />
 
       <Modal

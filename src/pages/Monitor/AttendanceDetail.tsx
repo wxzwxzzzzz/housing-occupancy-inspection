@@ -12,6 +12,7 @@ import {
   type DetailTabItem,
   type StatusBadge,
 } from '@/components/OmnibarPage';
+import { FaceTab, LocationMapTab } from './AttendanceFaceMapTabs';
 
 function getStatusBadge(status: string | undefined): StatusBadge {
   const map: Record<string, StatusBadge['color']> = {
@@ -123,9 +124,14 @@ const AttendanceDetail: React.FC = () => {
 
   const tabs: DetailTabItem[] = [
     {
-      key: 'detail',
-      label: '打卡详情',
-      content: <div style={{ padding: 16, color: '#595959' }}>详细打卡轨迹/人脸照片等数据</div>,
+      key: 'face',
+      label: '人脸',
+      content: <FaceTab face={r.face} />,
+    },
+    {
+      key: 'map',
+      label: '地图',
+      content: <LocationMapTab location={r.location} />,
     },
   ];
 

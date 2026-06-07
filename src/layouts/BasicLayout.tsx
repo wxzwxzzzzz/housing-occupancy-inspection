@@ -536,16 +536,6 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
               icon: iconMap['check-circle'],
               label: <Link to="/monitor/attendance">考勤打卡</Link>,
             },
-            {
-              key: '/monitor/alert-list',
-              icon: iconMap['warning'],
-              label: <Link to="/monitor/alert-list">预警列表</Link>,
-            },
-            {
-              key: '/monitor/alert',
-              icon: iconMap['warning'],
-              label: <Link to="/monitor/alert">预警处置</Link>,
-            },
           ],
         },
         {
@@ -873,11 +863,6 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
             label: '外出务工',
             path: '/monitor/migrant-works',
             icon: <RocketOutlined />,
-          },
-          {
-            label: '预警处置',
-            path: '/monitor/alert',
-            icon: <WarningOutlined />,
           },
         ],
       },

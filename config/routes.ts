@@ -214,12 +214,14 @@ export default [
             name: '预警列表',
             icon: 'alert',
             component: './Monitor/AlertList',
+            hideInMenu: true,
           },
           {
             path: '/monitor/alert',
             name: '预警处置',
             icon: 'warning',
             component: './Monitor/Alert',
+            hideInMenu: true,
           },
           {
             path: '/monitor/alert/detail/:id',

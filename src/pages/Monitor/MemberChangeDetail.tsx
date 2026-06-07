@@ -4,6 +4,12 @@ import { householdMemberChangeService } from '@/services/domains/change';
 import { OT } from '@/services/ontology/object-types';
 import { dictLabel } from '@/stores/dictStore';
 import type { HouseholdMemberChange } from '@/types/ontology/prh/entities/household_member_change';
+import {
+  FamilyEmploymentsTab,
+  FamilyIncomesTab,
+  FamilyMembersTab,
+  FamilyResidencesTab,
+} from '@/pages/Eligibility/ApplicationFamilyTabs';
 
 const MemberChangeDetail: React.FC = () => (
   <ApplicationDetailPage<HouseholdMemberChange>
@@ -32,6 +38,31 @@ const MemberChangeDetail: React.FC = () => (
         ],
       },
     ]}
+    buildTabs={(r) => {
+      const householdId = r.household ? String(r.household) : undefined;
+      return [
+        {
+          key: 'members',
+          label: '家庭成员',
+          content: <FamilyMembersTab householdId={householdId} />,
+        },
+        {
+          key: 'residences',
+          label: '居住信息',
+          content: <FamilyResidencesTab householdId={householdId} />,
+        },
+        {
+          key: 'employments',
+          label: '工作信息',
+          content: <FamilyEmploymentsTab householdId={householdId} />,
+        },
+        {
+          key: 'incomes',
+          label: '个人收入',
+          content: <FamilyIncomesTab householdId={householdId} />,
+        },
+      ];
+    }}
   />
 );
 

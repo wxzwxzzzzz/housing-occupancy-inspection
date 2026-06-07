@@ -11,6 +11,7 @@ const EmploymentChangeDetail: React.FC = () => (
     objectType={OT.EmploymentChange}
     service={employmentChangeService as any}
     listPath="/monitor/employment-changes"
+    hideTabs
     buildSections={(r) => [
       {
         key: 'base',

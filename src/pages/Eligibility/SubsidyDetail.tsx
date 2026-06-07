@@ -19,6 +19,12 @@ import { invokeAction } from '@/services/ontology/client';
 import { OT } from '@/services/ontology/object-types';
 import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
 import { dictLabel } from '@/stores/dictStore';
+import {
+  FamilyEmploymentsTab,
+  FamilyIncomesTab,
+  FamilyMembersTab,
+  FamilyResidencesTab,
+} from './ApplicationFamilyTabs';
 
 const StatusBadgeColor: Record<string, StatusBadge['color']> = {
   DRAFT: 'secondary',
@@ -74,6 +80,7 @@ const RentalSubsidyDetail: React.FC = () => {
 
   const r = data as any;
   const status = r.status;
+  const householdId = r.household ? String(r.household) : undefined;
 
   const callAction = async (
     action: 'submit' | 'unsubmit' | 'suspend' | 'resume' | 'terminate',
@@ -180,6 +187,26 @@ const RentalSubsidyDetail: React.FC = () => {
           补贴详情。可暂停 / 恢复 / 终止;到期会自动转为已到期。
         </div>
       ),
+    },
+    {
+      key: 'members',
+      label: '家庭成员',
+      content: <FamilyMembersTab householdId={householdId} />,
+    },
+    {
+      key: 'residences',
+      label: '居住信息',
+      content: <FamilyResidencesTab householdId={householdId} />,
+    },
+    {
+      key: 'employments',
+      label: '工作信息',
+      content: <FamilyEmploymentsTab householdId={householdId} />,
+    },
+    {
+      key: 'incomes',
+      label: '个人收入',
+      content: <FamilyIncomesTab householdId={householdId} />,
     },
   ];
 

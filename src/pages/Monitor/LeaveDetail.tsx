@@ -1,8 +1,7 @@
 import React from 'react';
 import ApplicationDetailPage from '@/components/ApplicationDetailPage';
-import AttachmentTab from '@/components/AttachmentTab';
 import ResidentLink from '@/components/ResidentLink';
-import { leaveAttachmentService, leaveService } from '@/services/domains/leave';
+import { leaveService } from '@/services/domains/leave';
 import { OT } from '@/services/ontology/object-types';
 import type { Leave } from '@/types/ontology/prh/entities/leave';
 
@@ -12,6 +11,7 @@ const LeaveDetail: React.FC = () => (
     objectType={OT.Leave}
     service={leaveService as any}
     listPath="/monitor/leaves"
+    hideTabs
     buildSections={(r) => [
       {
         key: 'base',
@@ -35,20 +35,6 @@ const LeaveDetail: React.FC = () => (
           { label: '结束日期', value: r.endDate ?? '-' },
           { label: '请假原因', value: r.reason ?? '-' },
         ],
-      },
-    ]}
-    buildTabs={(r) => [
-      {
-        key: 'attachments',
-        label: '附件',
-        content: (
-          <AttachmentTab
-            service={leaveAttachmentService as any}
-            ownerField="leave"
-            ownerId={r.id}
-            readonly={r.status !== 'DRAFT' && r.status !== 'UNDER_APPROVAL'}
-          />
-        ),
       },
     ]}
   />
