@@ -1257,7 +1257,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 flex: 1,
                 minHeight: 0,
                 position: 'relative',
-                padding: '10px 10px 10px 10px',
+                padding: '10px 0px 10px 0px',
                 background: 'var(--ant-color-bg-layout)',
               }}
             >
@@ -1270,6 +1270,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                 style={{
                   overflow: 'auto',
                   transition: 'width .2s cubic-bezier(.2,.8,.2,1)',
+                  borderRadius: 12,
                 }}
               >
                 <Menu
@@ -1338,6 +1339,8 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   style={{
                     background: 'var(--ant-color-bg-container)',
                     borderLeft: '1px solid var(--ant-color-border-secondary)',
+                    borderRadius: 12,
+                    overflow: 'hidden',
                   }}
                 >
                   {/* 面板头部 — 紧凑纯白 */}
@@ -1510,6 +1513,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                     background: 'var(--ant-color-bg-container)',
                     borderLeft: '1px solid var(--ant-color-border-secondary)',
                     flex: '0 0 auto',
+                    borderRadius: 12,
                   }}
                 >
                   <div
