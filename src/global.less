@@ -127,10 +127,11 @@ ol {
  * PC 大屏视觉间距统一:行高 / Card 边距
  *
  * 用户场景仅 PC + 大屏平板,信息密度可以适当拉开。
- * - 表格行高从默认 ~54px 提升到 ~58px(数据行更易读)
+ * - 表体行高从默认 ~54px 提升到 ~58px(数据行更易读)
+ * - 表头不受此规则影响,保持紧凑(由各表头样式单独控制)
  * - Card 内 padding 保持 antd 默认 24,Card 之间间距统一 20
  */
-.ant-table-cell {
+.ant-table-tbody > tr > td.ant-table-cell {
   padding-top: 16px !important;
   padding-bottom: 16px !important;
 }
@@ -362,13 +363,15 @@ html[data-theme='dark'] body {
 /* ============ 全局表格表头样式(对齐 OMS 原型 Tabler thead)============ */
 /* 让未走 OmnibarPage 的 antd Table 表头也统一:浅灰底 + 小号 + 弱灰字 */
 .ant-table-thead > tr > th {
-  background: #ebedf0 !important;
-  color: rgba(0, 0, 0, 0.55) !important;
+  background: #f9fafb !important;
+  color: rgba(0, 0, 0, 0.45) !important;
   font-size: 12px !important;
   font-weight: 500 !important;
   letter-spacing: 0.04em !important;
   line-height: 16px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid #e5e8ec !important;
 }
 /* 暗色模式 */
 [data-theme='dark'] .ant-table-thead > tr > th,

@@ -495,23 +495,18 @@
   // 用 body 前缀提优先级,所有 selector 展平,避免 less 嵌套编译歧义
   // ============================================================
 
-  // ---------- 表头(加深底色 + 双重底边,跟卡片白底拉开层次) ----------
+  // ---------- 表头(浅灰底 + 细底边,跟卡片白底拉开层次) ----------
   body .dashboard-container .ant-table-wrapper .ant-table-thead > tr > th {
-    background: #ebedf0 !important;
-    color: rgba(0, 0, 0, 0.55) !important;
+    background: #f9fafb !important;
+    color: rgba(0, 0, 0, 0.45) !important;
     font-size: 12px !important;
     font-weight: 500 !important;
     letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
     line-height: 16px !important;
-    padding: 10px 12px !important;
+    padding: 8px 12px !important;
     white-space: nowrap !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.12) !important;
-    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.04) !important;
-  }
-  body .dashboard-container .ant-table-wrapper .ant-table-thead > tr > th:last-child {
-    border-right: 0 !important;
+    border-bottom: 1px solid #e5e8ec !important;
   }
   // 抹掉 antd 默认的列分隔伪元素
   body .dashboard-container .ant-table-wrapper .ant-table-thead > tr > th::before {
@@ -526,7 +521,7 @@
     color: rgba(0, 0, 0, 0.85) !important;
     font-size: 13px !important;
     padding: 12px 12px !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-bottom: 1px solid #f0f1f3 !important;
   }
   // size="small" 时减 padding
   body .dashboard-container .ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
