@@ -32,7 +32,7 @@ export interface ApprovalFlow
   createTime?: string;
   /** 流程说明 */
   description?: string;
-  /** LogicFlow 图数据 { nodes, edges } */
-  graph?: { nodes: any[]; edges: any[] };
+  /** 流程图数据(X6 toJSON 的 { cells } 结构;旧数据可能为 LogicFlow 的 { nodes, edges }) */
+  graph?: Record<string, any>;
   [key: string]: unknown;
 }

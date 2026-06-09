@@ -1,0 +1,305 @@
+/**
+ * 钉钉式审批链 — 样式
+ * 竖向居中布局,节点卡片之间用竖线连接,+ 号悬浮在连线中点。
+ * 条件分支横向分列,列之间上下用横线连接成"川"字。
+ */
+
+.acd {
+  --acd-primary: #1d4ed8;
+  --acd-line: #d0d5dd;
+  --acd-bg: #f5f6f8;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 64px;
+  background: var(--acd-bg);
+  min-height: 560px;
+  overflow: auto;
+
+  // 竖向链:每个 wrapper 顶部用伪元素画连接线
+  &-chain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  // 节点 + 其后的"加号/连线"作为一个单元
+  &-node-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  // 节点之间的连线 + 加号
+  &-connector {
+    width: 2px;
+    height: 40px;
+    background: var(--acd-line);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &-add-btn {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--acd-line);
+    color: var(--acd-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    transition: all 0.15s;
+    z-index: 2;
+
+    &:hover {
+      background: var(--acd-primary);
+      color: #fff;
+      border-color: var(--acd-primary);
+      transform: scale(1.15);
+    }
+  }
+
+  // ---- 节点卡片 ----
+  &-card {
+    width: 260px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid transparent;
+    cursor: pointer;
+    overflow: hidden;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    position: relative;
+
+    &:hover {
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      .acd-card-del {
+        opacity: 1;
+      }
+    }
+
+    &.is-selected {
+      border-color: var(--acd-primary);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+    }
+
+    // 顶部色条 + 标题
+    &-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+
+      .acd-card-icon {
+        font-size: 14px;
+      }
+    }
+
+    &-body {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #1f2733;
+      min-height: 20px;
+      line-height: 1.6;
+      word-break: break-all;
+
+      .acd-placeholder {
+        color: #98a2b3;
+      }
+    }
+
+    &-tag {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 0 8px;
+      height: 22px;
+      line-height: 22px;
+      background: #eef2ff;
+      color: var(--acd-primary);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    &-meta {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #667085;
+    }
+
+    // 删除按钮
+    &-del {
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid var(--acd-line);
+      color: #98a2b3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.15s;
+      z-index: 3;
+
+      &:hover {
+        color: #fff;
+        background: #f04438;
+        border-color: #f04438;
+      }
+    }
+  }
+
+  // 头部配色按类型
+  &-card.type-start .acd-card-head {
+    background: #16a34a;
+  }
+  &-card.type-approval .acd-card-head {
+    background: var(--acd-primary);
+  }
+  &-card.type-cc .acd-card-head {
+    background: #0891b2;
+  }
+  &-card.type-end .acd-card-head {
+    background: #64748b;
+  }
+
+  // ---- 条件分支 ----
+  &-condition {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &-branches {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+
+  &-branch-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px;
+    position: relative;
+
+    // 顶部横线:跨整列宽度
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--acd-line);
+    }
+    // 首列:只保留右半段横线
+    &:first-child::before {
+      left: 50%;
+    }
+    // 末列:只保留左半段横线
+    &:last-child::before {
+      right: 50%;
+    }
+    // 单列时不画横线
+    &:only-child::before {
+      display: none;
+    }
+    // 每列顶部竖线:从横线垂到分支标题
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 20px;
+      background: var(--acd-line);
+      transform: translateX(-50%);
+    }
+  }
+
+  // 分支标题条
+  &-branch-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--acd-line);
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #1f2733;
+    white-space: nowrap;
+    cursor: pointer;
+    max-width: 240px;
+
+    .acd-branch-name {
+      font-weight: 600;
+    }
+    .acd-branch-expr {
+      color: #667085;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .acd-branch-prio {
+      color: #98a2b3;
+      font-size: 12px;
+    }
+
+    &:hover .acd-branch-del {
+      opacity: 1;
+    }
+    .acd-branch-del {
+      opacity: 0;
+      color: #98a2b3;
+      transition: 0.15s;
+      &:hover {
+        color: #f04438;
+      }
+    }
+  }
+
+  &-add-branch {
+    align-self: center;
+    margin: 0 8px;
+  }
+
+  // 条件分支节点本身的小标识(菱形/分流图标)
+  &-cond-entry {
+    width: 140px;
+    background: #fff;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    color: #7c3aed;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    &:hover {
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.18);
+    }
+  }
+}

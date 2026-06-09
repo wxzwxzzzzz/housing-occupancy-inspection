@@ -1,26 +1,26 @@
 import {
+  ApartmentOutlined,
   ArrowLeftOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
-  FullscreenOutlined,
   PlusOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import LogicFlow from '@logicflow/core';
 import {
   Button,
   Card,
   Descriptions,
+  Form,
+  Input,
   Modal,
   message,
   Select,
   Space,
   Tag,
 } from 'antd';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import '@logicflow/core/dist/index.css';
 import type { ColumnsType } from 'antd/es/table';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   type FilterConfig,
   OmnibarListPage,
@@ -28,13 +28,17 @@ import {
 } from '@/components/OmnibarPage';
 import { approvalFlowService } from '@/services/domains/approval-flow';
 import type { ApprovalFlow } from '@/types/ontology/prh/entities/approval_flow';
-import WorkflowEditor from './WorkflowEditor';
+import ApprovalChainDesigner from './ApprovalChainDesigner';
+import { defaultChainFor } from './ApprovalChainDesigner/templates';
+import {
+  type ApprovalChainGraph,
+  isApprovalChainGraph,
+} from './ApprovalChainDesigner/types';
 
 interface WorkflowItem {
   key: string;
   id?: string;
   name: string;
-  version: string;
   status: string;
   creator: string;
   createTime: string;
@@ -42,15 +46,20 @@ interface WorkflowItem {
 }
 
 const ApprovalWorkflow: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lfRef = useRef<LogicFlow | null>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>('material');
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'detail' | 'edit'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'detail' | 'design'>(
+    'list',
+  );
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [currentEditItem, setCurrentEditItem] = useState<WorkflowItem | null>(
     null,
   );
+  // 流程元数据 新建/编辑 Modal
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [saving, setSaving] = useState(false);
+  const [metaForm] = Form.useForm();
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -88,410 +97,11 @@ const ApprovalWorkflow: React.FC = () => {
     return map;
   }, [flows]);
 
-  // 流程图默认模板(LogicFlow 图设计内容;后端补 graph 字段后改读 flow.graph)
-  const DEFAULT_GRAPHS: Record<string, any> = {
-    material: {
-      nodes: [
-        {
-          id: 'node_1',
-          type: 'rect',
-          x: 150,
-          y: 80,
-          text: '提交材料',
-          properties: {
-            role: '保障户',
-            description: '上传身份证、房产证等材料',
-          },
-        },
-        {
-          id: 'node_2',
-          type: 'rect',
-          x: 150,
-          y: 180,
-          text: '初审',
-          properties: {
-            role: '初审员',
-            description: '检查材料完整性',
-          },
-        },
-        {
-          id: 'node_3',
-          type: 'diamond',
-          x: 150,
-          y: 280,
-          text: '初审通过?',
-        },
-        {
-          id: 'node_4',
-          type: 'rect',
-          x: 350,
-          y: 280,
-          text: '退回修改',
-          properties: {
-            role: '系统',
-            description: '通知保障户修改材料',
-          },
-        },
-        {
-          id: 'node_5',
-          type: 'rect',
-          x: 150,
-          y: 380,
-          text: '复审',
-          properties: {
-            role: '复审员',
-            description: '核实材料真实性',
-          },
-        },
-        {
-          id: 'node_6',
-          type: 'diamond',
-          x: 150,
-          y: 480,
-          text: '复审通过?',
-        },
-        {
-          id: 'node_7',
-          type: 'rect',
-          x: 150,
-          y: 580,
-          text: '终审',
-          properties: {
-            role: '审批主管',
-            description: '最终审批决策',
-          },
-        },
-        {
-          id: 'node_8',
-          type: 'rect',
-          x: 150,
-          y: 680,
-          text: '审批完成',
-          properties: {
-            role: '系统',
-            description: '更新审批状态',
-          },
-        },
-      ],
-      edges: [
-        {
-          id: 'edge_1',
-          type: 'polyline',
-          sourceNodeId: 'node_1',
-          targetNodeId: 'node_2',
-        },
-        {
-          id: 'edge_2',
-          type: 'polyline',
-          sourceNodeId: 'node_2',
-          targetNodeId: 'node_3',
-        },
-        {
-          id: 'edge_3',
-          type: 'polyline',
-          sourceNodeId: 'node_3',
-          targetNodeId: 'node_4',
-          text: '不通过',
-        },
-        {
-          id: 'edge_4',
-          type: 'polyline',
-          sourceNodeId: 'node_4',
-          targetNodeId: 'node_1',
-          text: '重新提交',
-        },
-        {
-          id: 'edge_5',
-          type: 'polyline',
-          sourceNodeId: 'node_3',
-          targetNodeId: 'node_5',
-          text: '通过',
-        },
-        {
-          id: 'edge_6',
-          type: 'polyline',
-          sourceNodeId: 'node_5',
-          targetNodeId: 'node_6',
-        },
-        {
-          id: 'edge_7',
-          type: 'polyline',
-          sourceNodeId: 'node_6',
-          targetNodeId: 'node_4',
-          text: '不通过',
-        },
-        {
-          id: 'edge_8',
-          type: 'polyline',
-          sourceNodeId: 'node_6',
-          targetNodeId: 'node_7',
-          text: '通过',
-        },
-        {
-          id: 'edge_9',
-          type: 'polyline',
-          sourceNodeId: 'node_7',
-          targetNodeId: 'node_8',
-        },
-      ],
-    },
-    leave: {
-      nodes: [
-        {
-          id: 'node_1',
-          type: 'rect',
-          x: 150,
-          y: 80,
-          text: '提交请假申请',
-          properties: {
-            role: '保障户',
-            description: '填写请假时间和原因',
-          },
-        },
-        {
-          id: 'node_2',
-          type: 'diamond',
-          x: 150,
-          y: 180,
-          text: '请假天数>3天?',
-        },
-        {
-          id: 'node_3',
-          type: 'rect',
-          x: 350,
-          y: 180,
-          text: '自动通过',
-          properties: {
-            role: '系统',
-            description: '3天以内自动批准',
-          },
-        },
-        {
-          id: 'node_4',
-          type: 'rect',
-          x: 150,
-          y: 280,
-          text: '主管审批',
-          properties: {
-            role: '审批主管',
-            description: '审核请假理由',
-          },
-        },
-        {
-          id: 'node_5',
-          type: 'diamond',
-          x: 150,
-          y: 380,
-          text: '审批通过?',
-        },
-        {
-          id: 'node_6',
-          type: 'rect',
-          x: 350,
-          y: 380,
-          text: '驳回申请',
-          properties: {
-            role: '系统',
-            description: '通知保障户',
-          },
-        },
-        {
-          id: 'node_7',
-          type: 'rect',
-          x: 150,
-          y: 480,
-          text: '审批完成',
-          properties: {
-            role: '系统',
-            description: '更新请假记录',
-          },
-        },
-      ],
-      edges: [
-        {
-          id: 'edge_1',
-          type: 'polyline',
-          sourceNodeId: 'node_1',
-          targetNodeId: 'node_2',
-        },
-        {
-          id: 'edge_2',
-          type: 'polyline',
-          sourceNodeId: 'node_2',
-          targetNodeId: 'node_3',
-          text: '否',
-        },
-        {
-          id: 'edge_3',
-          type: 'polyline',
-          sourceNodeId: 'node_3',
-          targetNodeId: 'node_7',
-        },
-        {
-          id: 'edge_4',
-          type: 'polyline',
-          sourceNodeId: 'node_2',
-          targetNodeId: 'node_4',
-          text: '是',
-        },
-        {
-          id: 'edge_5',
-          type: 'polyline',
-          sourceNodeId: 'node_4',
-          targetNodeId: 'node_5',
-        },
-        {
-          id: 'edge_6',
-          type: 'polyline',
-          sourceNodeId: 'node_5',
-          targetNodeId: 'node_6',
-          text: '不通过',
-        },
-        {
-          id: 'edge_7',
-          type: 'polyline',
-          sourceNodeId: 'node_5',
-          targetNodeId: 'node_7',
-          text: '通过',
-        },
-      ],
-    },
-    filing: {
-      nodes: [
-        {
-          id: 'node_1',
-          type: 'rect',
-          x: 150,
-          y: 80,
-          text: '提交备案申请',
-          properties: {
-            role: '保障户',
-            description: '填写外出时间和地址',
-          },
-        },
-        {
-          id: 'node_2',
-          type: 'rect',
-          x: 150,
-          y: 180,
-          text: '系统校验',
-          properties: {
-            role: '系统',
-            description: '检查备案信息完整性',
-          },
-        },
-        {
-          id: 'node_3',
-          type: 'diamond',
-          x: 150,
-          y: 280,
-          text: '信息完整?',
-        },
-        {
-          id: 'node_4',
-          type: 'rect',
-          x: 350,
-          y: 280,
-          text: '退回补充',
-          properties: {
-            role: '系统',
-            description: '提示缺失信息',
-          },
-        },
-        {
-          id: 'node_5',
-          type: 'rect',
-          x: 150,
-          y: 380,
-          text: '审核备案',
-          properties: {
-            role: '审核员',
-            description: '审核备案合理性',
-          },
-        },
-        {
-          id: 'node_6',
-          type: 'diamond',
-          x: 150,
-          y: 480,
-          text: '审核通过?',
-        },
-        {
-          id: 'node_7',
-          type: 'rect',
-          x: 150,
-          y: 580,
-          text: '备案完成',
-          properties: {
-            role: '系统',
-            description: '生成地理围栏',
-          },
-        },
-      ],
-      edges: [
-        {
-          id: 'edge_1',
-          type: 'polyline',
-          sourceNodeId: 'node_1',
-          targetNodeId: 'node_2',
-        },
-        {
-          id: 'edge_2',
-          type: 'polyline',
-          sourceNodeId: 'node_2',
-          targetNodeId: 'node_3',
-        },
-        {
-          id: 'edge_3',
-          type: 'polyline',
-          sourceNodeId: 'node_3',
-          targetNodeId: 'node_4',
-          text: '否',
-        },
-        {
-          id: 'edge_4',
-          type: 'polyline',
-          sourceNodeId: 'node_4',
-          targetNodeId: 'node_1',
-          text: '重新提交',
-        },
-        {
-          id: 'edge_5',
-          type: 'polyline',
-          sourceNodeId: 'node_3',
-          targetNodeId: 'node_5',
-          text: '是',
-        },
-        {
-          id: 'edge_6',
-          type: 'polyline',
-          sourceNodeId: 'node_5',
-          targetNodeId: 'node_6',
-        },
-        {
-          id: 'edge_7',
-          type: 'polyline',
-          sourceNodeId: 'node_6',
-          targetNodeId: 'node_4',
-          text: '不通过',
-        },
-        {
-          id: 'edge_8',
-          type: 'polyline',
-          sourceNodeId: 'node_6',
-          targetNodeId: 'node_7',
-          text: '通过',
-        },
-      ],
-    },
-  };
-
   // 准备表格数据(由 service 加载的 flows 派生,key = flowKey)
   const workflowList: WorkflowItem[] = flows.map((f) => ({
     key: f.flowKey,
     id: f.id,
     name: f.name,
-    version: f.version,
     status: f.status,
     creator: f.creatorName ?? '',
     createTime: f.createTime ?? '',
@@ -505,13 +115,6 @@ const ApprovalWorkflow: React.FC = () => {
       dataIndex: 'name',
       key: 'name',
       width: 200,
-    },
-    {
-      title: '版本',
-      dataIndex: 'version',
-      key: 'version',
-      width: 100,
-      render: (version: string) => <Tag color="blue">{version}</Tag>,
     },
     {
       title: '状态',
@@ -543,7 +146,7 @@ const ApprovalWorkflow: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 220,
+      width: 280,
       fixed: 'right',
       render: (_: any, record: WorkflowItem) => (
         <span className="opp-row-actions">
@@ -566,6 +169,15 @@ const ApprovalWorkflow: React.FC = () => {
             <EditOutlined /> 编辑
           </span>
           <span
+            className="opp-row-action"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDesign(record);
+            }}
+          >
+            <ApartmentOutlined /> 设计
+          </span>
+          <span
             className="opp-row-action danger"
             onClick={(e) => {
               e.stopPropagation();
@@ -579,105 +191,9 @@ const ApprovalWorkflow: React.FC = () => {
     },
   ];
 
-  // 初始化 LogicFlow (在详情或编辑模式时)
-  useEffect(() => {
-    if ((viewMode !== 'detail' && viewMode !== 'edit') || !containerRef.current)
-      return;
-
-    // 如果已经存在实例，先销毁
-    if (lfRef.current) {
-      lfRef.current.destroy();
-    }
-
-    // 创建新的 LogicFlow 实例
-    const lf = new LogicFlow({
-      container: containerRef.current,
-      width: containerRef.current.offsetWidth,
-      height: 700,
-      grid: {
-        size: 10,
-        visible: true,
-        type: 'dot',
-        config: {
-          color: '#e6e6e6',
-        },
-      },
-      background: {
-        color: '#fafafa',
-      },
-      keyboard: {
-        enabled: true,
-      },
-      // 编辑模式时允许编辑，详情模式时只读
-      isSilentMode: viewMode === 'detail',
-      edgeType: 'polyline',
-      style: {
-        rect: {
-          rx: 5,
-          ry: 5,
-          strokeWidth: 2,
-        },
-        circle: {
-          fill: '#f5f5f5',
-          stroke: '#666',
-        },
-        diamond: {
-          fill: '#ffe7ba',
-          stroke: '#ffa940',
-        },
-        text: {
-          color: '#333',
-          fontSize: 13,
-        },
-      },
-    });
-
-    lfRef.current = lf;
-
-    // 加载流程图数据
-    loadWorkflowData(selectedWorkflow);
-
-    // 监听窗口大小变化
-    const handleResize = () => {
-      if (containerRef.current && lfRef.current) {
-        lfRef.current.resize(containerRef.current.offsetWidth, 700);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (lfRef.current) {
-        lfRef.current.destroy();
-        lfRef.current = null;
-      }
-    };
-  }, [viewMode, selectedWorkflow]);
-
-  // 加载流程图数据
-  const loadWorkflowData = (workflowType: string) => {
-    if (!lfRef.current) return;
-
-    setLoading(true);
-    try {
-      const data = DEFAULT_GRAPHS[workflowType];
-      if (data) {
-        lfRef.current.render(data);
-        // 居中显示
-        lfRef.current.translateCenter();
-        message.success('流程图加载成功');
-      }
-    } catch {
-      message.error('流程图加载失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 切换流程
   const handleWorkflowChange = (value: string) => {
     setSelectedWorkflow(value);
-    loadWorkflowData(value);
   };
 
   // 刷新流程图
@@ -685,14 +201,7 @@ const ApprovalWorkflow: React.FC = () => {
     if (viewMode === 'list') {
       loadFlows();
       message.success('列表刷新成功');
-    } else {
-      loadWorkflowData(selectedWorkflow);
     }
-  };
-
-  // 全屏查看
-  const handleFullscreen = () => {
-    message.info('全屏功能开发中');
   };
 
   // 查看流程详情
@@ -706,31 +215,92 @@ const ApprovalWorkflow: React.FC = () => {
     setViewMode('list');
   };
 
-  // 编辑流程
-  const handleEdit = (record: WorkflowItem) => {
-    setCurrentEditItem(record);
-    setSelectedWorkflow(record.key);
-    setViewMode('edit');
+  // 新建流程(新建一条流程记录,只填元数据)
+  const handleCreate = () => {
+    setFormMode('create');
+    setCurrentEditItem(null);
+    metaForm.resetFields();
+    metaForm.setFieldsValue({ status: '已启用' });
+    setFormModalOpen(true);
   };
 
-  // 保存编辑
-  const handleSaveEdit = async (values: any, graphData: any) => {
+  // 编辑流程(编辑这条记录的元数据)
+  const handleEdit = (record: WorkflowItem) => {
+    setFormMode('edit');
+    setCurrentEditItem(record);
+    metaForm.setFieldsValue({
+      name: record.name,
+      flowKey: record.key,
+      status: record.status,
+      description: record.description,
+    });
+    setFormModalOpen(true);
+  };
+
+  // 保存流程元数据(新建 / 编辑)
+  const handleMetaSave = async () => {
+    let values: any;
+    try {
+      values = await metaForm.validateFields();
+    } catch {
+      return;
+    }
+    setSaving(true);
+    try {
+      if (formMode === 'create') {
+        if (flows.some((f) => f.flowKey === values.flowKey)) {
+          message.error(`流程标识「${values.flowKey}」已存在`);
+          setSaving(false);
+          return;
+        }
+        await approvalFlowService.add({
+          flowKey: values.flowKey,
+          name: values.name,
+          status: values.status,
+          description: values.description,
+          creatorName: '管理员',
+          createTime: new Date().toISOString().slice(0, 10),
+          graph: defaultChainFor(values.flowKey),
+        });
+        message.success('流程创建成功');
+      } else if (currentEditItem?.id) {
+        await approvalFlowService.modify({
+          id: currentEditItem.id,
+          name: values.name,
+          status: values.status,
+          description: values.description,
+        });
+        message.success('流程更新成功');
+      }
+      await loadFlows();
+      setFormModalOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 设计流程(打开流程图设计器,编辑 graph)
+  const handleDesign = (record: WorkflowItem) => {
+    setCurrentEditItem(record);
+    setSelectedWorkflow(record.key);
+    setViewMode('design');
+  };
+
+  // 保存流程图设计
+  const handleSaveDesign = async (graphData: ApprovalChainGraph) => {
     if (currentEditItem?.id) {
       await approvalFlowService.modify({
         id: currentEditItem.id,
-        name: values.name,
-        version: values.version,
-        description: values.description,
         graph: graphData,
       });
       await loadFlows();
     }
-    message.success('流程保存成功');
+    message.success('流程图保存成功');
     setViewMode('list');
   };
 
-  // 取消编辑
-  const handleCancelEdit = () => {
+  // 取消设计
+  const handleCancelDesign = () => {
     setViewMode('list');
   };
 
@@ -796,7 +366,7 @@ const ApprovalWorkflow: React.FC = () => {
       type: 'primary',
       label: '新建流程',
       icon: <PlusOutlined />,
-      onClick: () => message.info('新建流程功能开发中'),
+      onClick: handleCreate,
     },
     { divider: true },
     {
@@ -860,9 +430,6 @@ const ApprovalWorkflow: React.FC = () => {
           <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
             刷新
           </Button>
-          <Button icon={<FullscreenOutlined />} onClick={handleFullscreen}>
-            全屏
-          </Button>
         </Space>
       }
     >
@@ -877,11 +444,6 @@ const ApprovalWorkflow: React.FC = () => {
             key: 'name',
             label: '流程名称',
             children: currentWorkflow?.name,
-          },
-          {
-            key: 'version',
-            label: '版本',
-            children: <Tag color="blue">{currentWorkflow?.version}</Tag>,
           },
           {
             key: 'status',
@@ -915,69 +477,26 @@ const ApprovalWorkflow: React.FC = () => {
         ]}
       />
 
-      {/* 流程图容器 */}
+      {/* 审批链预览(只读) */}
       <div
-        ref={containerRef}
         style={{
-          width: '100%',
-          height: 700,
           border: '1px solid #e8e8e8',
-          borderRadius: 4,
+          borderRadius: 8,
           overflow: 'hidden',
-          position: 'relative',
-        }}
-      />
-
-      {/* 图例说明 */}
-      <div
-        style={{
-          marginTop: 16,
-          padding: 16,
-          background: '#fafafa',
-          borderRadius: 4,
         }}
       >
-        <Space size={24}>
-          <Space>
-            <div
-              style={{
-                width: 40,
-                height: 30,
-                background: '#fff',
-                border: '2px solid #000',
-                borderRadius: 4,
-              }}
-            />
-            <span>流程节点</span>
-          </Space>
-          <Space>
-            <div
-              style={{
-                width: 40,
-                height: 30,
-                background: '#ffe7ba',
-                border: '2px solid #ffa940',
-                clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-              }}
-            />
-            <span>判断节点</span>
-          </Space>
-          <Space>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ width: 30, height: 2, background: '#000' }} />
-              <div
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '6px solid #000',
-                  borderTop: '4px solid transparent',
-                  borderBottom: '4px solid transparent',
-                }}
-              />
-            </div>
-            <span>流程流转</span>
-          </Space>
-        </Space>
+        <ApprovalChainDesigner
+          readOnly
+          bare
+          graph={(() => {
+            const saved = currentWorkflow?.graph;
+            return isApprovalChainGraph(saved)
+              ? saved
+              : defaultChainFor(selectedWorkflow);
+          })()}
+          onSave={() => {}}
+          onCancel={() => {}}
+        />
       </div>
     </Card>
   );
@@ -988,19 +507,70 @@ const ApprovalWorkflow: React.FC = () => {
       {viewMode === 'detail' && (
         <div style={{ padding: '24px' }}>{renderDetailView()}</div>
       )}
-      {viewMode === 'edit' && currentEditItem && (
-        <WorkflowEditor
-          workflowKey={currentEditItem.key}
-          workflowData={DEFAULT_GRAPHS[currentEditItem.key]}
-          initialValues={{
-            name: currentEditItem.name,
-            version: currentEditItem.version,
-            description: currentEditItem.description,
-          }}
-          onSave={handleSaveEdit}
-          onCancel={handleCancelEdit}
+      {viewMode === 'design' && currentEditItem && (
+        <ApprovalChainDesigner
+          workflowName={currentEditItem.name}
+          graph={(() => {
+            const saved = workflowDetails[currentEditItem.key]?.graph;
+            return isApprovalChainGraph(saved)
+              ? saved
+              : defaultChainFor(currentEditItem.key);
+          })()}
+          onSave={handleSaveDesign}
+          onCancel={handleCancelDesign}
         />
       )}
+
+      {/* 新建 / 编辑 流程元数据 Modal */}
+      <Modal
+        title={formMode === 'create' ? '新建流程' : '编辑流程'}
+        open={formModalOpen}
+        onOk={handleMetaSave}
+        onCancel={() => setFormModalOpen(false)}
+        okText="保存"
+        cancelText="取消"
+        confirmLoading={saving}
+        destroyOnClose
+      >
+        <Form form={metaForm} layout="vertical" preserve={false}>
+          <Form.Item
+            label="流程名称"
+            name="name"
+            rules={[{ required: true, message: '请输入流程名称' }]}
+          >
+            <Input placeholder="如:材料审批流程" />
+          </Form.Item>
+          <Form.Item
+            label="流程标识"
+            name="flowKey"
+            rules={[
+              { required: true, message: '请输入流程标识' },
+              {
+                pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+                message: '以字母开头,仅含字母、数字、下划线',
+              },
+            ]}
+            extra="流程的唯一业务键,创建后不可修改,如 material / leave"
+          >
+            <Input placeholder="如:material" disabled={formMode === 'edit'} />
+          </Form.Item>
+          <Form.Item
+            label="状态"
+            name="status"
+            rules={[{ required: true, message: '请选择状态' }]}
+          >
+            <Select
+              options={[
+                { value: '已启用', label: '已启用' },
+                { value: '已停用', label: '已停用' },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item label="流程说明" name="description">
+            <Input.TextArea rows={3} placeholder="请输入流程说明" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* 删除确认 Modal */}
       <Modal
