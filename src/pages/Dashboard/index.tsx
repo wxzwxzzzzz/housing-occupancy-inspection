@@ -1,25 +1,29 @@
 import {
   AlertOutlined,
-  ArrowRightOutlined,
+  BankOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   DownOutlined,
   FallOutlined,
+  HomeOutlined,
   MinusOutlined,
+  ReloadOutlined,
   RiseOutlined,
+  RocketOutlined,
+  SolutionOutlined,
+  StopOutlined,
   TeamOutlined,
+  UserAddOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from '@umijs/max';
 import {
-  Badge,
   Button,
   Card,
   Col,
   Dropdown,
   Row,
   Space,
-  Table,
-  Tag,
 } from 'antd';
 import type { ApexOptions } from 'apexcharts';
 import { observer } from 'mobx-react-lite';
@@ -245,7 +249,7 @@ const Dashboard: React.FC = observer(() => {
 
   const liveStats = dashboardStore.stats;
   const liveAlertCount = alertStore.total;
-  const liveCritical = alertStore.criticalAlerts.length;
+  const _liveCritical = alertStore.criticalAlerts.length;
   const summaries = dashboardStore.reportSummaries;
 
   // 真实趋势(来自 store,基于 AttendanceFact 按日聚合)
@@ -257,99 +261,29 @@ const Dashboard: React.FC = observer(() => {
   const sparkAlerts = alertTypeTrend.map((d) => d.invalid + d.missed);
 
   // 预警列表级别/状态展示配置(对齐 AlertItem: level=ALERT_*, status=pending/processing/resolved)
-  const levelTag: Record<string, { text: string; color: string }> = {
+  const _levelTag: Record<string, { text: string; color: string }> = {
     ALERT_RED: { text: '红色预警', color: 'red' },
     ALERT_WARNING: { text: '预警', color: 'orange' },
     ALERT_INFO: { text: '提示', color: 'blue' },
   };
-  const statusTag: Record<string, { text: string; color: string }> = {
+  const _statusTag: Record<string, { text: string; color: string }> = {
     pending: { text: '待处理', color: 'orange' },
     processing: { text: '处理中', color: 'blue' },
     resolved: { text: '已处置', color: 'green' },
   };
 
-  const alertColumns = [
-    {
-      title: '居民',
-      dataIndex: 'resident',
-      key: 'resident',
-      width: 140,
-      render: (id: string) => id || '-',
-    },
-    {
-      title: '预警类型',
-      dataIndex: 'title',
-      key: 'title',
-      width: 220,
-      render: (t: string) => <Tag>{t}</Tag>,
-    },
-    {
-      title: '级别',
-      dataIndex: 'level',
-      key: 'level',
-      width: 110,
-      render: (level: string) => (
-        <Tag color={levelTag[level]?.color ?? 'default'}>
-          {levelTag[level]?.text ?? level}
-        </Tag>
-      ),
-    },
-    {
-      title: '触发时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 180,
-      render: (t: string) => (t ? new Date(t).toLocaleString() : '-'),
-    },
-    { title: '说明', dataIndex: 'content', key: 'content', ellipsis: true },
-    {
-      title: '处理状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 110,
-      render: (status: string) => (
-        <Badge
-          status={
-            status === 'resolved'
-              ? 'success'
-              : status === 'processing'
-                ? 'processing'
-                : 'warning'
-          }
-          text={statusTag[status]?.text ?? status}
-        />
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 120,
-      render: (_: any, record: any) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            onClick={() => navigate(`/monitor/alert/detail/${record.id}`)}
-          >
-            查看
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
   // 欢迎卡 / KPI 的真实派生值(全部来自 store,无写死)
   const sumVal = (k: string) => summaries[k]?.value ?? 0;
   const checkedInToday = sumVal('attendance'); // 出勤率%(gauge 值)
-  const activeAlerts = liveStats?.activeAlerts ?? sumVal('alert');
-  const pendingApprovals =
+  const _activeAlerts = liveStats?.activeAlerts ?? sumVal('alert');
+  const _pendingApprovals =
     liveStats?.pending ??
     sumVal('eligibilityApplication') +
       sumVal('leave') +
       sumVal('attendanceMakeup');
-  const totalResidents =
+  const _totalResidents =
     liveStats?.totalResidents ?? sumVal('residentSnapshot');
-  const activeHouseholds =
+  const _activeHouseholds =
     liveStats?.activeHouseholds ?? sumVal('householdSnapshot');
 
   // 大数字优先用 store 真实值
@@ -362,69 +296,89 @@ const Dashboard: React.FC = observer(() => {
     (userStore.user as any)?.account ||
     '用户';
 
+  // 待办计数(各审批流 UNDER_APPROVAL + 待处置预警)
+  const tc = dashboardStore.todoCounts;
+  const todoItems = [
+    { key: 'leave', label: '请假审批', icon: <CalendarOutlined />, count: tc?.leave ?? 0, path: '/monitor/leaves' },
+    { key: 'makeup', label: '补卡审批', icon: <ReloadOutlined />, count: tc?.makeup ?? 0, path: '/monitor/makeups' },
+    { key: 'migrant', label: '外出务工', icon: <RocketOutlined />, count: tc?.migrantWork ?? 0, path: '/monitor/migrant-works' },
+    { key: 'application', label: '资质申请', icon: <SolutionOutlined />, count: tc?.application ?? 0, path: '/eligibility/applications' },
+    { key: 'residence', label: '居住变更', icon: <HomeOutlined />, count: tc?.residenceChange ?? 0, path: '/monitor/residence-changes' },
+    { key: 'employment', label: '工作变更', icon: <BankOutlined />, count: tc?.employmentChange ?? 0, path: '/monitor/employment-changes' },
+    { key: 'member', label: '成员变更', icon: <TeamOutlined />, count: tc?.memberChange ?? 0, path: '/monitor/member-changes' },
+    { key: 'termination', label: '资格终止', icon: <StopOutlined />, count: tc?.termination ?? 0, path: '/eligibility/terminations' },
+    { key: 'alert', label: '待处置预警', icon: <AlertOutlined />, count: tc?.alert ?? 0, path: '/monitor/alert-list' },
+  ];
+  const todoTotal = todoItems.reduce((s, it) => s + it.count, 0);
+
+  // ② 快捷入口
+  const quickEntries = [
+    { key: 'add-resident', label: '新增居民', icon: <UserAddOutlined />, bg: 'qe-blue', path: '/residents' },
+    { key: 'add-household', label: '新增家庭', icon: <TeamOutlined />, bg: 'qe-green', path: '/profile/households' },
+    { key: 'checkin', label: '考勤打卡', icon: <CheckCircleOutlined />, bg: 'qe-cyan', path: '/monitor/attendance' },
+    { key: 'leave', label: '请假审批', icon: <CalendarOutlined />, bg: 'qe-orange', path: '/monitor/leaves' },
+    { key: 'application', label: '资质申请', icon: <SolutionOutlined />, bg: 'qe-purple', path: '/eligibility/applications' },
+    { key: 'report', label: '报表中心', icon: <BarChartOutlined />, bg: 'qe-gold', path: '/report/resident-snapshot' },
+    { key: 'message', label: '消息中心', icon: <AlertOutlined />, bg: 'qe-pink', path: '/system/message' },
+    { key: 'config', label: '系统配置', icon: <BankOutlined />, bg: 'qe-indigo', path: '/system/config' },
+  ];
+
+  // ③ 指标:居民激活 + 业务量
+  const rs = dashboardStore.reportSummaries;
+  const rb = dashboardStore.residentBreakdown;
+  const activatedResidents = rb?.activated ?? 0;
+  const inactiveResidents = rb?.inactive ?? 0;
+  const indicatorCards = [
+    { key: 'activated', label: '已激活居民', value: activatedResidents, color: '#389e0d', path: '/residents' },
+    { key: 'inactive', label: '未激活居民', value: inactiveResidents, color: '#d46b08', path: '/residents' },
+    { key: 'allocation', label: '实物配租', value: rs.housingAllocation?.value ?? 0, color: '#1d4ed8', path: '/eligibility/allocations' },
+    { key: 'subsidy', label: '租赁补贴', value: rs.rentalSubsidy?.value ?? 0, color: '#08979c', path: '/eligibility/subsidies' },
+    { key: 'termination', label: '资格终止', value: rs.eligibilityTermination?.value ?? 0, color: '#cf1322', path: '/eligibility/terminations' },
+  ];
+
+  // ④⑤⑥ 打卡/预警/消息 分项
+  const ab = dashboardStore.attendanceBreakdown;
+  const alb = dashboardStore.alertBreakdown;
+  const mc = dashboardStore.messageCounts;
+
   return (
     <div className="dashboard-container">
-      {/* 第一行 — 左欢迎卡(占 6) + 右两张大 KPI(各占 3) */}
+      {/* 第一行 — 待办卡(占 6) + 右两张大 KPI(各占 3) */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card className="welcome-card" bordered={false}>
-            <div className="welcome-body">
-              <div className="welcome-text">
-                <div className="welcome-greeting">欢迎回来，{userName}</div>
-                <div className="welcome-subtitle">
-                  您有 {activeAlerts} 条活跃预警，{pendingApprovals}{' '}
-                  条申请待审批。
-                </div>
-                <div className="welcome-mini-stats">
-                  <div className="mini-stat">
-                    <div className="mini-label">今日打卡率</div>
-                    <div className="mini-value-row">
-                      <span className="mini-value">{kpiAttendanceValue}</span>
-                    </div>
-                  </div>
-                  <div className="mini-stat">
-                    <div className="mini-label">活跃保障户</div>
-                    <div className="mini-value-row">
-                      <span className="mini-value">{activeHouseholds}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="welcome-actions">
-                  <Button
-                    type="primary"
-                    icon={<ArrowRightOutlined />}
-                    onClick={() => navigate('/monitor/alert-list')}
-                  >
-                    查看全部预警
-                  </Button>
-                  <Button onClick={() => navigate('/approval/material')}>
-                    处理审批
-                  </Button>
-                </div>
+          <Card className="todo-card" bordered={false}>
+            <div className="todo-head">
+              <div className="todo-head-left">
+                <span className="todo-title">我的待办</span>
+                <span className="todo-sub">
+                  {userName}，您有待处理事项
+                </span>
               </div>
-              <div className="welcome-illustration">
-                <div className="illu-tile illu-blue">
-                  <CheckCircleOutlined />
-                  <div className="illu-num">{kpiAttendanceValue}</div>
-                  <div className="illu-label">今日打卡率</div>
-                </div>
-                <div className="illu-tile illu-red">
-                  <AlertOutlined />
-                  <div className="illu-num">{liveCritical || activeAlerts}</div>
-                  <div className="illu-label">严重预警</div>
-                </div>
-                <div className="illu-tile illu-purple">
-                  <TeamOutlined />
-                  <div className="illu-num">{totalResidents}</div>
-                  <div className="illu-label">保障户</div>
-                </div>
-                <div className="illu-tile illu-orange">
-                  <ClockCircleOutlined />
-                  <div className="illu-num">{pendingApprovals}</div>
-                  <div className="illu-label">待审批</div>
-                </div>
+              <div className="todo-total">
+                <span className="todo-total-num">{todoTotal}</span>
+                <span className="todo-total-unit">项待处理</span>
               </div>
             </div>
+            {todoTotal === 0 ? (
+              <div className="todo-empty">
+                <CheckCircleOutlined />
+                <span>暂无待办，一切已处理</span>
+              </div>
+            ) : (
+              <div className="todo-grid">
+                {todoItems.map((it) => (
+                  <div
+                    key={it.key}
+                    className={`todo-item${it.count > 0 ? ' has' : ''}`}
+                    onClick={() => navigate(it.path)}
+                  >
+                    <span className="todo-item-icon">{it.icon}</span>
+                    <span className="todo-item-label">{it.label}</span>
+                    <span className="todo-item-count">{it.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </Col>
 
@@ -473,7 +427,40 @@ const Dashboard: React.FC = observer(() => {
         </Col>
       </Row>
 
-      {/* 中部 — 16 报表卡墙(连续平铺,一排 4 个,全部真实聚合数据) */}
+      {/* ② 快捷入口 */}
+      <Card className="quick-entry-card" bordered={false} style={{ marginTop: 16 }}>
+        <div className="quick-entry-grid">
+          {quickEntries.map((q) => (
+            <div
+              key={q.key}
+              className="quick-entry-item"
+              onClick={() => navigate(q.path)}
+            >
+              <span className={`quick-entry-icon ${q.bg}`}>{q.icon}</span>
+              <span className="quick-entry-label">{q.label}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* ③ 指标 — 居民激活 + 业务量 */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        {indicatorCards.map((it) => (
+          <Col key={it.key} xs={12} sm={8} lg={4}>
+            <Card
+              className="indicator-card"
+              bordered={false}
+              onClick={() => it.path && navigate(it.path)}
+            >
+              <div className="indicator-label">{it.label}</div>
+              <div className="indicator-value" style={{ color: it.color }}>
+                {it.value}
+              </div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         {wallCards.map((card) => {
           const s = dashboardStore.reportSummaries[card.key];
@@ -509,17 +496,43 @@ const Dashboard: React.FC = observer(() => {
         })}
       </Row>
 
-      {/* 图表区 — 打卡率趋势 + 预警趋势叠加柱 */}
+      {/* ④ 打卡趋势 + ⑤ 预警类型 */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={12}>
           <Card
-            title="打卡率趋势"
+            title="打卡趋势"
             extra={<TimeRangeDropdown />}
             bordered={false}
           >
+            <div className="metric-strip">
+              <div className="metric-cell">
+                <span className="metric-num">{ab?.total ?? 0}</span>
+                <span className="metric-lbl">打卡总数</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num">{ab?.employment ?? 0}</span>
+                <span className="metric-lbl">工作打卡</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num">{ab?.residence ?? 0}</span>
+                <span className="metric-lbl">居住打卡</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-good">{ab?.checked ?? 0}</span>
+                <span className="metric-lbl">已打卡</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-warn">{ab?.pending ?? 0}</span>
+                <span className="metric-lbl">预计打卡</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-bad">{ab?.missed ?? 0}</span>
+                <span className="metric-lbl">超时未打</span>
+              </div>
+            </div>
             <Chart
               type="area"
-              height={240}
+              height={200}
               options={{
                 chart: {
                   fontFamily: 'inherit',
@@ -562,10 +575,32 @@ const Dashboard: React.FC = observer(() => {
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card title="预警趋势" extra={<TimeRangeDropdown />} bordered={false}>
+          <Card title="预警类型" extra={<TimeRangeDropdown />} bordered={false}>
+            <div className="metric-strip">
+              <div className="metric-cell">
+                <span className="metric-num">{alb?.total ?? 0}</span>
+                <span className="metric-lbl">预警总数</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-warn">{alb?.invalid ?? 0}</span>
+                <span className="metric-lbl">异常</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-bad">{alb?.missed ?? 0}</span>
+                <span className="metric-lbl">缺勤</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-good">{alb?.read ?? 0}</span>
+                <span className="metric-lbl">已读</span>
+              </div>
+              <div className="metric-cell">
+                <span className="metric-num metric-bad">{alb?.unread ?? 0}</span>
+                <span className="metric-lbl">未读</span>
+              </div>
+            </div>
             <Chart
               type="bar"
-              height={240}
+              height={200}
               options={{
                 chart: {
                   fontFamily: 'inherit',
@@ -598,42 +633,59 @@ const Dashboard: React.FC = observer(() => {
         </Col>
       </Row>
 
-      {/* 预警列表(底部) */}
+      {/* ⑥ 消息中心(精简版:三类计数 + 最近消息) */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col span={24}>
           <Card
             title={
               <Space>
                 <AlertOutlined />
-                预警列表
+                消息中心
               </Space>
             }
             extra={
-              <Space>
-                <Button
-                  type="primary"
-                  size="small"
-                  onClick={() => navigate('/monitor/alert-list')}
-                >
-                  查看更多
-                </Button>
-              </Space>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => navigate('/system/message')}
+              >
+                查看全部
+              </Button>
             }
             bordered={false}
           >
-            <Table
-              dataSource={alertStore.alerts}
-              columns={alertColumns}
-              rowKey="id"
-              loading={alertStore.loading}
-              pagination={{
-                pageSize: 5,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total) => `共 ${total} 条`,
-                pageSizeOptions: ['5', '10', '20', '50'],
-              }}
-            />
+            <div className="msg-center-grid">
+              <div
+                className="msg-cat msg-cat-todo"
+                onClick={() => navigate('/system/message')}
+              >
+                <div className="msg-cat-head">
+                  <span className="msg-cat-name">待办消息</span>
+                  <span className="msg-cat-count">{mc?.todo ?? 0}</span>
+                </div>
+                <div className="msg-cat-desc">审批结果、待处理事项通知</div>
+              </div>
+              <div
+                className="msg-cat msg-cat-biz"
+                onClick={() => navigate('/system/message')}
+              >
+                <div className="msg-cat-head">
+                  <span className="msg-cat-name">业务通知</span>
+                  <span className="msg-cat-count">{mc?.business ?? 0}</span>
+                </div>
+                <div className="msg-cat-desc">打卡提醒、到期提醒等</div>
+              </div>
+              <div
+                className="msg-cat msg-cat-alert"
+                onClick={() => navigate('/monitor/alert-list')}
+              >
+                <div className="msg-cat-head">
+                  <span className="msg-cat-name">预警消息</span>
+                  <span className="msg-cat-count">{mc?.alert ?? 0}</span>
+                </div>
+                <div className="msg-cat-desc">考勤异常、缺勤等预警</div>
+              </div>
+            </div>
           </Card>
         </Col>
       </Row>

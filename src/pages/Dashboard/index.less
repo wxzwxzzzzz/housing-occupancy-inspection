@@ -9,160 +9,156 @@
   background: transparent;
 }
 
-// =================== 顶部欢迎行 ===================
-//
-// 左:欢迎卡(大标题 + 副文案 + 2 个内嵌 mini-stat + 操作按钮)
-// 右:4 张业务 stat 小卡(配色方头像 + 大数字 + 副文案)
-.welcome-card {
+// =================== 待办卡(首页第一项,最醒目)===================
+.todo-card {
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
-  color: rgba(0, 0, 0, 0.85);
   border: 0;
-  box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
   height: 100%;
+  // 主色描边 + 浅蓝渐变,突出"待办"
+  background: linear-gradient(135deg, #f5f8ff 0%, #eef3ff 100%);
+  box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--ant-color-primary, #1d4ed8);
+  }
 
   :global {
     .ant-card-body {
-      padding: 24px 28px !important;
+      padding: 20px 24px !important;
       height: 100%;
+      display: flex;
+      flex-direction: column;
     }
   }
 
-  .welcome-body {
-    display: grid;
-    grid-template-columns: 1fr 220px;
-    gap: 24px;
-    align-items: center;
-    height: 100%;
-    min-height: 168px;
-  }
-
-  .welcome-text {
+  .todo-head {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
   }
-
-  .welcome-greeting {
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #1f1f1f;
-  }
-
-  .welcome-subtitle {
-    font-size: 13px;
-    color: #595959;
-    line-height: 1.6;
-  }
-
-  .welcome-mini-stats {
-    display: flex;
-    gap: 32px;
-    margin-top: 8px;
-  }
-
-  .mini-stat {
+  .todo-head-left {
     display: flex;
     flex-direction: column;
     gap: 4px;
   }
-
-  .mini-label {
-    font-size: 12px;
-    color: #8c8c8c;
-  }
-
-  .mini-value-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  .mini-value {
-    font-size: 22px;
+  .todo-title {
+    font-size: 18px;
     font-weight: 700;
     color: #1f1f1f;
-    line-height: 1;
   }
-
-  .mini-trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1;
-
-    &.trend-up {
-      color: #389e0d;
-    }
-    &.trend-down {
-      color: #cf1322;
-    }
-    &.trend-flat {
-      color: #8c8c8c;
-    }
+  .todo-sub {
+    font-size: 13px;
+    color: #595959;
   }
-
-  .welcome-actions {
+  .todo-total {
     display: flex;
-    gap: 8px;
-    margin-top: 4px;
-
-    :global(.ant-btn) {
-      border-radius: 6px;
-    }
+    align-items: baseline;
+    gap: 4px;
+  }
+  .todo-total-num {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ant-color-primary, #1d4ed8);
+  }
+  .todo-total-unit {
+    font-size: 13px;
+    color: #595959;
   }
 
-  // 右侧业务图标网格 — 2x2,4 块
-  .welcome-illustration {
+  // 待办子项网格
+  .todo-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    flex: 1;
+  }
+  .todo-item {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    height: 168px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #e5e8ec;
+    cursor: pointer;
+    transition: all 0.15s ease;
 
-    .illu-tile {
-      display: flex;
-      flex-direction: column;
+    .todo-item-icon {
+      font-size: 16px;
+      color: #8c8c8c;
+      display: inline-flex;
+    }
+    .todo-item-label {
+      flex: 1;
+      font-size: 13px;
+      color: #595959;
+      white-space: nowrap;
+    }
+    .todo-item-count {
+      min-width: 22px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background: #f0f0f0;
+      color: #8c8c8c;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 2px;
-      border-radius: 10px;
-      padding: 10px 6px;
-      background: rgba(0, 0, 0, 0.03);
-      transition: background 0.15s ease;
+    }
 
-      :global(.anticon) {
-        font-size: 18px;
-        margin-bottom: 2px;
-      }
-    }
-    .illu-num {
-      font-size: 18px;
-      font-weight: 600;
-      line-height: 1;
-      color: var(--ant-color-text, #1f1f1f);
-    }
-    .illu-label {
-      font-size: 11px;
-      color: #8c8c8c;
-      line-height: 1.2;
-    }
-    /* 统一克制风:不再一格一色,均用淡灰底 + 主色图标 */
-    .illu-blue,
-    .illu-red,
-    .illu-purple,
-    .illu-orange {
-      background: rgba(0, 0, 0, 0.03);
-      :global(.anticon) {
+    // 有待办时高亮
+    &.has {
+      border-color: color-mix(in srgb, var(--ant-color-primary, #1d4ed8) 30%, transparent);
+      .todo-item-icon {
         color: var(--ant-color-primary, #1d4ed8);
       }
+      .todo-item-label {
+        color: #1f1f1f;
+        font-weight: 500;
+      }
+      .todo-item-count {
+        background: var(--ant-color-primary, #1d4ed8);
+        color: #fff;
+      }
+    }
+    &:hover {
+      border-color: var(--ant-color-primary, #1d4ed8);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--ant-color-primary, #1d4ed8) 18%, transparent);
+      transform: translateY(-1px);
+    }
+  }
+
+  // 空状态
+  .todo-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #52c41a;
+    :global(.anticon) {
+      font-size: 36px;
+    }
+    span {
+      font-size: 14px;
+      color: #595959;
     }
   }
 }
+
 
 // 4 张业务 stat 小卡 — 对齐 Tabler card-sm 风格
 // 图标方块(avatar avatar-square) + 中等字重主标题 + 副文案
@@ -650,3 +646,165 @@
 
 /* ============ 报表卡墙(连续平铺,一排 4 个)============ */
 /* 卡墙复用 KpiCard,默认样式已足够;此处仅留扩展位 */
+
+// =================== ② 快捷入口 ===================
+.quick-entry-card {
+  border-radius: 12px;
+  border: 0;
+  box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+  :global(.ant-card-body) {
+    padding: 16px 20px !important;
+  }
+  .quick-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+  }
+  .quick-entry-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    &:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+  }
+  .quick-entry-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    :global(.anticon) {
+      font-size: 20px;
+    }
+  }
+  .qe-blue { background: #eff6ff; color: #1d4ed8; }
+  .qe-green { background: #ecfdf5; color: #389e0d; }
+  .qe-cyan { background: #ecfeff; color: #08979c; }
+  .qe-orange { background: #fff7ed; color: #d46b08; }
+  .qe-purple { background: #f5f3ff; color: #722ed1; }
+  .qe-gold { background: #fffbe6; color: #d48806; }
+  .qe-pink { background: #fdf2f8; color: #c41d7f; }
+  .qe-indigo { background: #eef2ff; color: #1e3a5f; }
+  .quick-entry-label {
+    font-size: 13px;
+    color: #595959;
+  }
+}
+
+@media (max-width: 768px) {
+  .quick-entry-card .quick-entry-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// =================== ③ 指标卡 ===================
+.indicator-card {
+  border-radius: 10px;
+  border: 0;
+  box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  &:hover {
+    box-shadow: 0 4px 12px rgba(18, 18, 23, 0.08);
+    transform: translateY(-1px);
+  }
+  :global(.ant-card-body) {
+    padding: 16px 18px !important;
+  }
+  .indicator-label {
+    font-size: 13px;
+    color: #8c8c8c;
+    margin-bottom: 8px;
+  }
+  .indicator-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+// =================== ④⑤ 图表卡分项数字条 ===================
+.metric-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  padding: 4px 0 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #f0f1f3;
+  .metric-cell {
+    flex: 1;
+    min-width: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .metric-num {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1f1f1f;
+  }
+  .metric-good { color: #389e0d; }
+  .metric-warn { color: #d46b08; }
+  .metric-bad { color: #cf1322; }
+  .metric-lbl {
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+}
+
+// =================== ⑥ 消息中心 ===================
+.msg-center-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  .msg-cat {
+    padding: 18px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid #e5e8ec;
+    transition: all 0.15s ease;
+    &:hover {
+      box-shadow: 0 2px 8px rgba(18, 18, 23, 0.08);
+      transform: translateY(-1px);
+    }
+  }
+  .msg-cat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .msg-cat-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f1f1f;
+  }
+  .msg-cat-count {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .msg-cat-desc {
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+  .msg-cat-todo { background: #eff6ff; .msg-cat-count { color: #1d4ed8; } }
+  .msg-cat-biz { background: #f6ffed; .msg-cat-count { color: #389e0d; } }
+  .msg-cat-alert { background: #fff7ed; .msg-cat-count { color: #d46b08; } }
+}
+
+@media (max-width: 768px) {
+  .msg-center-grid {
+    grid-template-columns: 1fr;
+  }
+}

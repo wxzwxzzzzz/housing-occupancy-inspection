@@ -30,6 +30,65 @@ export interface DashboardStats {
   pending: number;
 }
 
+/** 首页待办计数 — 各审批流实体 UNDER_APPROVAL 数 + 待处置预警 */
+export interface TodoCounts {
+  leave: number;
+  makeup: number;
+  migrantWork: number;
+  residenceChange: number;
+  employmentChange: number;
+  memberChange: number;
+  application: number;
+  termination: number;
+  alert: number;
+}
+
+/** 打卡构成分项 */
+export interface AttendanceBreakdown {
+  total: number;
+  /** 工作打卡 */
+  employment: number;
+  /** 居住打卡 */
+  residence: number;
+  /** 已打卡(有效) */
+  checked: number;
+  /** 未打卡(缺勤) */
+  missed: number;
+  /** 应打卡 */
+  required: number;
+  /** 待打卡 */
+  pending: number;
+}
+
+/** 预警分项 */
+export interface AlertBreakdown {
+  total: number;
+  /** 异常(无效) */
+  invalid: number;
+  /** 缺勤 */
+  missed: number;
+  /** 已读 */
+  read: number;
+  /** 未读 */
+  unread: number;
+}
+
+/** 消息中心三类计数 */
+export interface MessageCounts {
+  /** 待办消息(审批结果) */
+  todo: number;
+  /** 业务通知(提醒/到期/其他) */
+  business: number;
+  /** 预警消息 */
+  alert: number;
+}
+
+/** 居民激活分项 */
+export interface ResidentBreakdown {
+  activated: number;
+  inactive: number;
+}
+
 export interface ChartPoint {
   date: string;
   value: number;
@@ -58,6 +117,16 @@ class DashboardStore {
   alertTypeTrend: AlertTrendPoint[] = [];
   buildingStatus: ChartPoint[] = [];
   loading = false;
+  /** 首页待办计数 */
+  todoCounts: TodoCounts | null = null;
+  /** 打卡构成分项 */
+  attendanceBreakdown: AttendanceBreakdown | null = null;
+  /** 预警分项 */
+  alertBreakdown: AlertBreakdown | null = null;
+  /** 消息中心三类计数 */
+  messageCounts: MessageCounts | null = null;
+  /** 居民激活分项 */
+  residentBreakdown: ResidentBreakdown | null = null;
   /** 18 报表卡墙的汇总数据,key → summary */
   reportSummaries: Record<string, ReportCardSummary> = {};
   reportLoading = false;
@@ -116,6 +185,140 @@ class DashboardStore {
         (f: any) => f.attendanceStatus === 'MISSED',
       ).length;
       const alertCount = invalidCount + missedCount;
+
+      // 打卡构成分项(按出勤类型 + 状态)
+      const empCount = allFact.data.filter(
+        (f: any) => f.attendanceType === 'EMPLOYMENT',
+      ).length;
+      const resCount = allFact.data.filter(
+        (f: any) => f.attendanceType === 'RESIDENCE',
+      ).length;
+      const pendingCheckin = allFact.data.filter(
+        (f: any) => f.attendanceStatus === 'PENDING',
+      ).length;
+      const exemptedCount = allFact.data.filter(
+        (f: any) => f.attendanceStatus === 'EXEMPTED',
+      ).length;
+      const attendanceBreakdown: AttendanceBreakdown = {
+        total: factTotal,
+        employment: empCount,
+        residence: resCount,
+        checked: validCount,
+        missed: missedCount,
+        required: factTotal - exemptedCount,
+        pending: pendingCheckin,
+      };
+
+      // 预警已读/未读(来自 Notification 中 ALERT 类型)
+      let alertRead = 0;
+      let alertUnread = 0;
+      let msgTodo = 0;
+      let msgBusiness = 0;
+      let msgAlert = 0;
+      try {
+        const notiRes = await invokeQuery(
+          OT.Notification,
+          qb(OT.Notification).page(1, 500).build(),
+        );
+        for (const n of notiRes.data as any[]) {
+          const t = n.notificationType;
+          if (t === 'ALERT') {
+            msgAlert++;
+            if (n.status === 'READ') alertRead++;
+            else alertUnread++;
+          } else if (t === 'APPROVAL_RESULT') {
+            msgTodo++;
+          } else {
+            msgBusiness++;
+          }
+        }
+      } catch {
+        // notification 未就绪时静默
+      }
+
+      // 待办计数:各审批流实体 UNDER_APPROVAL 数(并行查询)
+      const countPending = async (objectType: string): Promise<number> => {
+        try {
+          const res = await invokeQuery(
+            objectType,
+            qb(objectType).eq('status', 'UNDER_APPROVAL').page(1, 1).build(),
+          );
+          return res.page?.total ?? res.data.length ?? 0;
+        } catch {
+          return 0;
+        }
+      };
+      const [
+        leaveN,
+        makeupN,
+        migrantN,
+        residenceN,
+        employmentN,
+        memberN,
+        terminationN,
+      ] = await Promise.all([
+        countPending(OT.Leave),
+        countPending(OT.AttendanceMakeup),
+        countPending(OT.MigrantWork),
+        countPending(OT.ResidenceChange),
+        countPending(OT.EmploymentChange),
+        countPending(OT.HouseholdMemberChange),
+        countPending(OT.EligibilityTermination),
+      ]);
+
+      // 居民激活分项:已激活 vs 未激活(草稿+未认证+已认证未激活)
+      const countResidentStatus = async (status: string): Promise<number> => {
+        try {
+          const res = await invokeQuery(
+            OT.Resident,
+            qb(OT.Resident).eq('status', status).page(1, 1).build(),
+          );
+          return res.page?.total ?? res.data.length ?? 0;
+        } catch {
+          return 0;
+        }
+      };
+      const [actN, draftN, unverN, verN] = await Promise.all([
+        countResidentStatus('ACTIVATED'),
+        countResidentStatus('DRAFT'),
+        countResidentStatus('UNVERIFIED'),
+        countResidentStatus('VERIFIED'),
+      ]);
+
+      runInAction(() => {
+        this.residentBreakdown = {
+          activated: actN,
+          inactive: draftN + unverN + verN,
+        };
+      });
+
+      runInAction(() => {
+        this.todoCounts = {
+          leave: leaveN,
+          makeup: makeupN,
+          migrantWork: migrantN,
+          residenceChange: residenceN,
+          employmentChange: employmentN,
+          memberChange: memberN,
+          application: eligibility.page?.total ?? 0,
+          termination: terminationN,
+          // 待处置预警 = 缺勤(MISSED),与 activeAlerts 一致
+          alert: missedCount,
+        };
+        this.attendanceBreakdown = attendanceBreakdown;
+        this.alertBreakdown = {
+          total: alertCount,
+          invalid: invalidCount,
+          missed: missedCount,
+          read: alertRead,
+          unread: alertUnread,
+        };
+        this.messageCounts = {
+          todo: msgTodo,
+          business: msgBusiness,
+          alert: msgAlert,
+        };
+      });
 
       runInAction(() => {
         this.stats = {

@@ -133,7 +133,9 @@
       "Bash(npx @biomejs/biome lint src/pages/Monitor/MemberChangeDetail.tsx)",
       "Bash(npx biome *)",
       "Bash(sed -i '101,498d' src/pages/Approval/Workflow.tsx)",
-      "Bash(sed -n '95,108p' src/pages/Approval/Workflow.tsx)"
+      "Bash(sed -n '95,108p' src/pages/Approval/Workflow.tsx)",
+      "Bash(npx @biomejs/biome lint src/pages/Dashboard/index.tsx)",
+      "Bash(npx @biomejs/biome lint --write --unsafe src/pages/Dashboard/index.tsx)"
     ],
     "deny": [],
     "ask": []
