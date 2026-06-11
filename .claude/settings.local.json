@@ -135,7 +135,21 @@
       "Bash(sed -i '101,498d' src/pages/Approval/Workflow.tsx)",
       "Bash(sed -n '95,108p' src/pages/Approval/Workflow.tsx)",
       "Bash(npx @biomejs/biome lint src/pages/Dashboard/index.tsx)",
-      "Bash(npx @biomejs/biome lint --write --unsafe src/pages/Dashboard/index.tsx)"
+      "Bash(npx @biomejs/biome lint --write --unsafe src/pages/Dashboard/index.tsx)",
+      "Bash(node *)",
+      "Bash(grep -iE 'Date|Time|createdAt|status|amount|month|At\\\\?|At:' __TRACKED_VAR__.ts)",
+      "Bash(grep -vE '^\\\\s*\\(\\\\*|//|/\\\\*|import|export type|$\\)' __TRACKED_VAR__.ts)",
+      "Bash(grep -vE \"^\\\\s*\\(\\\\*|//|/\\\\*\\)\")",
+      "Bash(grep -rA6 \"interface IAuditInfo\" src/types/)",
+      "Bash(grep -rA6 \"interface ISubmitInfo\" src/types/)",
+      "Bash(npx @biomejs/biome lint src/pages/Dashboard/index.tsx src/stores/dashboardStore.ts)",
+      "Bash(grep -nA10 \"function seedRentalSubsidy\\\\|function seedHousingAllocation\\\\|OT.RentalSubsidy\\\\b\\\\|OT.HousingAllocation\\\\b\" src/services/_mock-lib/seed.ts)",
+      "Bash(grep -nA20 \"function projectFact\" src/services/_mock-lib/seed.ts)",
+      "Bash(grep -nA18 \"function insert\" src/services/_mock-lib/seed.ts)",
+      "Bash(grep -nA15 \"insert\" src/services/_mock-lib/store.ts)",
+      "Bash(echo \"started pid $!\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"pid $!\")"
     ],
     "deny": [],
     "ask": []

@@ -108,6 +108,36 @@ export interface AlertTrendPoint {
   missed: number;
 }
 
+/** 业务办理月度趋势点(多业务并列,key=业务键) */
+export interface BizMonthlyPoint {
+  /** 月份标签 YYYY-MM */
+  month: string;
+  application: number;
+  allocation: number;
+  subsidy: number;
+  termination: number;
+  migrantWork: number;
+  change: number;
+}
+
+/** 档案规模对比项(快照类当前量) */
+export interface ProfileScaleItem {
+  key: string;
+  label: string;
+  value: number;
+}
+
+/** 资金发放月度趋势点 */
+export interface FundMonthlyPoint {
+  month: string;
+  /** 个人收入合计 */
+  income: number;
+  /** 租赁补贴发放 */
+  subsidy: number;
+  /** 实物配租租金 */
+  rent: number;
+}
+
 class DashboardStore {
   stats: DashboardStats | null = null;
   alertTrend: ChartPoint[] = [];
@@ -115,6 +145,12 @@ class DashboardStore {
   attendanceRateTrend: RateTrendPoint[] = [];
   /** 预警趋势(近7天每日 异常/缺勤 计数) */
   alertTypeTrend: AlertTrendPoint[] = [];
+  /** 业务办理月度趋势(近12月) */
+  bizMonthlyTrend: BizMonthlyPoint[] = [];
+  /** 档案规模对比(快照类当前量) */
+  profileScale: ProfileScaleItem[] = [];
+  /** 资金发放月度趋势(近12月) */
+  fundMonthlyTrend: FundMonthlyPoint[] = [];
   buildingStatus: ChartPoint[] = [];
   loading = false;
   /** 首页待办计数 */
@@ -364,6 +400,8 @@ class DashboardStore {
       this.reportLoading = true;
     });
     try {
+      // 保留每张报表的原始明细行,既算卡片汇总,也供合并图表按月聚合
+      const rowsByKey: Record<string, Record<string, any>[]> = {};
       const results = await Promise.all(
         reportCards.map(async (card) => {
           try {
@@ -371,6 +409,7 @@ class DashboardStore {
               page: { pageNo: 1, pageSize: 1000 },
             });
             const rows = (env.data as Record<string, any>[]) ?? [];
+            rowsByKey[card.key] = rows;
             const { value, sub, gauge } = card.summarize(rows);
             const sparkData = card.sparkData ? card.sparkData(rows) : [];
             return {
@@ -381,6 +420,7 @@ class DashboardStore {
               sparkData,
             } as ReportCardSummary;
           } catch {
+            rowsByKey[card.key] = [];
             return {
               key: card.key,
               value: 0,
@@ -393,6 +433,10 @@ class DashboardStore {
         const map: Record<string, ReportCardSummary> = {};
         for (const r of results) map[r.key] = r;
         this.reportSummaries = map;
+        // 合并图表数据集(近 12 个月)
+        this.bizMonthlyTrend = buildBizMonthly(rowsByKey, 12);
+        this.fundMonthlyTrend = buildFundMonthly(rowsByKey, 12);
+        this.profileScale = buildProfileScale(rowsByKey);
       });
     } finally {
       runInAction(() => {
@@ -476,3 +520,195 @@ function aggregateAlertByDay(facts: any[], days: number): AlertTrendPoint[] {
 }
 
 export default DashboardStore;
+
+// ============================================================
+// 合并图表聚合工具(近 N 月)
+// ============================================================
+
+/** 从一行 fact(可能嵌套实体)里尽力提取一个日期字符串 */
+function pickDate(row: Record<string, any>, candidates: string[]): string {
+  for (const path of candidates) {
+    // 支持 "a.b" 形式的嵌套取值
+    const v = path.split('.').reduce<any>((o, k) => (o == null ? o : o[k]), row);
+    if (v) return String(v);
+  }
+  return '';
+}
+
+/** 生成近 months 个月的 YYYY-MM 标签序列 */
+function monthKeys(months: number): string[] {
+  const out: string[] = [];
+  const d = new Date();
+  d.setDate(1);
+  for (let i = months - 1; i >= 0; i--) {
+    const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    out.push(
+      `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`,
+    );
+  }
+  return out;
+}
+
+/** 把任意日期字符串归一到 YYYY-MM */
+function toMonth(s: string): string {
+  return s ? s.slice(0, 7) : '';
+}
+
+/** 业务办理月度趋势(6 类业务按月计数) */
+function buildBizMonthly(
+  rowsByKey: Record<string, any[]>,
+  months: number,
+): BizMonthlyPoint[] {
+  const keys = monthKeys(months);
+  const init = () =>
+    new Map<string, number>(keys.map((k) => [k, 0]));
+  const buckets = {
+    application: init(),
+    allocation: init(),
+    subsidy: init(),
+    termination: init(),
+    migrantWork: init(),
+    change: init(),
+  };
+
+  const tally = (
+    bucket: Map<string, number>,
+    rows: any[] | undefined,
+    dateFields: string[],
+  ) => {
+    for (const r of rows ?? []) {
+      const m = toMonth(pickDate(r, dateFields));
+      if (bucket.has(m)) bucket.set(m, (bucket.get(m) ?? 0) + 1);
+    }
+  };
+
+  // 申请审批类:用提交时间(回退 createAt)
+  tally(buckets.application, rowsByKey.eligibilityApplication, [
+    'submittedAt',
+    'reviewStartDate',
+    'createAt',
+    'application.submittedAt',
+  ]);
+  tally(buckets.termination, rowsByKey.eligibilityTermination, [
+    'effectiveDate',
+    'submittedAt',
+    'createAt',
+    'termination.submittedAt',
+  ]);
+  // 配租/补贴:用开始/租赁开始日期(seed 用 effectiveFrom,回退 createAt)
+  tally(buckets.allocation, rowsByKey.housingAllocation, [
+    'leaseStartDate',
+    'effectiveFrom',
+    'createAt',
+    'allocation.createAt',
+  ]);
+  tally(buckets.subsidy, rowsByKey.rentalSubsidy, [
+    'startDate',
+    'effectiveFrom',
+    'createAt',
+    'subsidy.createAt',
+  ]);
+  tally(buckets.migrantWork, rowsByKey.migrantWork, [
+    'startDate',
+    'submittedAt',
+    'createAt',
+    'migrantWork.submittedAt',
+  ]);
+  // 三类变更合并成一条"变更"线
+  for (const k of [
+    'householdMemberChange',
+    'residenceChange',
+    'employmentChange',
+  ]) {
+    tally(buckets.change, rowsByKey[k], [
+      'submittedAt',
+      'createAt',
+      'memberChange.submittedAt',
+      'memberChange.createAt',
+      'residenceChange.submittedAt',
+      'employmentChange.submittedAt',
+    ]);
+  }
+
+  return keys.map((month) => ({
+    month: month.slice(5), // MM
+    application: buckets.application.get(month) ?? 0,
+    allocation: buckets.allocation.get(month) ?? 0,
+    subsidy: buckets.subsidy.get(month) ?? 0,
+    termination: buckets.termination.get(month) ?? 0,
+    migrantWork: buckets.migrantWork.get(month) ?? 0,
+    change: buckets.change.get(month) ?? 0,
+  }));
+}
+
+/** 资金发放月度趋势(收入/补贴/配租租金,按金额求和) */
+function buildFundMonthly(
+  rowsByKey: Record<string, any[]>,
+  months: number,
+): FundMonthlyPoint[] {
+  const keys = monthKeys(months);
+  const init = () => new Map<string, number>(keys.map((k) => [k, 0]));
+  const income = init();
+  const subsidy = init();
+  const rent = init();
+
+  const sumInto = (
+    bucket: Map<string, number>,
+    rows: any[] | undefined,
+    dateFields: string[],
+    amountFields: string[],
+  ) => {
+    for (const r of rows ?? []) {
+      const m = toMonth(pickDate(r, dateFields));
+      if (!bucket.has(m)) continue;
+      let amt = 0;
+      for (const af of amountFields) {
+        if (r[af] != null) {
+          amt = Number(r[af]) || 0;
+          break;
+        }
+      }
+      bucket.set(m, (bucket.get(m) ?? 0) + amt);
+    }
+  };
+
+  sumInto(
+    income,
+    rowsByKey.personalIncome,
+    ['period', 'reportPeriod', 'createAt'],
+    ['incomeAmount', 'amount'],
+  );
+  sumInto(
+    subsidy,
+    rowsByKey.rentalSubsidy,
+    ['startDate', 'effectiveFrom', 'createAt'],
+    ['activeMonthlyEntitlementAmount', 'monthlyEntitlementAmount', 'monthlyAmount'],
+  );
+  sumInto(
+    rent,
+    rowsByKey.housingAllocation,
+    ['leaseStartDate', 'effectiveFrom', 'createAt'],
+    ['activeMonthlyRentAmount', 'monthlyRentAmount', 'rentAmount'],
+  );
+
+  return keys.map((month) => ({
+    month: month.slice(5),
+    income: Math.round(income.get(month) ?? 0),
+    subsidy: Math.round(subsidy.get(month) ?? 0),
+    rent: Math.round(rent.get(month) ?? 0),
+  }));
+}
+
+/** 档案规模对比(快照类当前量) */
+function buildProfileScale(
+  rowsByKey: Record<string, any[]>,
+): ProfileScaleItem[] {
+  const len = (k: string) => (rowsByKey[k] ?? []).length;
+  return [
+    { key: 'resident', label: '居民', value: len('residentSnapshot') },
+    { key: 'household', label: '家庭', value: len('householdSnapshot') },
+    { key: 'member', label: '家庭成员', value: len('householdMemberSnapshot') },
+    { key: 'residence', label: '居住信息', value: len('residenceSnapshot') },
+    { key: 'employment', label: '工作信息', value: len('employmentSnapshot') },
+  ];
+}

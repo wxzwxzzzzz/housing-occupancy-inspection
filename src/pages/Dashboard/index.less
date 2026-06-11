@@ -647,18 +647,55 @@
 /* ============ 报表卡墙(连续平铺,一排 4 个)============ */
 /* 卡墙复用 KpiCard,默认样式已足够;此处仅留扩展位 */
 
-// =================== ② 快捷入口 ===================
+// =================== 分区标题 ===================
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 14px;
+
+  .section-title-left {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .section-title-bar {
+    width: 4px;
+    height: 15px;
+    border-radius: 2px;
+    background: var(--ant-color-primary, #1d4ed8);
+    align-self: center;
+  }
+  .section-title-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f1f1f;
+  }
+  .section-title-desc {
+    font-size: 12px;
+    color: #8c8c8c;
+  }
+}
+
+// =================== ① 快捷入口(工作台右栏) ===================
 .quick-entry-card {
   border-radius: 12px;
   border: 0;
   box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
   :global(.ant-card-body) {
-    padding: 16px 20px !important;
+    padding: 20px 22px !important;
+    height: 100%;
+  }
+  .quick-entry-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f1f1f;
+    margin-bottom: 14px;
   }
   .quick-entry-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 8px;
   }
   .quick-entry-item {
     display: flex;
@@ -681,84 +718,222 @@
     align-items: center;
     justify-content: center;
     font-size: 20px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    transition: background 0.15s ease, color 0.15s ease;
     :global(.anticon) {
       font-size: 20px;
     }
   }
-  .qe-blue { background: #eff6ff; color: #1d4ed8; }
-  .qe-green { background: #ecfdf5; color: #389e0d; }
-  .qe-cyan { background: #ecfeff; color: #08979c; }
-  .qe-orange { background: #fff7ed; color: #d46b08; }
-  .qe-purple { background: #f5f3ff; color: #722ed1; }
-  .qe-gold { background: #fffbe6; color: #d48806; }
-  .qe-pink { background: #fdf2f8; color: #c41d7f; }
-  .qe-indigo { background: #eef2ff; color: #1e3a5f; }
+  .quick-entry-item:hover .quick-entry-icon {
+    background: #1d4ed8;
+    color: #fff;
+  }
   .quick-entry-label {
     font-size: 13px;
     color: #595959;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 575px) {
   .quick-entry-card .quick-entry-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-// =================== ③ 指标卡 ===================
-.indicator-card {
-  border-radius: 10px;
+// =================== ② 核心指标卡(去重后的全局 KPI) ===================
+.core-kpi-row {
+  align-items: stretch;
+}
+.core-kpi-card {
+  border-radius: 12px;
   border: 0;
   box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
   cursor: pointer;
+  height: 100%;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   &:hover {
-    box-shadow: 0 4px 12px rgba(18, 18, 23, 0.08);
-    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(18, 18, 23, 0.1);
+    transform: translateY(-2px);
   }
   :global(.ant-card-body) {
     padding: 16px 18px !important;
   }
-  .indicator-label {
-    font-size: 13px;
-    color: #8c8c8c;
-    margin-bottom: 8px;
+
+  .core-kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    min-height: 44px;
   }
-  .indicator-value {
+  .core-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    :global(.anticon) {
+      font-size: 21px;
+    }
+  }
+  .core-kpi-ring {
+    width: 56px;
+    height: 56px;
+    pointer-events: none;
+    margin: -6px;
+  }
+  .core-kpi-value {
     font-size: 28px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.1;
+    color: #1f1f1f;
+    letter-spacing: -0.5px;
+  }
+  .core-kpi-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #595959;
+    margin-top: 2px;
+  }
+  .core-kpi-foot {
+    font-size: 12px;
+    color: #8c8c8c;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #eef1f5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // 危险态(待处置预警)左缘红条 + 数字红
+  &.is-danger {
+    position: relative;
+    overflow: hidden;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #cf1322;
+    }
+    .core-kpi-value {
+      color: #cf1322;
+    }
+  }
+
+  // 图标配色基调(统一:主色蓝 + 语义三色,与 metric-tiles 共用)
+  .tone-blue { background: #eff6ff; color: #1d4ed8; }
+  .tone-green { background: #ecfdf5; color: #389e0d; }
+  .tone-warning { background: #fff7ed; color: #d46b08; }
+  .tone-red { background: #fef2f2; color: #cf1322; }
+}
+
+// =================== ④ 业务报表合并图表 ===================
+.biz-chart-card {
+  border-radius: 12px;
+  border: 0;
+  box-shadow: 0 1px 2px rgba(18, 18, 23, 0.05);
+
+  :global {
+    .ant-card-head {
+      border-bottom: 1px solid #f0f1f3;
+      min-height: 48px;
+      padding: 0 20px;
+    }
+    .ant-card-head-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f1f1f;
+    }
+    .ant-card-body {
+      padding: 12px 16px 8px !important;
+    }
+  }
+
+  .chart-axis-note {
+    font-size: 12px;
+    color: #8c8c8c;
   }
 }
 
-// =================== ④⑤ 图表卡分项数字条 ===================
-.metric-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 0;
+// =================== ④ 业务报表分组(旧·已弃用,保留兼容) ===================
+.report-group {
+  margin-bottom: 18px;
+  .report-group-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #595959;
+    margin: 0 0 10px;
+    padding-left: 10px;
+    border-left: 3px solid #d9e2ef;
+  }
+}
+.metric-tiles {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
   padding: 4px 0 16px;
   margin-bottom: 8px;
   border-bottom: 1px solid #f0f1f3;
-  .metric-cell {
-    flex: 1;
-    min-width: 64px;
+
+  .metric-tile {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: #fafbfc;
+    transition: background 0.15s ease;
+    &:hover {
+      background: #f2f4f7;
+    }
   }
-  .metric-num {
-    font-size: 22px;
+  .metric-tile-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    :global(.anticon) {
+      font-size: 17px;
+    }
+  }
+  .metric-tile-num {
+    font-size: 20px;
     font-weight: 700;
     line-height: 1;
     color: #1f1f1f;
   }
-  .metric-good { color: #389e0d; }
-  .metric-warn { color: #d46b08; }
-  .metric-bad { color: #cf1322; }
-  .metric-lbl {
+  .metric-tile-lbl {
     font-size: 12px;
     color: #8c8c8c;
+    white-space: nowrap;
+  }
+
+  // 图标配色基调(统一:主色蓝 + 语义三色)
+  .tone-blue { background: #eff6ff; color: #1d4ed8; }
+  .tone-green { background: #ecfdf5; color: #389e0d; }
+  .tone-warning { background: #fff7ed; color: #d46b08; }
+  .tone-red { background: #fef2f2; color: #cf1322; }
+}
+
+@media (max-width: 1200px) {
+  .metric-tiles {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 576px) {
+  .metric-tiles {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -768,13 +943,24 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   .msg-cat {
-    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    padding: 18px 20px 18px 22px;
     border-radius: 10px;
     cursor: pointer;
-    border: 1px solid #e5e8ec;
+    border: 1px solid transparent;
     transition: all 0.15s ease;
+    // 左侧 4px 色条
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+    }
     &:hover {
-      box-shadow: 0 2px 8px rgba(18, 18, 23, 0.08);
+      box-shadow: 0 4px 12px rgba(18, 18, 23, 0.12);
       transform: translateY(-1px);
     }
   }
@@ -790,17 +976,35 @@
     color: #1f1f1f;
   }
   .msg-cat-count {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     line-height: 1;
   }
   .msg-cat-desc {
     font-size: 12px;
-    color: #8c8c8c;
+    color: #595959;
   }
-  .msg-cat-todo { background: #eff6ff; .msg-cat-count { color: #1d4ed8; } }
-  .msg-cat-biz { background: #f6ffed; .msg-cat-count { color: #389e0d; } }
-  .msg-cat-alert { background: #fff7ed; .msg-cat-count { color: #d46b08; } }
+  // 待办 — 蓝
+  .msg-cat-todo {
+    background: #fff;
+    border-color: #e5e8ec;
+    &::before { background: #1d4ed8; }
+    .msg-cat-count { color: #1d4ed8; }
+  }
+  // 业务通知 — 政务深蓝
+  .msg-cat-biz {
+    background: #fff;
+    border-color: #e5e8ec;
+    &::before { background: #1e3a5f; }
+    .msg-cat-count { color: #1e3a5f; }
+  }
+  // 预警 — 红
+  .msg-cat-alert {
+    background: #fff;
+    border-color: #e5e8ec;
+    &::before { background: #cf1322; }
+    .msg-cat-count { color: #cf1322; }
+  }
 }
 
 @media (max-width: 768px) {
