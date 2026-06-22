@@ -7,7 +7,7 @@
  * 受控:value=string(URL),onChange(string|undefined)
  */
 
-import { PictureOutlined, UploadOutlined } from '@ant-design/icons';
+import { PictureOutlined } from '@ant-design/icons';
 import { Button, Image, Space, Upload } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import React, { useEffect, useState } from 'react';
@@ -84,7 +84,7 @@ const PhotoCell: React.FC<PhotoCellProps> = ({
       }}
     >
       {fileList.length === 0 && (
-        <Button size="small" icon={<UploadOutlined />}>
+        <Button size="small">
           上传
         </Button>
       )}

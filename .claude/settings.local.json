@@ -168,7 +168,8 @@
       "Bash(echo \"===lessc $?===\")",
       "Bash(sed -n '15,40p' src/components/ThemeSettings.tsx)",
       "Bash(sed -n '1,20p' config/defaultSettings.ts)",
-      "Bash(echo \"lessc $?\")"
+      "Bash(echo \"lessc $?\")",
+      "Bash(git checkout *)"
     ],
     "deny": [],
     "ask": []

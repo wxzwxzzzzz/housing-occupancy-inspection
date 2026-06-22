@@ -10,11 +10,8 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   HomeOutlined,
-  ReloadOutlined,
-  RocketOutlined,
   ScheduleOutlined,
   SolutionOutlined,
-  StopOutlined,
   TeamOutlined,
   UserAddOutlined,
   WalletOutlined,
@@ -123,18 +120,12 @@ const Dashboard: React.FC = observer(() => {
     (userStore.user as any)?.account ||
     '用户';
 
-  // 待办计数(各审批流 UNDER_APPROVAL + 待处置预警)
-  const tc = dashboardStore.todoCounts;
+  // 我的待办 = 消息中心三类(待办 / 业务 / 预警)
+  const mcTodo = dashboardStore.messageCounts;
   const todoItems = [
-    { key: 'leave', label: '请假审批', icon: <CalendarOutlined />, count: tc?.leave ?? 0, path: '/monitor/leaves' },
-    { key: 'makeup', label: '补卡审批', icon: <ReloadOutlined />, count: tc?.makeup ?? 0, path: '/monitor/makeups' },
-    { key: 'migrant', label: '外出务工', icon: <RocketOutlined />, count: tc?.migrantWork ?? 0, path: '/monitor/migrant-works' },
-    { key: 'application', label: '资质申请', icon: <SolutionOutlined />, count: tc?.application ?? 0, path: '/eligibility/applications' },
-    { key: 'residence', label: '居住变更', icon: <HomeOutlined />, count: tc?.residenceChange ?? 0, path: '/monitor/residence-changes' },
-    { key: 'employment', label: '工作变更', icon: <BankOutlined />, count: tc?.employmentChange ?? 0, path: '/monitor/employment-changes' },
-    { key: 'member', label: '成员变更', icon: <TeamOutlined />, count: tc?.memberChange ?? 0, path: '/monitor/member-changes' },
-    { key: 'termination', label: '资格终止', icon: <StopOutlined />, count: tc?.termination ?? 0, path: '/eligibility/terminations' },
-    { key: 'alert', label: '待处置预警', icon: <AlertOutlined />, count: tc?.alert ?? 0, path: '/monitor/alert-list' },
+    { key: 'todo', label: '待办消息', desc: '审批结果、待处理事项通知', icon: <ScheduleOutlined />, count: mcTodo?.todo ?? 0, path: '/system/message' },
+    { key: 'biz', label: '业务通知', desc: '打卡提醒、到期提醒等', icon: <BankOutlined />, count: mcTodo?.business ?? 0, path: '/system/message' },
+    { key: 'alert', label: '预警消息', desc: '考勤异常、缺勤等预警', icon: <AlertOutlined />, count: mcTodo?.alert ?? 0, path: '/monitor/alert-list' },
   ];
   const todoTotal = todoItems.reduce((s, it) => s + it.count, 0);
 
@@ -155,7 +146,6 @@ const Dashboard: React.FC = observer(() => {
   const rb = dashboardStore.residentBreakdown;
   const ab = dashboardStore.attendanceBreakdown;
   const alb = dashboardStore.alertBreakdown;
-  const mc = dashboardStore.messageCounts;
   const activatedResidents = rb?.activated ?? 0;
   const inactiveResidents = rb?.inactive ?? 0;
   const residentTotal =
@@ -259,7 +249,7 @@ const Dashboard: React.FC = observer(() => {
     <div className="dashboard-container">
       {/* ========== 区① 我的工作台 — 待办(大) + 快捷入口 ========== */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} lg={15}>
+        <Col xs={24} lg={12}>
           <Card className="todo-card" bordered={false}>
             <div className="todo-head">
               <div className="todo-head-left">
@@ -285,7 +275,10 @@ const Dashboard: React.FC = observer(() => {
                     onClick={() => navigate(it.path)}
                   >
                     <span className="todo-item-icon">{it.icon}</span>
-                    <span className="todo-item-label">{it.label}</span>
+                    <div className="todo-item-main">
+                      <span className="todo-item-label">{it.label}</span>
+                      <span className="todo-item-desc">{it.desc}</span>
+                    </div>
                     <span className="todo-item-count">{it.count}</span>
                   </div>
                 ))}
@@ -295,7 +288,7 @@ const Dashboard: React.FC = observer(() => {
         </Col>
 
         {/* 快捷入口 */}
-        <Col xs={24} lg={9}>
+        <Col xs={24} lg={12}>
           <Card className="quick-entry-card" bordered={false}>
             <div className="quick-entry-title">快捷入口</div>
             <div className="quick-entry-grid">
@@ -472,53 +465,6 @@ const Dashboard: React.FC = observer(() => {
           </Card>
         </Col>
       </Row>
-
-      {/* ========== 消息中心(精简三类计数) ========== */}
-      <SectionTitle
-        title="消息中心"
-        desc="待办 / 业务 / 预警"
-        extra={
-          <Button
-            type="link"
-            size="small"
-            onClick={() => navigate('/system/message')}
-          >
-            全部
-          </Button>
-        }
-      />
-      <div className="msg-center-grid">
-        <div
-          className="msg-cat msg-cat-todo"
-          onClick={() => navigate('/system/message')}
-        >
-          <div className="msg-cat-head">
-            <span className="msg-cat-name">待办消息</span>
-            <span className="msg-cat-count">{mc?.todo ?? 0}</span>
-          </div>
-          <div className="msg-cat-desc">审批结果、待处理事项通知</div>
-        </div>
-        <div
-          className="msg-cat msg-cat-biz"
-          onClick={() => navigate('/system/message')}
-        >
-          <div className="msg-cat-head">
-            <span className="msg-cat-name">业务通知</span>
-            <span className="msg-cat-count">{mc?.business ?? 0}</span>
-          </div>
-          <div className="msg-cat-desc">打卡提醒、到期提醒等</div>
-        </div>
-        <div
-          className="msg-cat msg-cat-alert"
-          onClick={() => navigate('/monitor/alert-list')}
-        >
-          <div className="msg-cat-head">
-            <span className="msg-cat-name">预警消息</span>
-            <span className="msg-cat-count">{mc?.alert ?? 0}</span>
-          </div>
-          <div className="msg-cat-desc">考勤异常、缺勤等预警</div>
-        </div>
-      </div>
 
       {/* ========== 区④ 业务报表 — 合并图表(近 12 月) ========== */}
       <SectionTitle
