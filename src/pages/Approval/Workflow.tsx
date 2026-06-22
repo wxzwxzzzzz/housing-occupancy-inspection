@@ -1,6 +1,5 @@
 import {
   ApartmentOutlined,
-  ArrowLeftOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
@@ -364,7 +363,7 @@ const ApprovalWorkflow: React.FC = () => {
     {
       key: 'create',
       type: 'primary',
-      label: '新建流程',
+      label: '新建',
       icon: <PlusOutlined />,
       onClick: handleCreate,
     },
@@ -418,8 +417,8 @@ const ApprovalWorkflow: React.FC = () => {
       }
       extra={
         <Space>
-          <Button icon={<ArrowLeftOutlined />} onClick={handleBackToList}>
-            返回列表
+          <Button onClick={handleBackToList}>
+            返回
           </Button>
           <Select
             value={selectedWorkflow}
@@ -427,7 +426,7 @@ const ApprovalWorkflow: React.FC = () => {
             options={workflowOptions}
             style={{ width: 180 }}
           />
-          <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
+          <Button onClick={handleRefresh}>
             刷新
           </Button>
         </Space>

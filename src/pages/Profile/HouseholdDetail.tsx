@@ -386,7 +386,7 @@ const HouseholdDetail: React.FC = () => {
     {
       key: 'invite',
       icon: <UsergroupAddOutlined />,
-      label: '邀请家庭成员',
+      label: '邀请',
       onClick: () => setInviteOpen(true),
       disabled: (household as any)?.status === 'ARCHIVED',
     },

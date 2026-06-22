@@ -4,13 +4,222 @@
 // 命名空间:.omnibar-page-* 限定作用域,避免污染全局
 // =============================================================
 
-@primary: #1d4ed8;
-@text-body: rgba(0, 0, 0, 0.85);
-@text-secondary: rgba(0, 0, 0, 0.45);
-@text-muted: rgba(0, 0, 0, 0.6);
-@border-color: rgba(0, 0, 0, 0.06);
-@bg-tertiary: #f5f5f5;
-@bg-secondary: #fafafa;
+// 颜色变量 — 精确对标原型 Tabler CSS 变量(从 tabler.css 读出的真值)
+@primary: var(--ant-color-primary, #066fd1); // --tblr-primary(blue 主题)
+@text-body: #1f2937; // --tblr-body-color
+@text-secondary: #6b7280; // --tblr-secondary(表头字 / 标签)
+@text-muted: #6c7a89;
+@border-color: rgba(4, 32, 69, 0.1); // --tblr-border-color-translucent
+@border-color-light: rgba(4, 32, 69, 0.1);
+@surface: #fff; // --tblr-bg-surface
+@surface-secondary: #f9fafb; // --tblr-bg-surface-secondary(= gray-50)
+@surface-tertiary: #f9fafb; // --tblr-bg-surface-tertiary(= gray-50,表头底)
+@input-surface: #fff;
+@shadow-card: 0 0 4px rgba(31, 41, 55, 0.04); // --tblr-shadow-card
+@shadow-input: 0 1px 1px rgba(31, 41, 55, 0.06); // --tblr-shadow-input
+@bg-tertiary: @surface-secondary;
+@bg-secondary: @surface-secondary;
+@filter-control-height: 28px;
+@quick-button-height: 26px;
+@toolbar-button-height: 28px;
+
+// =============================================================
+// 共享表格皮肤 mixin —— 列表页 / 详情页表格统一(对齐原型 .card-table)
+// 仅含视觉皮肤(表头 32px 灰底、tbody 0.75rem 行高、hover/selected、链接/行操作),
+// 不含定位规则(选择列宽、序号列居中),那些由各自容器按需补充。
+// =============================================================
+.opp-card-table-skin() {
+  .ant-table-wrapper,
+  .ant-spin-nested-loading,
+  .ant-spin-container,
+  .ant-table,
+  .ant-table-container {
+    height: 100%;
+  }
+
+  .ant-table {
+    background: @surface;
+    border-radius: 0;
+    font-size: 13px;
+  }
+
+  .ant-table-container,
+  .ant-table-header {
+    border-radius: 0 !important;
+  }
+
+  .ant-table table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .ant-table-thead > tr > th.ant-table-cell {
+    position: sticky !important;
+    top: 0;
+    z-index: 1;
+    height: 32px !important;
+    padding: 8px 12px !important;
+    background: @surface-tertiary !important;
+    border-right: 1px solid @border-color !important;
+    border-bottom: 1px solid @border-color !important;
+    color: @text-secondary !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 16px !important;
+    letter-spacing: 0.04em !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+
+    &::before {
+      display: none !important;
+    }
+
+    &:last-child {
+      border-right: 0 !important;
+    }
+  }
+
+  // antd 表头还有一层 .ant-table-cell 外的容器行高,一并钉死
+  .ant-table-thead > tr {
+    height: 32px !important;
+  }
+
+  .ant-table-tbody > tr > td.ant-table-cell {
+    max-width: 260px;
+    padding: 0.75rem 0.75rem !important;
+    border-bottom: 1px solid @border-color !important;
+    color: @text-body;
+    font-size: 13px;
+    // 原型表体继承 Tabler line-height-base(20/14),钉死以覆盖 antd 默认 1.571
+    line-height: 1.4285714286 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ant-table-tbody > tr:hover > td,
+  .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    // 原型:color-mix(in srgb, var(--tblr-emphasis-color) 7.5%, transparent),emphasis=#374151
+    background: rgba(55, 65, 81, 0.075) !important;
+  }
+
+  .ant-table-tbody > tr.ant-table-row-selected > td {
+    background: color-mix(in srgb, @primary 5%, transparent) !important;
+  }
+
+  .opp-link-cell {
+    color: @primary;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .opp-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    .opp-row-action {
+      color: @primary;
+      font-size: 12px;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      &.danger {
+        color: #d63939;
+      }
+    }
+
+    .opp-row-action-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      color: @text-secondary;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+
+      &:hover {
+        background: @surface-secondary;
+        color: @primary;
+      }
+    }
+  }
+}
+
+// =============================================================
+// 共享按钮皮肤 mixin —— 工具栏 / 详情头部 / Tab 操作区统一
+// 规则:无图标(图标由 ToolbarActions 层移除)、高 28px、宽度自适应、
+// 默认白底灰边黑字,hover 蓝边蓝字;primary 保留蓝底白字。
+// =============================================================
+.opp-button-skin() {
+  .ant-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 0;
+    height: @toolbar-button-height;
+    padding: 0 12px;
+    border-color: @border-color;
+    border-radius: 4px;
+    box-shadow: none;
+    background: @surface;
+    color: @text-body;
+    font-size: 13px;
+    line-height: (@toolbar-button-height - 2px);
+    white-space: nowrap;
+  }
+
+  .ant-btn:hover,
+  .ant-btn:focus-visible {
+    background: @surface;
+    border-color: @primary;
+    color: @primary;
+  }
+
+  .ant-btn-primary {
+    background: @primary;
+    border-color: @primary;
+    color: #fff;
+  }
+
+  .ant-btn-primary:hover,
+  .ant-btn-primary:focus-visible {
+    background: @primary;
+    border-color: @primary;
+    color: #fff;
+    filter: brightness(0.96);
+  }
+
+  // 下拉箭头 —— 原型 .caret 实心三角
+  .opp-caret {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 4px;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-top: 4px solid currentColor;
+    opacity: 0.7;
+    vertical-align: middle;
+  }
+
+  .ant-btn-primary .opp-caret {
+    border-top-color: #fff;
+    opacity: 1;
+  }
+}
 
 // ============ 公共布局 ============
 .omnibar-page {
@@ -349,90 +558,6 @@
   }
 }
 
-// 表格区
-.opp-list-table-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  border-top: 1px solid @border-color;
-
-  // 表头:紧凑浅灰底 + 细底边 + 极淡列竖线(对齐 OMS 原型 Tabler thead)
-  .ant-table-thead > tr > th.ant-table-cell {
-    background: #f9fafb !important;
-    color: rgba(0, 0, 0, 0.45) !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.04em !important;
-    text-transform: uppercase !important;
-    line-height: 16px !important;
-    padding: 8px 12px !important;
-    white-space: nowrap !important;
-    border-bottom: 1px solid #e5e8ec !important;
-
-    &::before {
-      display: none !important;
-    }
-  }
-
-  // 单元格:行高舒展(对齐原型 0.75rem),细底边
-  .ant-table-tbody > tr > td.ant-table-cell {
-    padding: 12px 12px !important;
-    color: @text-body;
-    font-size: 13px;
-    border-bottom: 1px solid #f0f1f3 !important;
-  }
-  .ant-table-tbody > tr:hover > td,
-  .ant-table-tbody > tr > td.ant-table-cell-row-hover {
-    background: rgba(0, 0, 0, 0.025) !important;
-  }
-  .ant-table-tbody > tr.ant-table-row-selected > td {
-    background: rgba(29, 78, 216, 0.05) !important;
-  }
-
-  // 链接列
-  .opp-link-cell {
-    color: @primary;
-    cursor: pointer;
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  // 行操作列
-  .opp-row-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    .opp-row-action {
-      color: @primary;
-      cursor: pointer;
-      font-size: 12px;
-      &:hover {
-        text-decoration: underline;
-      }
-      &.danger {
-        color: #cf1322;
-      }
-    }
-    .opp-row-action-more {
-      width: 20px;
-      height: 20px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 3px;
-      color: @text-secondary;
-      cursor: pointer;
-      font-weight: 700;
-      letter-spacing: 1px;
-      &:hover {
-        background: @bg-secondary;
-        color: @primary;
-      }
-    }
-  }
-}
-
 // 小计 / 合计
 .opp-list-summary {
   flex-shrink: 0;
@@ -564,6 +689,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
+
+    // 统一按钮皮肤(无图标 / 28px / 白底灰边 / primary 蓝底)
+    .opp-button-skin();
   }
 }
 
@@ -757,11 +885,19 @@
     height: 100%;
   }
 
+  // Tab 内的表格沿用与列表页一致的 card-table 皮肤(表头 32px / tbody 0.75rem 行高)
+  .ant-tabs-tabpane {
+    .opp-card-table-skin();
+  }
+
   .opp-detail-tab-actions {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 0 20px 0 0;
+
+    // 统一按钮皮肤(无图标 / 28px / 白底灰边 / primary 蓝底)
+    .opp-button-skin();
   }
 }
 
@@ -794,5 +930,606 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+// ============ OmnibarListPage HTML prototype parity ============
+.omnibar-page {
+  min-height: 0;
+
+  .opp-query-panel {
+    background: @surface;
+    border: 1px solid @border-color;
+    border-radius: 8px 8px 0 0;
+    box-shadow: @shadow-card;
+    padding: 12px 20px;
+    margin-bottom: 2px;
+
+    &.collapsed .opp-query-filters {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      margin-top: 0;
+      padding: 0;
+    }
+  }
+
+  .opp-query-omnibar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .opp-query-omnibar {
+    height: 36px;
+    padding: 3px;
+    background: @input-surface;
+    border: 1px solid @border-color;
+    border-radius: 18px;
+    box-shadow: @shadow-input;
+    gap: 6px;
+    transition: background 0.15s ease, box-shadow 0.2s ease, border-color 0.15s ease;
+
+    &:hover {
+      border-color: @border-color;
+    }
+
+    &:focus-within {
+      border-color: @primary;
+      box-shadow: @shadow-input, 0 0 0 0.25rem color-mix(in srgb, @primary 25%, transparent);
+    }
+  }
+
+  .opp-omnibar-scheme {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 14px;
+    background: @surface-secondary;
+    color: @text-body;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 28px;
+    white-space: nowrap;
+
+    &:hover {
+      background: @border-color;
+    }
+
+    .anticon {
+      flex-shrink: 0;
+      color: @text-secondary;
+      font-size: 10px;
+    }
+  }
+
+  .opp-omnibar-chips {
+    gap: 6px;
+    padding: 0 4px;
+
+    .chip-empty {
+      color: @text-secondary;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
+
+  .opp-query-chip {
+    height: 22px;
+    padding: 2px 4px 2px 10px;
+    border-radius: 10px;
+    background: color-mix(in srgb, @primary 12%, transparent);
+    color: @primary;
+    font-size: 12px;
+    line-height: 18px;
+
+    .chip-close {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      color: @primary;
+
+      &:hover {
+        background: color-mix(in srgb, @primary 15%, transparent);
+      }
+
+      .anticon {
+        font-size: 8px;
+      }
+    }
+  }
+
+  .opp-omnibar-clear {
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: @text-secondary;
+
+    &:hover {
+      background: @surface-secondary;
+      color: @text-body;
+    }
+  }
+
+  .opp-omnibar-actions {
+    gap: 4px;
+    margin-left: 8px;
+
+    .opp-oa-btn {
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: @border-color;
+      color: @text-body;
+      line-height: 30px;
+
+      &:hover {
+        background: @surface-secondary;
+        color: @text-body;
+      }
+
+      .anticon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .opp-query-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-top: 0;
+    max-height: 400px;
+    overflow: visible;
+    transition: max-height 0.2s ease, opacity 0.2s ease;
+  }
+
+  .opp-qf {
+    flex: 0 0 calc((100% - 64px) / 5);
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: @text-body;
+    font-size: 13px;
+  }
+
+  .opp-qf-label {
+    min-width: 72px;
+    flex-shrink: 0;
+    color: @text-secondary;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .opp-qf-control {
+    flex: 1;
+    min-width: 0;
+
+    &.ant-input,
+    &.ant-input-affix-wrapper,
+    &.ant-picker {
+      height: @filter-control-height;
+      min-height: @filter-control-height;
+      padding: 0 8px;
+      border-color: @border-color;
+      border-radius: 4px;
+      box-shadow: none;
+      font-size: 13px;
+      line-height: (@filter-control-height - 2px);
+    }
+
+    &.ant-input {
+      display: block;
+    }
+
+    &.ant-input-affix-wrapper {
+      display: inline-flex;
+      align-items: center;
+
+      .ant-input {
+        height: (@filter-control-height - 2px);
+        padding: 0;
+        font-size: 13px;
+        line-height: (@filter-control-height - 2px);
+      }
+
+      .ant-input-clear-icon {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+
+    &.ant-picker {
+      display: inline-flex;
+      align-items: center;
+
+      .ant-picker-input > input {
+        height: (@filter-control-height - 2px);
+        font-size: 13px;
+        line-height: (@filter-control-height - 2px);
+      }
+
+      .ant-picker-suffix,
+      .ant-picker-clear {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+
+    &.ant-picker-range {
+      padding-inline: 8px;
+
+      .ant-picker-active-bar {
+        bottom: 0;
+      }
+    }
+
+    &.ant-input:hover,
+    &.ant-input:focus,
+    &.ant-input-affix-wrapper:hover,
+    &.ant-input-affix-wrapper-focused,
+    &.ant-picker:hover,
+    &.ant-picker-focused {
+      border-color: @primary;
+      box-shadow: none;
+    }
+
+    &.ant-select .ant-select-selector {
+      height: @filter-control-height !important;
+      min-height: @filter-control-height !important;
+      padding: 0 8px !important;
+      border-color: @border-color !important;
+      border-radius: 4px !important;
+      box-shadow: none !important;
+      font-size: 13px;
+    }
+
+    &.ant-select-single {
+      height: @filter-control-height;
+
+      .ant-select-selection-search-input {
+        height: (@filter-control-height - 2px) !important;
+        line-height: (@filter-control-height - 2px) !important;
+      }
+
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        line-height: (@filter-control-height - 2px) !important;
+      }
+    }
+
+    &.ant-select .ant-select-arrow,
+    &.ant-select .ant-select-clear {
+      display: inline-flex;
+      align-items: center;
+      height: 100%;
+      margin-top: 0;
+      transform: translateY(-50%);
+    }
+
+    &.ant-select:hover .ant-select-selector,
+    &.ant-select-focused .ant-select-selector {
+      border-color: @primary !important;
+      box-shadow: none !important;
+    }
+  }
+
+  .opp-qf-quick {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    flex-shrink: 0;
+
+    button {
+      flex: 0 0 auto;
+      height: @quick-button-height;
+      min-width: 36px;
+      padding: 0 8px;
+      border: 1px solid @border-color;
+      border-radius: 3px;
+      background: @surface;
+      color: @text-secondary;
+      font-size: 12px;
+      line-height: (@quick-button-height - 2px);
+      white-space: nowrap;
+
+      &:hover {
+        border-color: @primary;
+        color: @primary;
+      }
+
+      &.active {
+        background: color-mix(in srgb, @primary 4%, transparent);
+        border-color: @primary;
+        color: @primary;
+      }
+    }
+  }
+
+  .opp-list-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 14px 0 12px;
+    background: @surface;
+    border: 1px solid @border-color;
+    border-radius: 0 0 8px 8px;
+    box-shadow: @shadow-card;
+  }
+
+  .opp-list-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 8px 20px;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+
+  .opp-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .opp-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+
+    // 统一按钮皮肤(无图标 / 28px / 白底灰边 / primary 蓝底)
+    .opp-button-skin();
+  }
+
+  .opp-view-radio {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: @text-body;
+    font-size: 13px;
+    cursor: pointer;
+
+    input[type='radio'] {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: @primary;
+    }
+  }
+
+  .opp-list-table-wrap {
+    flex: 1;
+    min-height: 0;
+    // 固定表头由 antd scroll.y 实现:内层 .ant-table-body 滚动,外层不再滚动,避免双滚动条
+    overflow: hidden;
+    border-top: 1px solid @border-color;
+    border-radius: 0;
+
+    // 共享表格皮肤(表头 32px / tbody 行高 / hover / 链接 / 行操作)
+    .opp-card-table-skin();
+
+    // ↓ 列表页专属:多选列宽 + 序号列居中
+    .ant-table-selection-column,
+    .ant-table-cell:has(.ant-checkbox-wrapper),
+    .ant-table-cell:has(.ant-checkbox) {
+      width: 40px !important;
+      min-width: 40px !important;
+      text-align: center !important;
+    }
+
+    .ant-table-thead > tr > th:nth-child(2),
+    .ant-table-tbody > tr > td:nth-child(2) {
+      text-align: center !important;
+    }
+  }
+
+  .opp-list-summary {
+    display: flex;
+    align-items: stretch;
+    height: 30px;
+    flex-shrink: 0;
+    border-top: 1px solid transparent;
+    font-size: 13px;
+    font-weight: 600;
+
+    .opp-summary-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 96px;
+      min-width: 96px;
+      flex-shrink: 0;
+      border-right: 1px solid @border-color;
+    }
+
+    .opp-summary-body {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      padding: 0 12px;
+    }
+
+    &.subtotal {
+      background: color-mix(in srgb, @primary 6%, @surface);
+      border-top-color: color-mix(in srgb, @primary 15%, @surface);
+      color: @primary;
+
+      .opp-summary-label {
+        border-right-color: color-mix(in srgb, @primary 15%, @surface);
+      }
+    }
+
+    &.grandtotal {
+      background: color-mix(in srgb, @primary 12%, @surface);
+      border-top-color: color-mix(in srgb, @primary 20%, @surface);
+      color: @text-body;
+      font-weight: 700;
+
+      .opp-summary-label {
+        border-right-color: color-mix(in srgb, @primary 20%, @surface);
+      }
+    }
+  }
+
+  .opp-list-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 20px;
+    flex-shrink: 0;
+    border-top: 1px solid @surface-secondary;
+    background: transparent;
+    color: @text-secondary;
+    font-size: 13px;
+
+    .opp-footer-left,
+    .opp-footer-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .opp-footer-left {
+      gap: 8px;
+    }
+
+    .opp-footer-right {
+      gap: 8px;
+    }
+
+    .opp-page-total {
+      margin-right: 6px;
+      color: @text-secondary;
+    }
+
+    .opp-only-selected {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      strong {
+        color: @primary !important;
+        font-weight: 600;
+      }
+    }
+
+    .ant-switch {
+      width: 28px;
+      min-width: 28px;
+      height: 16px;
+      background: @border-color;
+      line-height: 16px;
+
+      .ant-switch-handle {
+        top: 2px;
+        width: 12px;
+        height: 12px;
+
+        &::before {
+          border-radius: 50%;
+          background: @surface;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+      }
+
+      &.ant-switch-checked {
+        background: @primary;
+
+        .ant-switch-handle {
+          inset-inline-start: calc(100% - 14px);
+        }
+      }
+    }
+
+    .ant-pagination {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      color: @text-secondary;
+      font-size: 13px;
+
+      .ant-pagination-prev,
+      .ant-pagination-next,
+      .ant-pagination-item {
+        min-width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        line-height: 26px;
+      }
+
+      .ant-pagination-item {
+        border-color: @border-color;
+
+        a {
+          color: @text-body;
+        }
+
+        &:hover {
+          border-color: @primary;
+
+          a {
+            color: @primary;
+          }
+        }
+      }
+
+      .ant-pagination-item-active {
+        border-color: @primary;
+
+        a {
+          color: @primary;
+        }
+      }
+
+      .ant-pagination-options {
+        margin-inline-start: 8px;
+      }
+
+      .ant-select-selector,
+      .ant-pagination-options-quick-jumper input {
+        height: 28px !important;
+        border-color: @border-color !important;
+        border-radius: 3px !important;
+        box-shadow: none !important;
+        font-size: 13px;
+      }
+
+      .ant-select-selector {
+        padding: 0 8px !important;
+        background: @surface !important;
+      }
+
+      .ant-select-selection-item {
+        line-height: 26px !important;
+      }
+
+      .ant-pagination-options-quick-jumper {
+        height: 28px;
+        color: @text-secondary;
+        line-height: 28px;
+
+        input {
+          width: 50px;
+          padding: 0 8px;
+          text-align: center;
+        }
+      }
+    }
   }
 }

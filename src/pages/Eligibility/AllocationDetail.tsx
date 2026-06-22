@@ -117,7 +117,7 @@ const HousingAllocationDetail: React.FC = () => {
       list.push({
         key: 'submit',
         type: 'primary',
-        label: '提交生效',
+        label: '生效',
         onClick: handleSubmit,
       });
     } else if (status === 'ALLOC_ACTIVE') {
@@ -129,7 +129,7 @@ const HousingAllocationDetail: React.FC = () => {
       list.push({
         key: 'terminate',
         danger: true,
-        label: '终止配租',
+        label: '终止',
         onClick: handleTerminate,
         disabled: terminating,
       });

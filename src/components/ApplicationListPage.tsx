@@ -188,7 +188,7 @@ export function ApplicationListPage<
         key: 'create',
         type: 'primary',
         icon: <PlusOutlined />,
-        label: '新建申请',
+        label: '新建',
         onClick: () => onCreate?.(),
       });
     }
@@ -206,14 +206,14 @@ export function ApplicationListPage<
             key: 'batch-reject',
             danger: true,
             icon: <CloseOutlined />,
-            label: `批量驳回 (${selectedKeys.length})`,
+            label: `驳回 (${selectedKeys.length})`,
             onClick: () => setBatchModal('reject'),
           },
           {
             key: 'batch-approve',
             type: 'primary',
             icon: <CheckOutlined />,
-            label: `批量通过 (${selectedKeys.length})`,
+            label: `批准 (${selectedKeys.length})`,
             onClick: () => setBatchModal('approve'),
           },
         );

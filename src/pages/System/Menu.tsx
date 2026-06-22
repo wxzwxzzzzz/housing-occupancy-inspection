@@ -298,13 +298,13 @@ const SystemMenu: React.FC = () => {
     {
       key: 'add',
       type: 'primary',
-      label: '新增菜单',
+      label: '新增',
       icon: <PlusOutlined />,
       onClick: handleAdd,
     },
     {
       key: 'batchDelete',
-      label: '批量删除',
+      label: '删除',
       danger: true,
       disabled: selectedKeys.length === 0,
       onClick: handleBatchDelete,

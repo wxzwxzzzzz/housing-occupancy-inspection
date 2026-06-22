@@ -37,7 +37,7 @@ import './index.less';
 // =================== 统一配色板(政务深蓝 + 语义色) ===================
 // 规则:主色蓝做骨架;橙=警告,红=危险;不使用绿色与其它装饰色。
 const C = {
-  primary: '#1d4ed8',
+  primary: '#066fd1',
   warning: '#d46b08',
   danger: '#cf1322',
   text: '#1f1f1f',
@@ -46,7 +46,7 @@ const C = {
 };
 /** 折线多 series 用蓝阶为主的协调色板(无绿:4 档蓝 + 橙 + 红) */
 const SERIES_PALETTE = [
-  '#1d4ed8', // 资质申请 — 主蓝
+  '#066fd1', // 资质申请 — 主蓝
   '#3b82f6', // 实物配租 — 中蓝
   '#60a5fa', // 租赁补贴 — 浅蓝
   '#cf1322', // 资格终止 — 红(负向)
@@ -483,7 +483,7 @@ const Dashboard: React.FC = observer(() => {
             size="small"
             onClick={() => navigate('/system/message')}
           >
-            查看全部
+            全部
           </Button>
         }
       />
@@ -530,7 +530,7 @@ const Dashboard: React.FC = observer(() => {
             size="small"
             onClick={() => navigate('/report/resident-snapshot')}
           >
-            报表中心
+            报表
           </Button>
         }
       />
@@ -659,7 +659,7 @@ const Dashboard: React.FC = observer(() => {
                 },
                 plotOptions: { bar: { columnWidth: '55%', borderRadius: 4 } },
                 dataLabels: { enabled: false },
-                colors: ['#1d4ed8', '#60a5fa', '#a5c4fb'],
+                colors: ['#066fd1', '#60a5fa', '#a5c4fb'],
                 xaxis: {
                   categories: fundMonthly.map((d) => `${d.month}月`),
                   axisBorder: { show: false },

@@ -179,7 +179,7 @@ function ApplicationDetailPageInner<T = Record<string, any>>(
       list.push({
         key: 'cancel',
         danger: true,
-        label: '取消申请',
+        label: '取消',
         onClick: handleCancel,
       });
     }

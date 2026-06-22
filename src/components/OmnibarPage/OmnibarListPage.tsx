@@ -136,20 +136,22 @@ function OmnibarListPageInner<T extends Record<string, any>>(props: OmnibarListP
         scroll={scroll}
         subtotal={subtotal}
         grandtotal={grandtotal}
+        footer={
+          !hideFooter && (
+            <ListFooter
+              selectedCount={selectedKeys.length}
+              showOnlySelected={showOnlySelected}
+              onShowOnlySelectedChange={onShowOnlySelectedChange}
+              total={total}
+              page={page}
+              pageSize={pageSize}
+              pageSizeOptions={pageSizeOptions}
+              onPageChange={onPageChange}
+            />
+          )
+        }
       />
 
-      {!hideFooter && (
-        <ListFooter
-          selectedCount={selectedKeys.length}
-          showOnlySelected={showOnlySelected}
-          onShowOnlySelectedChange={onShowOnlySelectedChange}
-          total={total}
-          page={page}
-          pageSize={pageSize}
-          pageSizeOptions={pageSizeOptions}
-          onPageChange={onPageChange}
-        />
-      )}
       {bottomSlot && <div className="opp-bottom-slot">{bottomSlot}</div>}
     </div>
   );

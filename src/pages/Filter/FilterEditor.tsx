@@ -1,5 +1,4 @@
 // @ts-nocheck
-import { CodeOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons';
 // Query Builder imports - 使用 Ant Design 版本
 import {
   AntdConfig,
@@ -276,16 +275,15 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
       footer={
         <Space>
           <Button onClick={onCancel}>取消</Button>
-          <Button icon={<UndoOutlined />} onClick={handleReset}>
+          <Button onClick={handleReset}>
             重置
           </Button>
           <Button
-            icon={<CodeOutlined />}
             onClick={() => setShowJsonLogic(!showJsonLogic)}
           >
             {showJsonLogic ? '隐藏代码' : '查看代码'}
           </Button>
-          <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
+          <Button type="primary" onClick={handleSave}>
             保存
           </Button>
         </Space>
@@ -439,8 +437,8 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
 
         /* AND/OR 选中状态 - 蓝色 */
         .query-builder-container .group--conjunctions .ant-btn-primary {
-          background: #1d4ed8;
-          border-color: #1d4ed8;
+          background: var(--ant-color-primary, #066fd1);
+          border-color: var(--ant-color-primary, #066fd1);
           color: #fff;
         }
 
@@ -466,8 +464,8 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         }
 
         .query-builder-container .group--actions .ant-btn:hover {
-          color: #1d4ed8;
-          border-color: #1d4ed8;
+          color: var(--ant-color-primary, #066fd1);
+          border-color: var(--ant-color-primary, #066fd1);
         }
 
         /* 组子元素容器 */
@@ -549,7 +547,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         }
 
         .query-builder-container .ant-select-focused .ant-select-selector {
-          border-color: #1d4ed8 !important;
+          border-color: var(--ant-color-primary, #066fd1) !important;
           box-shadow: none !important;
         }
 
@@ -582,7 +580,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         .query-builder-container .ant-input:focus,
         .query-builder-container .ant-input-number:focus,
         .query-builder-container .ant-input-number-focused {
-          border-color: #1d4ed8;
+          border-color: var(--ant-color-primary, #066fd1);
           box-shadow: none;
         }
 
@@ -640,7 +638,7 @@ const FilterEditor: React.FC<FilterEditorProps> = ({
         /* 嵌套组样式 */
         .query-builder-container .group .group {
           margin: 8px 0;
-          border-left: 3px solid #1d4ed8;
+          border-left: 3px solid var(--ant-color-primary, #066fd1);
         }
 
         /* 删除组头部多余间距 */

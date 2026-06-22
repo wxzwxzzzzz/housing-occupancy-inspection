@@ -92,7 +92,7 @@ const EligibilityApplications: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新建资质申请',
+      label: '新建',
       onClick: () => setCreateOpen(true),
     },
     {

@@ -100,7 +100,7 @@ export function ApprovalDetailPage<T extends { id: string; status?: string }>(
     ...(extraHeaderActions?.(data) ?? []),
     {
       key: 'back',
-      label: '返回列表',
+      label: '返回',
       icon: <ArrowLeftOutlined />,
       onClick: () => (listRoute ? navigate(listRoute) : navigate(-1)),
     },

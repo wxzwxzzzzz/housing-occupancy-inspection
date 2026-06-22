@@ -113,7 +113,7 @@ const RentalSubsidyDetail: React.FC = () => {
       list.push({
         key: 'submit',
         type: 'primary',
-        label: '提交生效',
+        label: '生效',
         onClick: () => callAction('submit'),
         disabled: busy,
       });
@@ -126,14 +126,14 @@ const RentalSubsidyDetail: React.FC = () => {
       });
       list.push({
         key: 'suspend',
-        label: '暂停发放',
+        label: '暂停',
         onClick: () => callAction('suspend'),
         disabled: busy,
       });
       list.push({
         key: 'terminate',
         danger: true,
-        label: '终止补贴',
+        label: '终止',
         onClick: confirmTerminate,
         disabled: busy,
       });
@@ -141,14 +141,14 @@ const RentalSubsidyDetail: React.FC = () => {
       list.push({
         key: 'resume',
         type: 'primary',
-        label: '恢复发放',
+        label: '恢复',
         onClick: () => callAction('resume'),
         disabled: busy,
       });
       list.push({
         key: 'terminate',
         danger: true,
-        label: '终止补贴',
+        label: '终止',
         onClick: confirmTerminate,
         disabled: busy,
       });

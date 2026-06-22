@@ -60,7 +60,7 @@ const AttendanceConfigSolutions: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新建方案',
+      label: '新建',
       onClick: () => setCreateOpen(true),
     },
     {

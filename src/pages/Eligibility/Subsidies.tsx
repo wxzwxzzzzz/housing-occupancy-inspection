@@ -80,7 +80,7 @@ const EligibilitySubsidies: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新建补贴',
+      label: '新建',
       onClick: () => setCreateOpen(true),
     },
     {

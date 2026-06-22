@@ -1,8 +1,5 @@
 import {
-  DeleteOutlined,
-  EditOutlined,
   PlusOutlined,
-  SafetyOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Form, Input, Modal, message, Tag, Tree } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -208,7 +205,7 @@ const SystemRole: React.FC = () => {
   const toolbarActions: ToolbarAction[] = [
     {
       key: 'add',
-      label: '新增角色',
+      label: '新增',
       type: 'primary',
       icon: <PlusOutlined />,
       onClick: handleAdd,
@@ -222,7 +219,6 @@ const SystemRole: React.FC = () => {
       width: 160,
       render: (text, record) => (
         <span className="opp-link-cell" onClick={() => handleEdit(record)}>
-          <SafetyOutlined style={{ marginRight: 4, color: '#1d4ed8' }} />
           {text}
         </span>
       ),
@@ -264,14 +260,14 @@ const SystemRole: React.FC = () => {
             权限
           </span>
           <span className="opp-row-action" onClick={() => handleEdit(record)}>
-            <EditOutlined /> 编辑
+            编辑
           </span>
           {record.code !== 'admin' && (
             <span
               className="opp-row-action danger"
               onClick={() => handleDelete(record)}
             >
-              <DeleteOutlined /> 删除
+              删除
             </span>
           )}
         </span>

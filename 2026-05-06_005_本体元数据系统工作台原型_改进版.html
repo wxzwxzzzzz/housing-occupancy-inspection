@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-themes.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
 <style>
@@ -1379,124 +1379,6 @@ a.card:hover{
   font-size:13px;
   color:var(--tblr-secondary-color);
 }
-/* 左侧 side-rail —— 与右侧 side-rail 对称 */
-.left-rail{
-  flex-shrink:0;
-  width:44px;
-  margin:10px 0 10px 10px;
-  border-radius:8px;
-  background:var(--tblr-bg-surface);
-  border:var(--tblr-border-width) solid var(--tblr-border-color-translucent);
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  padding:10px 4px 6px;
-  overflow:hidden;
-  transition:width .2s ease, margin .2s ease, padding .2s ease, border .2s ease;
-}
-.left-rail.expanded{
-  width:180px;
-  padding:10px 8px 6px;
-}
-.left-rail.hidden{
-  width:0;
-  margin:10px 0;
-  padding:0;
-  border:none;
-}
-.left-rail .rail-icons{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  gap:4px;
-}
-.left-rail .rail-btn{
-  height:36px;
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:10px;
-  padding:0 6px;
-  border-radius:8px;
-  color:var(--tblr-secondary-color);
-  cursor:pointer;
-  background:transparent;
-  border:0;
-  transition:background .15s ease,color .15s ease,padding .2s ease;
-  position:relative;
-  white-space:nowrap;
-  overflow:hidden;
-}
-.left-rail:not(.expanded) .rail-btn{
-  justify-content:center;
-  padding:0;
-}
-.left-rail .rail-btn:hover{background:var(--tblr-bg-surface-secondary)}
-.left-rail .rail-btn.active{background:color-mix(in srgb, var(--tblr-primary) 15%, transparent);color:var(--tblr-primary)}
-.left-rail .rail-btn svg{width:20px;height:20px;fill:currentColor;flex-shrink:0}
-.left-rail .rail-btn .rail-label{
-  font-size:13px;
-  color:var(--tblr-body-color);
-  opacity:0;
-  max-width:0;
-  transition:opacity .15s ease, max-width .2s ease;
-}
-.left-rail.expanded .rail-btn .rail-label{
-  opacity:1;
-  max-width:140px;
-}
-.left-rail .rail-btn .rail-tooltip{
-  position:absolute;
-  left:42px;
-  top:50%;
-  transform:translateY(-50%);
-  padding:4px 8px;
-  background:var(--tblr-body-color);
-  color:var(--tblr-bg-surface);
-  font-size:11px;
-  border-radius:4px;
-  white-space:nowrap;
-  opacity:0;
-  pointer-events:none;
-  transition:opacity .15s ease;
-  z-index:10;
-}
-.left-rail:not(.expanded) .rail-btn:hover .rail-tooltip{opacity:1}
-/* 左 rail 隐藏时显示的展开按钮 — 右半圆 + 左矩形延伸 */
-.left-show-btn{
-  position:absolute;
-  z-index:18;
-  left:0;
-  bottom:16px;
-  width:25px;
-  height:40px;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:var(--tblr-bg-surface-secondary);
-  border:var(--tblr-border-width) solid var(--tblr-border-color-translucent);
-  border-left:none;
-  border-radius:0 20px 20px 0;
-  color:var(--tblr-body-color);
-  cursor:pointer;
-  box-shadow:2px 2px 10px rgba(0,0,0,.1);
-  padding:0;
-  transition:width .2s ease;
-}
-.left-show-btn:hover{width:35px}
-.left-show-btn .btn-circle{
-  flex-shrink:0;
-  width:28px;
-  height:28px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  transition:background .15s ease;
-}
-.left-show-btn:hover .btn-circle{background:var(--tblr-bg-surface-secondary)}
-.left-show-btn svg{width:12px;height:12px;fill:currentColor;stroke:none}
-.app-panel.left-hidden .left-show-btn{display:flex}
 /* 滚动条 — 默认隐藏，hover 显示 */
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -1513,7 +1395,7 @@ a.card:hover{
   <header class="menu-bar">
     <nav class="menu-left" aria-label="系统菜单">
       <div class="brand" aria-label="Koderwake">
-        <button class="brand-button" type="button" onclick="toggleLeftRail()" aria-label="折叠/展开左侧菜单" title="折叠/展开左侧菜单">
+        <button class="brand-button" type="button" onclick="toggleLaunchpad()" aria-label="展开启动台" title="启动台">
           <svg class="brand-clover" viewBox="0 0 24 23" focusable="false" aria-hidden="true">
             <g transform="translate(1,1)" stroke="none" fill-rule="evenodd" fill-opacity="0.7">
               <path d="M20.2049675,6.46040325 C21.4348164,4.52275148 20.8958764,1.93239834 19.0011482,0.674643852 C17.8972386,-0.0581367825 16.576677,-0.176680698 15.4233982,0.23511744 L15.422357,0.231346395 C14.0902558,0.671627015 11.6207537,2.04610645 10.799177,3.34055099 C9.34968284,5.62411851 9.49132651,8.49459379 10.9400398,10.589609 L18.0458234,8.15923694 C18.9036245,7.87206076 19.6752245,7.29495774 20.2049675,6.46040325" stroke="#FBBD05" stroke-width="0.66" fill="#FBBC05"/>
@@ -1605,45 +1487,6 @@ a.card:hover{
       </button>
     </div>
     <section class="app-panel" id="appPanel">
-      <nav class="left-rail" id="leftRail" aria-label="主菜单">
-        <div class="rail-icons">
-          <button class="rail-btn" type="button" onclick="openWindow('business')" aria-label="业务菜单" title="业务菜单">
-            <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/></svg>
-            <span class="rail-label">业务菜单</span>
-            <span class="rail-tooltip">业务菜单</span>
-          </button>
-          <button class="rail-btn" type="button" onclick="openWindow('oms')" aria-label="本体管理" title="本体管理">
-            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5zm0 15l-10-5v5l10 5 10-5v-5z"/></svg>
-            <span class="rail-label">本体管理</span>
-            <span class="rail-tooltip">本体管理</span>
-          </button>
-          <button class="rail-btn" type="button" onclick="openWindow('basedoc')" aria-label="基础档案" title="基础档案">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
-            <span class="rail-label">基础档案</span>
-            <span class="rail-tooltip">基础档案</span>
-          </button>
-          <button class="rail-btn" type="button" onclick="openWindow('iam')" aria-label="权限管理" title="权限管理">
-            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            <span class="rail-label">权限管理</span>
-            <span class="rail-tooltip">权限管理</span>
-          </button>
-          <button class="rail-btn" type="button" onclick="openWindow('settings')" aria-label="系统管理" title="系统管理">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-            <span class="rail-label">系统管理</span>
-            <span class="rail-tooltip">系统管理</span>
-          </button>
-          <button class="rail-btn" type="button" onclick="toggleLaunchpad()" aria-label="启动台" title="启动台">
-            <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-            <span class="rail-label">启动台</span>
-            <span class="rail-tooltip">启动台</span>
-          </button>
-        </div>
-      </nav>
-      <button class="left-show-btn" type="button" onclick="toggleLeftRail()" aria-label="展开主菜单" title="展开主菜单">
-        <span class="btn-circle">
-          <svg viewBox="64 64 896 896" focusable="false" aria-hidden="true"><path d="M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z"/></svg>
-        </span>
-      </button>
       <div class="app-panel-body">
         <div class="business-grid" id="businessGrid"></div>
       </div>
@@ -2849,16 +2692,6 @@ function toggleBusinessMenu(){
   closePopovers();
   document.getElementById("businessMenu").classList.toggle("open");
   hideLaunchpad();
-}
-
-function toggleLeftMenu(){
-  toggleLeftRail();
-}
-
-function toggleLeftRail(){
-  const rail=document.getElementById("leftRail");
-  if(!rail) return;
-  rail.classList.toggle("expanded");
 }
 
 const LAUNCHPAD_APPS=[

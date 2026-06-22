@@ -83,7 +83,7 @@ const EligibilityAllocations: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新建配租',
+      label: '新建',
       onClick: () => setCreateOpen(true),
     },
     {

@@ -154,12 +154,12 @@ const AlertDetail: React.FC = () => {
     {
       key: 'resolve',
       type: 'primary',
-      label: '标记已处置',
+      label: '处置',
       onClick: handleResolve,
     },
     {
       key: 'goto-resident',
-      label: '查看居民全貌',
+      label: '全貌',
       onClick: () => {
         if (r.resident) window.open(`/residents/${r.resident}`, '_blank');
       },

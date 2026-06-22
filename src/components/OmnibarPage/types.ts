@@ -105,6 +105,8 @@ export interface DetailTabItem {
   content: React.ReactNode;
   /** 只在 active 时渲染,默认 true(更省性能) */
   destroyInactive?: boolean;
+  /** 该 tab 专属的右上角操作组(激活时显示;未配置则回退到页面级 tabActions) */
+  actions?: ToolbarAction[];
 }
 
 /** 状态徽章 */

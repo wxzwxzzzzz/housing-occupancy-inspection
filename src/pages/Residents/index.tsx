@@ -104,7 +104,7 @@ const ResidentsPage: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新增居民',
+      label: '新增',
       onClick: () => setCreateOpen(true),
     },
     {

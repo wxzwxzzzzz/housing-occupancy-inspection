@@ -10,10 +10,7 @@
  */
 
 import {
-  EditOutlined,
   EnvironmentOutlined,
-  PlusOutlined,
-  ReloadOutlined,
 } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import {
@@ -28,7 +25,13 @@ import {
   Space,
   Tag,
 } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
 import FenceMapEditor from '@/components/FenceMapEditor';
 import { fenceService } from '@/services/domains/fence';
 import { residenceService } from '@/services/domains/household';
@@ -47,6 +50,26 @@ const FenceTypeLabel: Record<string, string> = {
 
 export interface ResidentFencePanelProps {
   residentId: string;
+  /** 内部状态(是否有生效居住记录 / 是否已绑定围栏)变化时通知父级,用于父级切换 tab actions */
+  onStateChange?: (state: ResidentFenceState) => void;
+}
+
+/** 暴露给父级(tab actions)的命令句柄 */
+export interface ResidentFencePanelHandle {
+  /** 新增围栏 */
+  openCreate: () => void;
+  /** 编辑现有围栏 */
+  openEdit: () => void;
+  /** 刷新围栏数据 */
+  refresh: () => void;
+}
+
+/** 当前可用的操作上下文,父级据此决定显示哪些按钮 */
+export interface ResidentFenceState {
+  /** 是否有"生效中"的居住记录(无则无法绑定围栏) */
+  hasActiveResidence: boolean;
+  /** 是否已绑定围栏(true=可编辑/刷新,false=可新增) */
+  hasFence: boolean;
 }
 
 interface EditState {
@@ -56,9 +79,10 @@ interface EditState {
   vertices: GeoPoint[];
 }
 
-const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
-  residentId,
-}) => {
+const ResidentFencePanel = forwardRef<
+  ResidentFencePanelHandle,
+  ResidentFencePanelProps
+>(({ residentId, onStateChange }, ref) => {
   // 1. 拉该居民"生效中"的居住记录(理论上只有 1 条)
   const {
     data: activeResidence,
@@ -132,6 +156,29 @@ const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
     if (submitting) return;
     setDrawerOpen(false);
   };
+
+  // 暴露给父级(tab actions)的命令
+  useImperativeHandle(
+    ref,
+    () => ({
+      openCreate: openDrawer,
+      openEdit: openDrawer,
+      refresh: reloadFence,
+    }),
+    // openDrawer / reloadFence 在每次渲染重建,但闭包始终引用最新 fence/state,故依赖留空安全
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fence, vertexPoints],
+  );
+
+  // 状态变化(有无生效居住记录 / 有无围栏)上报父级,驱动 tab actions 切换
+  useEffect(() => {
+    if (residenceLoading || fenceLoading) return;
+    onStateChange?.({
+      hasActiveResidence: !!activeResidence,
+      hasFence: !!fence,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [residenceLoading, fenceLoading, activeResidence, fence]);
 
   const isValid = useMemo(() => {
     if (editing.fenceType === 'CIRCLE') {
@@ -222,7 +269,7 @@ const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
     );
   }
 
-  // 有居住记录但没围栏:显示新增按钮
+  // 有居住记录但没围栏:空状态(新增动作在 tab 右上角)
   if (!fence) {
     return (
       <div style={{ padding: 24 }}>
@@ -234,14 +281,10 @@ const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
             <span style={{ color: '#888' }}>
               当前居住地址{' '}
               <strong>{(activeResidence as any).address?.detail ?? '-'}</strong>{' '}
-              尚未绑定电子围栏
+              尚未绑定电子围栏,点击右上角「新增」开始绘制
             </span>
           }
-        >
-          <Button type="primary" icon={<PlusOutlined />} onClick={openDrawer}>
-            新增围栏
-          </Button>
-        </Empty>
+        />
 
         <FenceDrawer
           open={drawerOpen}
@@ -257,14 +300,13 @@ const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
     );
   }
 
-  // 有围栏:展示 + 编辑
+  // 有围栏:展示(刷新/编辑动作在 tab 右上角)
   return (
     <div style={{ padding: 16 }}>
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           marginBottom: 12,
         }}
       >
@@ -289,14 +331,6 @@ const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
             </span>
           )}
         </Space>
-        <Space>
-          <Button icon={<ReloadOutlined />} onClick={reloadFence}>
-            刷新
-          </Button>
-          <Button type="primary" icon={<EditOutlined />} onClick={openDrawer}>
-            编辑围栏
-          </Button>
-        </Space>
       </div>
 
       <FenceMapEditor
@@ -320,7 +354,9 @@ const ResidentFencePanel: React.FC<ResidentFencePanelProps> = ({
       />
     </div>
   );
-};
+});
+
+ResidentFencePanel.displayName = 'ResidentFencePanel';
 
 // ============ 内嵌的编辑 Drawer ============
 

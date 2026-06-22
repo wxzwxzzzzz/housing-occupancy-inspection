@@ -127,7 +127,7 @@ const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
             loading={submitting}
             onClick={() => handle('reject')}
           >
-            驳 回
+            驳回
           </Button>
           <Button
             type="primary"
@@ -135,7 +135,7 @@ const ApprovalPanel: React.FC<ApprovalPanelProps> = ({
             loading={submitting}
             onClick={() => handle('approve')}
           >
-            通 过
+            通过
           </Button>
         </Space>
         {!canOperate && (

@@ -140,7 +140,7 @@ const SystemMessage: React.FC = () => {
   const toolbarActions: ToolbarAction[] = [
     {
       key: 'markSelected',
-      label: '标记已读',
+      label: '已读',
       icon: <CheckCircleOutlined />,
       disabled: selectedKeys.length === 0,
       onClick: markSelectedRead,
@@ -148,7 +148,7 @@ const SystemMessage: React.FC = () => {
     {
       key: 'markAll',
       type: 'primary',
-      label: '全部标为已读',
+      label: '全读',
       disabled: unreadCount === 0,
       onClick: markAllRead,
     },

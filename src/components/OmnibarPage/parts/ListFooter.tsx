@@ -32,7 +32,7 @@ const ListFooter: React.FC<ListFooterProps> = ({
             checked={!!showOnlySelected}
             onChange={(v) => onShowOnlySelectedChange?.(v)}
           />
-          已选 <strong style={{ color: '#1d4ed8' }}>{selectedCount}</strong> 行
+          已选 <strong style={{ color: 'var(--ant-color-primary, #066fd1)' }}>{selectedCount}</strong> 行
         </span>
       </div>
       <div className="opp-footer-right">

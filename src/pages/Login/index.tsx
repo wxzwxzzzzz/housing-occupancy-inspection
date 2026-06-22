@@ -90,7 +90,7 @@ const Login: React.FC = () => {
         <Card className="login-card">
           <div className="login-header">
             <div className="login-logo">
-              <SafetyOutlined style={{ fontSize: 48, color: '#1d4ed8' }} />
+              <SafetyOutlined style={{ fontSize: 48, color: 'var(--ant-color-primary, #066fd1)' }} />
             </div>
             <h1 className="login-title">公租房监测系统</h1>
             <p className="login-subtitle">审批端管理平台</p>
@@ -179,7 +179,7 @@ const Login: React.FC = () => {
                           disabled={countdown > 0}
                           style={{ width: 120 }}
                         >
-                          {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+                          {countdown > 0 ? `${countdown}秒后重试` : '获取'}
                         </Button>
                       </Space.Compact>
                     </Form.Item>

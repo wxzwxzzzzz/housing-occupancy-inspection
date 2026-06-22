@@ -181,7 +181,7 @@ const FilterList: React.FC = () => {
     { divider: true },
     {
       key: 'delete',
-      label: '批量删除',
+      label: '删除',
       danger: true,
       onClick: handleBatchDelete,
     },

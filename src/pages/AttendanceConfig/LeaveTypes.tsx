@@ -61,7 +61,7 @@ const AttendanceConfigLeaveTypes: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新建请假类型',
+      label: '新建',
       onClick: () => setCreateOpen(true),
     },
     {

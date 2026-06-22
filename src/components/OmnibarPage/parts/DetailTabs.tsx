@@ -27,6 +27,10 @@ const DetailTabs: React.FC<DetailTabsProps> = ({
     onChange?.(k);
   };
 
+  // 当前激活 tab 自带的 actions 优先;没有则回退到页面级 actions
+  const activeTab = tabs.find((t) => t.key === activeKey);
+  const effectiveActions = activeTab?.actions ?? actions;
+
   return (
     <div className="opp-detail-tabs">
       <Tabs
@@ -39,9 +43,9 @@ const DetailTabs: React.FC<DetailTabsProps> = ({
           destroyInactiveTabPane: t.destroyInactive ?? true,
         }))}
         tabBarExtraContent={
-          actions ? (
+          effectiveActions && effectiveActions.length > 0 ? (
             <div className="opp-detail-tab-actions">
-              <ToolbarActions actions={actions} />
+              <ToolbarActions actions={effectiveActions} />
             </div>
           ) : null
         }

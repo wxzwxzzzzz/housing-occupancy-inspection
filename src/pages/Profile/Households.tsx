@@ -93,7 +93,7 @@ const ProfileHouseholds: React.FC = () => {
       key: 'create',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '新增家庭',
+      label: '新增',
       onClick: () => setCreateOpen(true),
     },
     {

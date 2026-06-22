@@ -9,11 +9,9 @@
 
 import {
   ApartmentOutlined,
-  ArrowLeftOutlined,
   BranchesOutlined,
   CloseOutlined,
   PlusOutlined,
-  SaveOutlined,
   SolutionOutlined,
   TeamOutlined,
   UserOutlined,
@@ -265,24 +263,21 @@ const ApprovalChainDesigner: React.FC<Props> = ({
       <Space direction="vertical" style={{ width: 132 }}>
         <Button
           block
-          icon={<SolutionOutlined />}
           onClick={() => handleAdd(branchId, index, 'approval')}
         >
-          审批人
+          审批
         </Button>
         <Button
           block
-          icon={<TeamOutlined />}
           onClick={() => handleAdd(branchId, index, 'cc')}
         >
-          抄送人
+          抄送
         </Button>
         <Button
           block
-          icon={<BranchesOutlined />}
           onClick={() => handleAdd(branchId, index, 'condition')}
         >
-          条件分支
+          条件
         </Button>
       </Space>
     );
@@ -359,7 +354,7 @@ const ApprovalChainDesigner: React.FC<Props> = ({
             icon={<PlusOutlined />}
             onClick={() => setNodes((prev) => addBranch(prev, node.id))}
           >
-            添加分支
+            分支
           </Button>
         )}
       </div>
@@ -400,12 +395,12 @@ const ApprovalChainDesigner: React.FC<Props> = ({
       }
       extra={
         <Space>
-          <Button icon={<ArrowLeftOutlined />} onClick={onCancel}>
+          <Button onClick={onCancel}>
             返回
           </Button>
           {!readOnly && (
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
-              保存流程图
+            <Button type="primary" onClick={handleSave}>
+              保存
             </Button>
           )}
         </Space>

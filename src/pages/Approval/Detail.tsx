@@ -22,7 +22,6 @@ import {
   Tag,
   Timeline,
 } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from '@umijs/max';
 import { approvalService } from '@/services/domains/approval';
 import { leaveService } from '@/services/domains/leave';
@@ -126,7 +125,7 @@ const ApprovalDetail: React.FC = () => {
     <div style={{ padding: 24 }}>
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+          <Button onClick={() => navigate(-1)}>
             返回
           </Button>
           {loading ? (
@@ -180,12 +179,11 @@ const ApprovalDetail: React.FC = () => {
                 <Space>
                   <Button
                     type="primary"
-                    icon={<CheckOutlined />}
                     onClick={() => setModalType('approve')}
                   >
                     通过
                   </Button>
-                  <Button danger icon={<CloseOutlined />} onClick={() => setModalType('reject')}>
+                  <Button danger onClick={() => setModalType('reject')}>
                     驳回
                   </Button>
                 </Space>

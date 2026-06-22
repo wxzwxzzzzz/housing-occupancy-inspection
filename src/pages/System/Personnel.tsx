@@ -11,9 +11,6 @@ import {
   Tag,
 } from 'antd';
 import {
-  DeleteOutlined,
-  EditOutlined,
-  LockOutlined,
   PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -203,7 +200,7 @@ const SystemPersonnel: React.FC = () => {
               handleEdit(record);
             }}
           >
-            <EditOutlined /> 编辑
+            编辑
           </span>
           <span
             className="opp-row-action"
@@ -220,7 +217,7 @@ const SystemPersonnel: React.FC = () => {
               });
             }}
           >
-            <LockOutlined /> 锁定
+            锁定
           </span>
           <span
             className="opp-row-action danger"
@@ -238,7 +235,7 @@ const SystemPersonnel: React.FC = () => {
               });
             }}
           >
-            <DeleteOutlined /> 删除
+            删除
           </span>
         </span>
       ),

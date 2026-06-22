@@ -27,7 +27,7 @@
     top: 0;
     bottom: 0;
     width: 4px;
-    background: var(--ant-color-primary, #1d4ed8);
+    background: var(--ant-color-primary, #066fd1);
   }
 
   :global {
@@ -68,7 +68,7 @@
     font-size: 36px;
     font-weight: 700;
     line-height: 1;
-    color: var(--ant-color-primary, #1d4ed8);
+    color: var(--ant-color-primary, #066fd1);
   }
   .todo-total-unit {
     font-size: 13px;
@@ -120,22 +120,22 @@
 
     // 有待办时高亮
     &.has {
-      border-color: color-mix(in srgb, var(--ant-color-primary, #1d4ed8) 30%, transparent);
+      border-color: color-mix(in srgb, var(--ant-color-primary, #066fd1) 30%, transparent);
       .todo-item-icon {
-        color: var(--ant-color-primary, #1d4ed8);
+        color: var(--ant-color-primary, #066fd1);
       }
       .todo-item-label {
         color: #1f1f1f;
         font-weight: 500;
       }
       .todo-item-count {
-        background: var(--ant-color-primary, #1d4ed8);
+        background: var(--ant-color-primary, #066fd1);
         color: #fff;
       }
     }
     &:hover {
-      border-color: var(--ant-color-primary, #1d4ed8);
-      box-shadow: 0 2px 8px color-mix(in srgb, var(--ant-color-primary, #1d4ed8) 18%, transparent);
+      border-color: var(--ant-color-primary, #066fd1);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--ant-color-primary, #066fd1) 18%, transparent);
       transform: translateY(-1px);
     }
   }
@@ -412,7 +412,7 @@
     font-weight: 500;
   }
   .pill-info {
-    color: #1d4ed8;
+    color: var(--ant-color-primary, #066fd1);
     font-weight: 500;
   }
 }
@@ -588,7 +588,7 @@
   // 蓝色系
   body .dashboard-container .ant-tag.ant-tag-blue,
   body .dashboard-container .ant-tag.ant-tag-processing {
-    color: #1d4ed8 !important;
+    color: var(--ant-color-primary, #066fd1) !important;
     background: rgba(22, 119, 255, 0.12) !important;
   }
   // 紫色系
@@ -663,7 +663,7 @@
     width: 4px;
     height: 15px;
     border-radius: 2px;
-    background: var(--ant-color-primary, #1d4ed8);
+    background: var(--ant-color-primary, #066fd1);
     align-self: center;
   }
   .section-title-text {
@@ -719,14 +719,14 @@
     justify-content: center;
     font-size: 20px;
     background: #eff6ff;
-    color: #1d4ed8;
+    color: var(--ant-color-primary, #066fd1);
     transition: background 0.15s ease, color 0.15s ease;
     :global(.anticon) {
       font-size: 20px;
     }
   }
   .quick-entry-item:hover .quick-entry-icon {
-    background: #1d4ed8;
+    background: var(--ant-color-primary, #066fd1);
     color: #fff;
   }
   .quick-entry-label {
@@ -828,7 +828,7 @@
   }
 
   // 图标配色基调(统一:主色蓝 + 语义三色,与 metric-tiles 共用)
-  .tone-blue { background: #eff6ff; color: #1d4ed8; }
+  .tone-blue { background: #eff6ff; color: var(--ant-color-primary, #066fd1); }
   .tone-green { background: #ecfdf5; color: #389e0d; }
   .tone-warning { background: #fff7ed; color: #d46b08; }
   .tone-red { background: #fef2f2; color: #cf1322; }
@@ -920,7 +920,7 @@
   }
 
   // 图标配色基调(统一:主色蓝 + 语义三色)
-  .tone-blue { background: #eff6ff; color: #1d4ed8; }
+  .tone-blue { background: #eff6ff; color: var(--ant-color-primary, #066fd1); }
   .tone-green { background: #ecfdf5; color: #389e0d; }
   .tone-warning { background: #fff7ed; color: #d46b08; }
   .tone-red { background: #fef2f2; color: #cf1322; }
@@ -988,8 +988,8 @@
   .msg-cat-todo {
     background: #fff;
     border-color: #e5e8ec;
-    &::before { background: #1d4ed8; }
-    .msg-cat-count { color: #1d4ed8; }
+    &::before { background: var(--ant-color-primary, #066fd1); }
+    .msg-cat-count { color: var(--ant-color-primary, #066fd1); }
   }
   // 业务通知 — 政务深蓝
   .msg-cat-biz {

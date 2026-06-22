@@ -17,9 +17,9 @@ export interface MenuItem {
 
 export type ThemeMode = 'light' | 'dark';
 
-const PRIMARY_COLOR_KEY = 'prh:primaryColor';
+const PRIMARY_COLOR_KEY = 'prh:primaryColor:v2'; // v2:默认主色改为原型蓝 #066fd1,旧 key 作废一次
 const THEME_MODE_KEY = 'prh:themeMode';
-const DEFAULT_PRIMARY = '#1d4ed8';
+const DEFAULT_PRIMARY = '#066fd1';
 const DEFAULT_MODE: ThemeMode = 'light';
 
 class AppStore {

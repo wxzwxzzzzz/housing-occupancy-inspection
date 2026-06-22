@@ -14,7 +14,6 @@ import {
 import {
   DeleteOutlined,
   EditOutlined,
-  EnvironmentOutlined,
   PlusOutlined,
   ReloadOutlined,
   SettingOutlined,
@@ -216,13 +215,13 @@ const FencePage: React.FC = () => {
     {
       key: 'create',
       type: 'primary',
-      label: '新建围栏',
+      label: '新建',
       icon: <PlusOutlined />,
       onClick: handleCreate,
     },
     {
       key: 'batchDelete',
-      label: '批量删除',
+      label: '删除',
       danger: true,
       disabled: selectedKeys.length === 0,
       onClick: handleBatchDelete,
@@ -248,12 +247,7 @@ const FencePage: React.FC = () => {
       title: '名称',
       dataIndex: 'name',
       width: 200,
-      render: (v: string) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <EnvironmentOutlined style={{ color: '#1d4ed8' }} />
-          {v ?? '-'}
-        </span>
-      ),
+      render: (v: string) => <span>{v ?? '-'}</span>,
     },
     {
       title: '类型',

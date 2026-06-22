@@ -1,14 +1,12 @@
 import {
   CheckCircleOutlined,
   ExportOutlined,
-  PlusOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
   Avatar,
-  Button,
   Form,
   Input,
   Modal,
@@ -19,7 +17,7 @@ import {
   Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import EntityCreateModal from '@/components/EntityCreateModal';
 import {
   type DetailSection,
@@ -59,7 +57,10 @@ import {
   StatusColors,
 } from '@/utils/enum-options';
 import { lifecyclePanelStore, type LifecycleStep } from '@/stores';
-import ResidentFencePanel from './ResidentFencePanel';
+import ResidentFencePanel, {
+  type ResidentFencePanelHandle,
+  type ResidentFenceState,
+} from './ResidentFencePanel';
 
 function maskIdCard(idCard?: string): string {
   if (!idCard || idCard.length < 11) return idCard ?? '-';
@@ -121,6 +122,13 @@ const ResidentDetail: React.FC = () => {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiveForm] = Form.useForm();
   const [archiveSubmitting, setArchiveSubmitting] = useState(false);
+
+  // 电子围栏 tab:通过 ref 调用 panel 的新增/编辑/刷新,fenceState 驱动 tab 右上角按钮显隐
+  const fencePanelRef = useRef<ResidentFencePanelHandle>(null);
+  const [fenceState, setFenceState] = useState<ResidentFenceState>({
+    hasActiveResidence: false,
+    hasFence: false,
+  });
 
   const fetcher = React.useCallback(async (rid: string) => {
     const env = await residentService.detail(rid);
@@ -224,7 +232,7 @@ const ResidentDetail: React.FC = () => {
         key: 'activate',
         type: 'primary',
         icon: <CheckCircleOutlined />,
-        label: '激活居民',
+        label: '激活',
         onClick: handleActivate,
       });
     }
@@ -233,7 +241,7 @@ const ResidentDetail: React.FC = () => {
         key: 'archive',
         danger: true,
         icon: <ExportOutlined />,
-        label: '归档退出',
+        label: '归档',
         onClick: () => setArchiveOpen(true),
       });
     }
@@ -516,64 +524,76 @@ const ResidentDetail: React.FC = () => {
     {
       key: 'residences',
       label: `居住信息 (${residences.length})`,
-      content: (
-        <div>
-          <div style={{ padding: '8px 12px', textAlign: 'right' }}>
-            <Button
-              size="small"
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setModalKind('residence')}
-            >
-              登记居住信息
-            </Button>
-          </div>
-          {renderTable(residences, residenceCols)}
-        </div>
-      ),
+      actions: [
+        {
+          key: 'add-residence',
+          type: 'primary',
+          label: '登记',
+          onClick: () => setModalKind('residence'),
+        },
+      ],
+      content: renderTable(residences, residenceCols),
     },
     {
       key: 'fence',
       label: '电子围栏',
-      content: id ? <ResidentFencePanel residentId={id} /> : null,
+      actions: !fenceState.hasActiveResidence
+        ? []
+        : fenceState.hasFence
+          ? [
+              {
+                key: 'fence-refresh',
+                label: '刷新',
+                onClick: () => fencePanelRef.current?.refresh(),
+              },
+              {
+                key: 'fence-edit',
+                type: 'primary',
+                label: '编辑',
+                onClick: () => fencePanelRef.current?.openEdit(),
+              },
+            ]
+          : [
+              {
+                key: 'fence-create',
+                type: 'primary',
+                label: '新增',
+                onClick: () => fencePanelRef.current?.openCreate(),
+              },
+            ],
+      content: id ? (
+        <ResidentFencePanel
+          ref={fencePanelRef}
+          residentId={id}
+          onStateChange={setFenceState}
+        />
+      ) : null,
     },
     {
       key: 'employments',
       label: `工作信息 (${employments.length})`,
-      content: (
-        <div>
-          <div style={{ padding: '8px 12px', textAlign: 'right' }}>
-            <Button
-              size="small"
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setModalKind('employment')}
-            >
-              登记工作信息
-            </Button>
-          </div>
-          {renderTable(employments, employmentCols)}
-        </div>
-      ),
+      actions: [
+        {
+          key: 'add-employment',
+          type: 'primary',
+          label: '登记',
+          onClick: () => setModalKind('employment'),
+        },
+      ],
+      content: renderTable(employments, employmentCols),
     },
     {
       key: 'incomes',
       label: `个人收入 (${incomes.length})`,
-      content: (
-        <div>
-          <div style={{ padding: '8px 12px', textAlign: 'right' }}>
-            <Button
-              size="small"
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setModalKind('income')}
-            >
-              申报收入
-            </Button>
-          </div>
-          {renderTable(incomes, incomeCols)}
-        </div>
-      ),
+      actions: [
+        {
+          key: 'add-income',
+          type: 'primary',
+          label: '申报',
+          onClick: () => setModalKind('income'),
+        },
+      ],
+      content: renderTable(incomes, incomeCols),
     },
   ];
 

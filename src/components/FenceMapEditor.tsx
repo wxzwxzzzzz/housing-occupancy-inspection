@@ -141,10 +141,10 @@ const FenceMapEditor: React.FC<FenceMapEditorProps> = ({
 
     if (fenceType === 'CIRCLE' && center && Number.isFinite(radius) && (radius ?? 0) > 0) {
       const circle = new T.Circle(new T.LngLat(center.longitude, center.latitude), radius, {
-        color: '#1d4ed8',
+        color: '#066fd1',
         weight: 2,
         opacity: 0.9,
-        fillColor: '#1d4ed8',
+        fillColor: '#066fd1',
         fillOpacity: 0.15,
       });
       map.addOverLay(circle);

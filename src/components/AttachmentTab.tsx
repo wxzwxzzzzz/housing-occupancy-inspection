@@ -105,7 +105,7 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({
               type="primary"
               loading={uploading}
             >
-              上传附件
+              上传
             </Button>
           </Upload>
           <span style={{ marginLeft: 8, color: '#888', fontSize: 12 }}>
@@ -161,7 +161,7 @@ const AttachmentTab: React.FC<AttachmentTabProps> = ({
               >
                 <List.Item.Meta
                   avatar={
-                    <FileOutlined style={{ fontSize: 22, color: '#1d4ed8' }} />
+                    <FileOutlined style={{ fontSize: 22, color: 'var(--ant-color-primary, #066fd1)' }} />
                   }
                   title={file.name ?? `#${String(item.id).slice(-6)}`}
                   description={

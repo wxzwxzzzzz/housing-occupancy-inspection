@@ -130,7 +130,7 @@ const MonitorAttendance: React.FC = () => {
       key: 'manual-checkin',
       type: 'primary',
       icon: <PlusOutlined />,
-      label: '管理员代录',
+      label: '代录',
       onClick: () => setCheckinOpen(true),
     },
     {

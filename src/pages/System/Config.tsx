@@ -1,4 +1,3 @@
-import { ReloadOutlined, SaveOutlined } from '@ant-design/icons';
 import {
   Button,
   Card,
@@ -145,16 +144,15 @@ const SystemConfig: React.FC = () => {
         title="系统配置"
         extra={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={handleReset}>
-              恢复默认
+            <Button onClick={handleReset}>
+              重置
             </Button>
             <Button
               type="primary"
-              icon={<SaveOutlined />}
               loading={loading}
               onClick={handleSave}
             >
-              保存配置
+              保存
             </Button>
           </Space>
         }
