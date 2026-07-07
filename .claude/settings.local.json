@@ -169,7 +169,11 @@
       "Bash(sed -n '15,40p' src/components/ThemeSettings.tsx)",
       "Bash(sed -n '1,20p' config/defaultSettings.ts)",
       "Bash(echo \"lessc $?\")",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(grep -iE \"^\\\\s*[0-9]+:\\\\s*\\(Button|Card|Col|Row|Tag|List|Avatar|Progress\\),?$|} from 'antd'\")",
+      "Bash(cat .npmrc)",
+      "Bash(npm config *)",
+      "Bash(ls node_modules/@tabler)"
     ],
     "deny": [],
     "ask": []
