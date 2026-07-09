@@ -1079,7 +1079,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
           <Layout style={{ flex: 1, minHeight: 0 }}>
             <Header
               style={{
-                height: 26,
+                height: location.pathname === '/dashboard' ? 40 : 26,
                 padding: '0 12px',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -1106,7 +1106,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   className="layout-brand"
                   onClick={() => setLeftExpanded((v) => !v)}
                   style={{
-                    height: 26,
+                    height: location.pathname === '/dashboard' ? 40 : 26,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
@@ -1339,7 +1339,7 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                   style={{
                     background: 'var(--ant-color-bg-container)',
                     borderLeft: '1px solid var(--ant-color-border-secondary)',
-                    borderRadius: 12,
+                    borderRadius: ' 12px 0   0 12px ',
                     overflow: 'hidden',
                   }}
                 >
@@ -1513,7 +1513,8 @@ const BasicLayout: React.FC<{ children?: React.ReactNode }> = observer(
                     background: 'var(--ant-color-bg-container)',
                     borderLeft: '1px solid var(--ant-color-border-secondary)',
                     flex: '0 0 auto',
-                    borderRadius: 12,
+                    borderRadius: activeQuickMenu ? '0 12px 12px 0' : 12,
+                    transition: 'background .15s ease',
                   }}
                 >
                   <div
